@@ -1,5 +1,5 @@
 // Cubo Rubik · byarcy — guarda la app para usarla sin internet
-const CACHE = 'cubo-rubik-v0.13';
+const CACHE = 'cubo-rubik-v0.14';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
