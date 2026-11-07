@@ -10,7 +10,7 @@ Aprende paso a paso, entrena etapas sueltas y algoritmos, y mide tu tiempo en el
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.18-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.19-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -35,7 +35,7 @@ Mezcla el cubo y resuélvelo contra el reloj. El tiempo empieza con tu primer gi
 
 ### 🧭 Práctica guiada
 La app mira tu cubo y calcula los giros exactos que te faltan, uno por uno, con un **dedo guía** que muestra hacia dónde deslizar.
-- **Métodos:** Capas (el de principiantes, en 7 pasos) y CFOP (el de los speedcubers).
+- **Métodos:** Capas (el de principiantes, en 7 pasos), CFOP (el de los speedcubers) y Guía 5 pasos (la segunda capa con el blanco arriba y la última capa en cuatro partes, con pocos algoritmos cortos).
 - **Notación interactiva:** el primer paso es un ejercicio. La app te dice una letra y tú giras esa cara; al final haces R U R' U' seis veces y el cubo vuelve a como estaba.
 - **Meta de cada paso:** para qué sirve y cómo saber que terminaste. El recuadro de la esquina muestra cómo debe quedar.
 - **Pieza fantasma:** en Caso, la pieza que vas a mover aparece sola un momento en su lugar final.
