@@ -10,7 +10,7 @@ Aprende paso a paso, entrena etapas sueltas y algoritmos, y mide tu tiempo en el
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.19-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.20-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -51,6 +51,12 @@ No siempre quieres resolver desde cero:
 
 ### 🧠 Entrenador de algoritmos
 Elige un algoritmo (Sune, Antisune, T-perm, Y-perm, Ua, Ub, Aa, Ab…) y la app arma su caso. Lo haces giro por giro: la letra que toca se ilumina y, **si giras una cara equivocada, se marca en rojo** y hay que deshacerla, para corregir la memoria muscular. Al terminar ves tu tiempo y tu mejor marca.
+
+Con la **Guía 5 pasos**, el entrenador trae los casos de cada paso para memorizarlos:
+- **Ver:** el cubo hace el algoritmo solo, cada vez más rápido.
+- **Recordar:** lo haces tú; las letras se ocultan a medida que lo dominas (cada caso tiene 5 puntos de dominio).
+- **Mezcla:** 10 casos seguidos del paso; salen más los que menos dominas.
+- **Reconocer:** el cubo muestra un caso y eliges cuál es entre 3 o 4 miniaturas.
 
 ### 🧊 Cubo 2×2
 Botón junto al título para cambiar entre 3×3 y 2×2. Cada tamaño guarda su propio cubo, paso, tiempo y récord. El 2×2 tiene su práctica en 3 pasos y su propio entrenador.
