@@ -10,7 +10,7 @@ Aprende paso a paso, entrena etapas sueltas y algoritmos, y mide tu tiempo en el
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.20-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.21-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -42,6 +42,12 @@ La app mira tu cubo y calcula los giros exactos que te faltan, uno por uno, con 
 - **Alinear y algoritmo por separado:** los giros se agrupan, por ejemplo «Alinear: U'» + «Sune: R U R' U R U2 R'», para que entiendas por qué haces cada uno.
 - **Tres niveles de ayuda:** *Guía* (todos los giros y el dedo guía), *Caso* (qué pieza mover y qué algoritmo usar, sin letras) y *Examen* (solo la meta). En los dos últimos, «💡 Dame una pista»: el primer toque vuelve a mostrar la pieza fantasma y el segundo te da el giro que sigue.
 - **⏪ VOLVER:** si desarmas un paso que ya tenías listo, deshace de una vez los giros desde el error.
+
+### 🧩 Con mi cubo físico
+Con la Guía 5 pasos puedes resolver **tu propio cubo** siguiendo la app (no usa la cámara: te acompaña).
+- La app te dicta una mezcla en bloques de 4 giros; tocas «Hecho» y su cubo hace lo mismo.
+- En cada paso te da el bloque siguiente, con el dedo guía: **un toque por bloque**. En Caso y Examen resuelves a tu manera y tocas «Listo».
+- Al terminar cada paso revisas que tu cubo se vea igual. Si no coincide, puedes **deshacer el último bloque** o decir **hasta dónde llega tu cubo** y seguir por casos, sin empezar de cero.
 
 ### 🎯 Etapas sueltas
 No siempre quieres resolver desde cero:
