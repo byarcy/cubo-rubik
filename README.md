@@ -10,7 +10,7 @@ Aprende paso a paso, entrena etapas sueltas y algoritmos, y mide tu tiempo en el
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.15-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.17-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -36,11 +36,16 @@ Mezcla el cubo y resuélvelo contra el reloj. El tiempo empieza con tu primer gi
 ### 🧭 Práctica guiada
 La app mira tu cubo y calcula los giros exactos que te faltan, uno por uno, con un **dedo guía** que muestra hacia dónde deslizar.
 - **Métodos:** Capas (el de principiantes, en 7 pasos) y CFOP (el de los speedcubers).
+- **Notación interactiva:** el primer paso es un ejercicio. La app te dice una letra y tú giras esa cara; al final haces R U R' U' seis veces y el cubo vuelve a como estaba.
 - **Meta de cada paso:** para qué sirve y cómo saber que terminaste. El recuadro de la esquina muestra cómo debe quedar.
 - **Mostrar destino:** ves dónde tiene que quedar la pieza que estás moviendo.
+- **Alinear y algoritmo por separado:** los giros se agrupan, por ejemplo «Alinear: U'» + «Sune: R U R' U R U2 R'», para que entiendas por qué haces cada uno.
+- **Tres niveles de ayuda:** *Guía* (todos los giros y el dedo guía), *Caso* (qué pieza mover y qué algoritmo usar, sin letras) y *Examen* (solo la meta). En los dos últimos, «💡 Dame una pista» te muestra el giro que sigue.
+- **⏪ VOLVER:** si desarmas un paso que ya tenías listo, deshace de una vez los giros desde el error.
 
 ### 🎯 Etapas sueltas
 No siempre quieres resolver desde cero:
+- **🎯 Practicar solo este paso:** en cualquier paso, la app arma un caso nuevo de ese paso con todo lo anterior ya resuelto, para repetirlo las veces que quieras.
 - **Solo la cruz:** lo que no es de la cruz se ve gris. Al terminar sabes si usaste la menor cantidad de giros posible.
 - **Solo la última capa:** empiezas con las dos primeras capas ya armadas y practicas OLL y PLL.
 
