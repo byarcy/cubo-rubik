@@ -2,15 +2,15 @@
 
 # 🟥🟩🟦 CUBO RUBIK · byarcy
 
-**Tutorial interactivo del cubo Rubik, en español, hecho para el celular y con estilo synthwave.**
+**Cubo Rubik interactivo en 3D, en español, hecho para el celular y con estilo synthwave.**
 
-Aprende paso a paso, entrena etapas sueltas y algoritmos, y mide tu tiempo en el modo Reto.
+Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, en el modo Práctica.
 
 ### [▶ Abrir la app](https://byarcy.github.io/cubo-rubik/)
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.21-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.30-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -20,57 +20,51 @@ Aprende paso a paso, entrena etapas sueltas y algoritmos, y mide tu tiempo en el
 <p align="center">
   <img src="capturas/reto.jpg" width="250" alt="Modo Reto: cubo mezclado y temporizador">
   &nbsp;
-  <img src="capturas/practica.jpg" width="250" alt="Práctica guiada de la cruz, con el dedo guía y el resto del cubo en gris">
-  &nbsp;
-  <img src="capturas/algoritmos.jpg" width="250" alt="Entrenador de algoritmos con un giro equivocado marcado en rojo">
+  <img src="capturas/practica.jpg" width="250" alt="Modo Práctica: la esquina que toca iluminada, su hueco enmarcado y una flecha sobre la cara que hay que girar">
 </p>
-<p align="center"><sub>Reto con temporizador · Práctica guiada (solo la cruz) · Entrenador de algoritmos</sub></p>
+<p align="center"><sub>Reto con temporizador · Práctica guiada de las esquinas blancas</sub></p>
+
+> **Versión 0.30: la app se reescribió desde cero.** El código ahora está separado en archivos y el modo
+> Práctica empezó de nuevo, con otra idea: lecciones cortas, una etapa a la vez. Por ahora trae la primera
+> lección; las demás están en construcción. La versión anterior quedó guardada en la etiqueta `v0.21`.
 
 ---
 
 ## ✨ Qué puedes hacer
 
 ### ⏱️ Reto
-Mezcla el cubo y resuélvelo contra el reloj. El tiempo empieza con tu primer giro, cuenta tus movimientos y guarda tu mejor marca.
+Mezcla el cubo y resuélvelo contra el reloj. El tiempo empieza con tu primer giro, cuenta tus movimientos y guarda tu mejor marca. Puedes pausarlo.
 
-### 🧭 Práctica guiada
-La app mira tu cubo y calcula los giros exactos que te faltan, uno por uno, con un **dedo guía** que muestra hacia dónde deslizar.
-- **Métodos:** Capas (el de principiantes, en 7 pasos), CFOP (el de los speedcubers) y Guía 5 pasos (la segunda capa con el blanco arriba y la última capa en cuatro partes, con pocos algoritmos cortos).
-- **Notación interactiva:** el primer paso es un ejercicio. La app te dice una letra y tú giras esa cara; al final haces R U R' U' seis veces y el cubo vuelve a como estaba.
-- **Meta de cada paso:** para qué sirve y cómo saber que terminaste. El recuadro de la esquina muestra cómo debe quedar.
-- **Pieza fantasma:** en Caso, la pieza que vas a mover aparece sola un momento en su lugar final.
-- **Alinear y algoritmo por separado:** los giros se agrupan, por ejemplo «Alinear: U'» + «Sune: R U R' U R U2 R'», para que entiendas por qué haces cada uno.
-- **Tres niveles de ayuda:** *Guía* (todos los giros y el dedo guía), *Caso* (qué pieza mover y qué algoritmo usar, sin letras) y *Examen* (solo la meta). En los dos últimos, «💡 Dame una pista»: el primer toque vuelve a mostrar la pieza fantasma y el segundo te da el giro que sigue.
-- **⏪ VOLVER:** si desarmas un paso que ya tenías listo, deshace de una vez los giros desde el error.
+### 🧭 Práctica
+Para aprender el **método por capas**, el de principiantes, dividido en 7 etapas.
 
-### 🧩 Con mi cubo físico
-Con la Guía 5 pasos puedes resolver **tu propio cubo** siguiendo la app (no usa la cámara: te acompaña).
-- La app te dicta una mezcla en bloques de 4 giros; tocas «Hecho» y su cubo hace lo mismo.
-- En cada paso te da el bloque siguiente, con el dedo guía: **un toque por bloque**. En Caso y Examen resuelves a tu manera y tocas «Listo».
-- Al terminar cada paso revisas que tu cubo se vea igual. Si no coincide, puedes **deshacer el último bloque** o decir **hasta dónde llega tu cubo** y seguir por casos, sin empezar de cero.
+- **Barra de etapas:** la app mira tu cubo y muestra cuántas etapas llevas completas y cuál toca.
+- **Lección «Esquinas blancas»:** cada ejercicio empieza con la cruz blanca ya hecha y varias esquinas fuera de sitio. El cubo se muestra con el blanco abajo, para que veas la capa donde trabajas.
+- **Pieza en foco:** la esquina que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
+- **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
+- **Te corrige:** si giras otra cara a mitad de un paso, te pide deshacerla antes de seguir.
+- **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa).
 
-### 🎯 Etapas sueltas
-No siempre quieres resolver desde cero:
-- **🎯 Practicar solo este paso:** en cualquier paso, la app arma un caso nuevo de ese paso con todo lo anterior ya resuelto, para repetirlo las veces que quieras.
-- **Solo la cruz:** lo que no es de la cruz se ve gris. Al terminar sabes si usaste la menor cantidad de giros posible.
-- **Solo la última capa:** empiezas con las dos primeras capas ya armadas y practicas OLL y PLL.
+#### Las 7 etapas
 
-### 🧠 Entrenador de algoritmos
-Elige un algoritmo (Sune, Antisune, T-perm, Y-perm, Ua, Ub, Aa, Ab…) y la app arma su caso. Lo haces giro por giro: la letra que toca se ilumina y, **si giras una cara equivocada, se marca en rojo** y hay que deshacerla, para corregir la memoria muscular. Al terminar ves tu tiempo y tu mejor marca.
-
-Con la **Guía 5 pasos**, el entrenador trae los casos de cada paso para memorizarlos:
-- **Ver:** el cubo hace el algoritmo solo, cada vez más rápido.
-- **Recordar:** lo haces tú; las letras se ocultan a medida que lo dominas (cada caso tiene 5 puntos de dominio).
-- **Mezcla:** 10 casos seguidos del paso; salen más los que menos dominas.
-- **Reconocer:** el cubo muestra un caso y eliges cuál es entre 3 o 4 miniaturas.
+| # | Etapa | Lección |
+| --- | --- | --- |
+| 1 | Cruz blanca | En construcción |
+| 2 | Esquinas blancas | ✅ Lista |
+| 3 | Segunda capa | En construcción |
+| 4 | Cruz amarilla | En construcción |
+| 5 | Aristas amarillas | En construcción |
+| 6 | Esquinas amarillas en su sitio | En construcción |
+| 7 | Esquinas amarillas giradas | En construcción |
 
 ### 🧊 Cubo 2×2
-Botón junto al título para cambiar entre 3×3 y 2×2. Cada tamaño guarda su propio cubo, paso, tiempo y récord. El 2×2 tiene su práctica en 3 pasos y su propio entrenador.
+Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño guarda su propio cubo, tiempo y récord. La Práctica usa el 3×3.
 
 ### Y además
 - Gira las caras arrastrando con el dedo, o usa el menú **GIROS** con la notación (R, U', F2…).
-- Ayuda con notación, glosario tocable y fichas de cada método.
-- Tu avance se guarda solo en el celular.
+- Arrastra fuera del cubo para girarlo entero; el recuadro de la esquina muestra el lado que no ves.
+- Ayuda con el uso de la app y la notación.
+- Tu avance se guarda solo, en tu navegador.
 - Hay un secreto escondido para quien resuelva el cubo. 😉
 
 ---
@@ -87,20 +81,40 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 
 ## 🛠️ Cómo está hecha
 
-- **Sin librerías:** HTML, CSS y JavaScript puros, en un solo archivo.
+- **Sin librerías:** HTML, CSS y JavaScript puros. No hay que compilar nada.
 - **Motor 3D propio** sobre WebGL, que dibuja solo cuando algo se mueve, para cuidar la batería.
-- **Resolvedor propio** para las pistas: búsqueda IDA\* para la cruz, búsquedas por algoritmos para las demás etapas y una tabla de 190 080 posiciones para saber la cruz más corta.
+- **Lógica separada del dibujo:** el estado del cubo y el entrenador no conocen la interfaz, así que se pueden probar solos.
+- **Ejercicios generados:** el entrenador parte de un cubo armado, revuelve lo que la lección no usa y saca de sitio las piezas que vas a practicar. Así todos los ejercicios tienen solución.
 - **PWA:** `manifest.webmanifest` y un *service worker* (`sw.js`) que guarda la app para usarla sin internet.
 
 ### Contenido del repositorio
 
 | Archivo | Qué es |
 | --- | --- |
-| `index.html` | La app completa (HTML, CSS, scripts y fuente incluidos) |
+| `index.html` | La página: estructura y textos |
+| `estilos.css` | Diseño visual |
+| `motor_grafico.js` | Motor 3D (WebGL), escena, luces y animación de las capas |
+| `logica_cubo.js` | Estado del cubo, giros, notación y detector de etapas |
+| `algoritmos.js` | Secuencias de cada método, en notación estándar |
+| `entrenador.js` | El «profe» de la Práctica: reconoce el caso y prepara los ejercicios |
+| `controlador_juego.js` | Entrada (dedo, botones), Reto, Práctica, guardado y bucle principal |
 | `sw.js` | Service worker: guarda la app para usarla sin conexión |
 | `manifest.webmanifest` | Datos para instalarla como app |
-| `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Íconos |
+| `orbitron.woff` | Fuente de los títulos |
+| `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Íconos |
 | `capturas/` | Imágenes de este README |
+
+### Probarla en tu computadora
+
+La app abre directamente desde `index.html`. Para probar también la instalación y el uso sin conexión hace falta un servidor local; con Python instalado:
+
+```bash
+python -m http.server 8123
+```
+
+Luego abre `http://localhost:8123`. Con `?debug=true` al final, mezclar desordena un solo giro y el avance se guarda aparte.
+
+Al publicar una versión nueva hay que cambiar el número en tres lugares: `index.html` (título y pie de la ayuda), `sw.js` (`CACHE`) y la insignia de este README.
 
 La página se publica con **GitHub Pages** desde la rama `main`.
 

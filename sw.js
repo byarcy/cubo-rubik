@@ -1,6 +1,12 @@
 // Cubo Rubik · byarcy — guarda la app para usarla sin internet
-const CACHE = 'cubo-rubik-v0.21';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+// Al publicar una versión nueva, cambia el número de CACHE: así se borra lo guardado de la anterior.
+const CACHE = 'cubo-rubik-v0.30';
+const FILES = [
+  './', './index.html', './estilos.css',
+  './motor_grafico.js', './logica_cubo.js', './algoritmos.js', './entrenador.js', './controlador_juego.js',
+  './orbitron.woff', './icon.svg',
+  './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
@@ -14,18 +20,17 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Primero internet (para recibir versiones nuevas, y que todos los archivos sean de la misma);
+// sin conexión, lo guardado.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  if (req.mode === 'navigate') {
-    // La página: primero internet (para recibir versiones nuevas); sin conexión, la guardada
-    e.respondWith(
-      fetch(req)
-        .then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); } return r; })
-        .catch(() => caches.match('./index.html'))
-    );
-    return;
-  }
-  // Íconos y manifiesto: primero lo guardado
-  e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
+  e.respondWith(
+    fetch(req)
+      .then(r => {
+        if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+        return r;
+      })
+      .catch(() => caches.match(req, { ignoreSearch: true }).then(hit => hit || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
+  );
 });
