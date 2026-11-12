@@ -10,7 +10,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.30-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.31-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -22,11 +22,11 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
   &nbsp;
   <img src="capturas/practica.jpg" width="250" alt="Modo Práctica: la esquina que toca iluminada, su hueco enmarcado y una flecha sobre la cara que hay que girar">
 </p>
-<p align="center"><sub>Reto con temporizador · Práctica guiada de las esquinas blancas</sub></p>
+<p align="center"><sub>Reto con temporizador · Práctica guiada, etapa por etapa</sub></p>
 
-> **Versión 0.30: la app se reescribió desde cero.** El código ahora está separado en archivos y el modo
-> Práctica empezó de nuevo, con otra idea: lecciones cortas, una etapa a la vez. Por ahora trae la primera
-> lección; las demás están en construcción. La versión anterior quedó guardada en la etiqueta `v0.21`.
+> **Desde la versión 0.30 la app está reescrita desde cero.** El código ahora está separado en archivos y el modo
+> Práctica empezó de nuevo, con otra idea: lecciones cortas, una etapa a la vez. Por ahora trae las dos
+> lecciones de la primera capa; las demás están en construcción. La versión anterior quedó guardada en la etiqueta `v0.21`.
 
 ---
 
@@ -39,8 +39,10 @@ Mezcla el cubo y resuélvelo contra el reloj. El tiempo empieza con tu primer gi
 Para aprender el **método por capas**, el de principiantes, dividido en 7 etapas.
 
 - **Barra de etapas:** la app mira tu cubo y muestra cuántas etapas llevas completas y cuál toca.
-- **Lección «Esquinas blancas»:** cada ejercicio empieza con la cruz blanca ya hecha y varias esquinas fuera de sitio. El cubo se muestra con el blanco abajo, para que veas la capa donde trabajas.
-- **Pieza en foco:** la esquina que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
+- **Lección 1 · Cruz blanca:** parte de un cubo mezclado y enseña una receta que siempre funciona: llevar la arista a la capa amarilla, girarla hasta la cara de su color y meterla con media vuelta.
+- **Lección 2 · Esquinas blancas:** cada ejercicio empieza con la cruz ya hecha y varias esquinas fuera de sitio.
+- **Blanco abajo:** en las dos lecciones el cubo se muestra con el blanco abajo, para que veas la capa donde trabajas, y gira solo para dejar de frente las caras que toca mover.
+- **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
 - **Te corrige:** si giras otra cara a mitad de un paso, te pide deshacerla antes de seguir.
 - **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa).
@@ -49,7 +51,7 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 
 | # | Etapa | Lección |
 | --- | --- | --- |
-| 1 | Cruz blanca | En construcción |
+| 1 | Cruz blanca | ✅ Lista |
 | 2 | Esquinas blancas | ✅ Lista |
 | 3 | Segunda capa | En construcción |
 | 4 | Cruz amarilla | En construcción |

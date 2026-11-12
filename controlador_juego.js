@@ -170,7 +170,7 @@ function setMode(m){
     applySnap(modeStates.practica);
     prac.obj=null;prac.fin=false;
     // sin ejercicio guardado (o ya terminado): se prepara uno nuevo
-    if(!modeStates.practica||!ENTRENADOR.esquinas().plan){ENTRENADOR.generarEsquinas();syncFromLogic();}
+    if(!modeStates.practica||!lec().paso().plan){lec().generar();syncFromLogic();}
     pracPlan();pracVista();
   }else{
     applySnap(modeStates.reto);armed=!isSolved();
@@ -179,10 +179,25 @@ function setMode(m){
   updateUI();save();
 }
 
-// ---- Lección «Esquinas blancas» ----
+// ---- Lecciones (cruz blanca, esquinas blancas) ----
+// leccion: cuál está abierta · hechos: ejercicios terminados de cada una
 // nivel: 1 guiado (pieza, hueco, flecha y giros) · 2 solo la pieza y su hueco · 3 sin ayuda
-// obj: esquina que toca · plan: giros de este paso · i: cuántos llevas · dev: giros de más que hay que deshacer
-const prac={nivel:1,hechos:0,obj:null,caso:null,plan:[],i:0,dev:[],fin:false};
+// obj: pieza que toca · plan: giros de este paso · i: cuántos llevas · dev: giros de más que hay que deshacer
+const prac={leccion:'cruz',nivel:1,hechos:{cruz:0,esquinas:0},obj:null,caso:null,plan:[],i:0,dev:[],fin:false};
+const lec=()=>ENTRENADOR.LECCIONES[prac.leccion];
+// Textos de cada lección
+const LEC_UI={
+  cruz:{titulo:'CRUZ BLANCA',aviso:'CRUZ BLANCA COMPLETA',
+    fin:'¡Cruz blanca completa! Toca <b>OTRO EJERCICIO</b> para repetirla, o pasa a la lección <b>2 · Esquinas</b>.',
+    libre:'Arma la cruz blanca sin ayuda: las cuatro aristas blancas alrededor del centro blanco, cada una en la cara de su color.'},
+  esquinas:{titulo:'ESQUINAS BLANCAS',aviso:'CAPA BLANCA COMPLETA',
+    fin:'¡Capa blanca completa! Toca <b>OTRO EJERCICIO</b> para seguir practicando.',
+    libre:'Coloca las cuatro esquinas blancas sin ayuda. La barra de arriba te avisa cuando la capa esté completa.'}
+};
+function setLeccion(l){
+  if(l===prac.leccion||!ENTRENADOR.LECCIONES[l]||busy||queue.length||scrambling||resetAnim||exploded)return;
+  prac.leccion=l;pracNuevo();
+}
 const esInverso=(a,b)=>a.f===b.f&&(b.n===2?a.n===2:a.n===-b.n);
 // Lleva la cuenta del paso guiado con cada giro tuyo (y con cada deshacer)
 function pracMove(m){
@@ -198,55 +213,67 @@ function pracMove(m){
   if(i===0||i>=P.length)return;
   D.push(m);
 }
-// Pregunta al entrenador qué toca; devuelve true si cambió de esquina
+// Pregunta al entrenador qué toca; devuelve true si cambió de pieza
 function pracPlan(){
-  const e=ENTRENADOR.esquinas(prac.obj),antes=prac.obj;
+  const e=lec().paso(prac.obj),antes=prac.obj;
   prac.plan=e.plan||[];prac.i=0;prac.dev=[];
   prac.caso=e.roto?'roto':e.listo?'listo':e.caso;
   if(e.id)prac.obj=e.id;
-  if(e.listo){prac.obj=null;if(!prac.fin){prac.fin=true;prac.hechos++;celebrate('CAPA BLANCA COMPLETA');}}
+  if(e.listo){prac.obj=null;if(!prac.fin){prac.fin=true;prac.hechos[prac.leccion]++;celebrate(LEC_UI[prac.leccion].aviso);}}
   return !!e.id&&e.id!==antes;
 }
 // Con el cubo ya quieto: si no estás a medio paso, se vuelve a mirar el cubo
 function pracAfter(){
   if(prac.fin)return;
   if(prac.nivel===1&&(prac.dev.length||(prac.i>0&&prac.i<prac.plan.length)))return;
-  if(pracPlan()&&prac.nivel<3)pracVista();
+  const cambio=pracPlan();
+  // el cubo se acomoda solo si cambió la pieza o si la cara que toca girar quedó escondida
+  if(!prac.fin&&prac.nivel<3&&(cambio||(prac.nivel===1&&!pracSeVe())))pracVista();
 }
 function pracNuevo(){
   if(helpOpen||busy||queue.length||scrambling||resetAnim||exploded)return;
-  if(!ENTRENADOR.generarEsquinas())return;
+  if(!lec().generar())return;
   syncFromLogic();hist=[];earned=false;armed=false;
   prac.obj=null;prac.fin=false;pracPlan();pracVista();
   updateUI();save();
 }
-// Vista de la lección: blanco abajo y el hueco de la esquina al frente, a la derecha
+// Vista de la lección: blanco abajo, y de frente las caras que toca girar, la pieza y su hueco
 const FLIP=new M3.Quaternion().setFromAxisAngle(new M3.Vector3(0,0,1),Math.PI);
 function pracVista(){
-  let y=0;
-  if(prac.obj){
-    const h=V(prac.obj.split(',').map(Number)).applyQuaternion(FLIP),meta=new M3.Vector3(1,-1,1),q=new M3.Quaternion(),eje=new M3.Vector3(0,1,0);
-    let mejor=-9;
-    for(let k=0;k<4;k++){const a=k*Math.PI/2,d=h.clone().applyQuaternion(q.setFromAxisAngle(eje,a)).dot(meta);if(d>mejor){mejor=d;y=a;}}
+  const eje=new M3.Vector3(0,1,0),q=new M3.Quaternion(),meta=new M3.Vector3(1,0,1),dirs=[];
+  for(const m of prac.plan)if(m.f!=='U'&&m.f!=='D')dirs.push([FACE_DIR[m.f],1]);
+  if(prac.obj)dirs.push([CUBO.byId[prac.obj][0].p,0.5],[prac.obj.split(',').map(Number),0.5]);
+  let y=G.yaw,mejor=-1e9;
+  for(let k=0;k<4;k++){
+    const a=k*Math.PI/2;q.setFromAxisAngle(eje,a).multiply(FLIP);
+    let s=-0.01*Math.abs(normAng(a-G.yaw));
+    for(const [d,w] of dirs)s+=w*V(d).applyQuaternion(q).dot(meta);
+    if(s>mejor){mejor=s;y=a;}
   }
   animView(y,0,FLIP,500);
+}
+// ¿Se ven ahora todas las caras que hay que girar en este paso?
+function pracSeVe(){
+  const vm=viewMap(),vis=[vm.U,vm.F,vm.R];
+  return prac.plan.every(m=>vis.includes(m.f));
 }
 
 // ---- Ayudas dibujadas sobre el cubo: pieza en foco, marco del hueco y flecha del giro ----
 let focoId,focoMats=[];
-// Atenúa todas las calcomanías menos las de la pieza «id» (null = todo normal)
+// Atenúa todas las calcomanías menos las de las piezas «id» (varias separadas por «|»; null = todo normal)
 function setFoco(id){
   if(id===focoId)return;
+  const ids=id?id.split('|'):[];
   focoId=id;focoMats=[];
   for(const g of cubies){
-    const on=!id||g.userData.id===id;
+    const on=!id||ids.includes(g.userData.id);
     for(const ch of g.children){
       if(!ch.userData.st)continue;
       const mt=ch.material;
       if(mt.userData.hex==null){const c=mt.color;mt.userData.hex=(Math.round(c.r*255)<<16)|(Math.round(c.g*255)<<8)|Math.round(c.b*255);}
       const k=on?1:0.3;
       for(const c of [mt.color,mt.emissive]){c.setHex(mt.userData.hex);c.r*=k;c.g*=k;c.b*=k;}
-      if(id&&on)focoMats.push(mt);
+      if(g.userData.id===ids[0])focoMats.push(mt);
     }
   }
   markDirty();
@@ -295,11 +322,13 @@ function pracSig(){
 function pracVisual(on){
   const ayuda=!!on&&!prac.fin&&prac.caso!=='roto'&&!!prac.obj;
   const foco=ayuda&&prac.nivel<3;
-  setFoco(foco?prac.obj:null);
   const h=foco?prac.obj.split(',').map(Number):null;
+  // en la cruz también queda encendido el centro de la cara adonde va la arista
+  setFoco(foco?prac.obj+(prac.leccion==='cruz'?'|'+key([h[0],0,h[2]]):''):null);
   marcos.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
-    ponMarca(m,!!h,h&&h.map((v,i)=>v+d[i]*0.54),d);
+    const ver=!!h&&h[a]!==0;
+    ponMarca(m,ver,ver&&h.map((v,i)=>v+d[i]*0.54),d);
   });
   const g=ayuda&&prac.nivel===1?pracSig():null;
   flechas.forEach((m,i)=>{
@@ -322,16 +351,26 @@ function pracRender(){
   box.setAttribute('aria-label',n+' de '+E.length+' etapas completas');
   $('etapaTxt').innerHTML=n<E.length?'Etapa '+(n+1)+' de '+E.length+' · <b>'+E[n].nombre+'</b>':'<b>Cubo armado</b>';
   document.querySelectorAll('#niveles button').forEach(b=>b.classList.toggle('on',+b.dataset.nv===prac.nivel));
-  $('pracCount').textContent=prac.hechos?prac.hechos+(prac.hechos===1?' ejercicio hecho':' ejercicios hechos'):'';
+  document.querySelectorAll('#lecciones button').forEach(b=>b.classList.toggle('on',b.dataset.lec===prac.leccion));
+  const T=LEC_UI[prac.leccion],hechos=prac.hechos[prac.leccion];
+  $('pracTitle').textContent=T.titulo;
+  $('pracCount').textContent=hechos?hechos+(hechos===1?' ejercicio hecho':' ejercicios hechos'):'';
   // Letras según se ve el cubo ahora: cara del modelo → letra
   const vm=viewMap(),L={};for(const l in vm)L[vm[l]]=l;
   let msg='',chips=[];
   const sts=prac.obj&&CUBO.byId[prac.obj];
   const nombre=sts?'<b>'+sts.map(s=>s.c).sort((a,b)=>(b==='U')-(a==='U')).map(c=>COLOR_ES[c]).join('-')+'</b>':'';
-  if(prac.fin)msg='¡Capa blanca completa! Toca <b>OTRO EJERCICIO</b> para seguir practicando.';
+  const centro=sts&&sts.find(s=>s.c!=='U'),cara=centro?'<b>'+COLOR_ES[centro.c]+'</b>':'';
+  const pieza=(prac.leccion==='cruz'?'La arista ':'La esquina ')+nombre;
+  if(prac.fin)msg=T.fin;
   else if(prac.caso==='roto')msg='La cruz blanca se desarmó. Toca <b>deshacer</b> hasta recuperarla.';
-  else if(prac.nivel===3)msg='Coloca las cuatro esquinas blancas sin ayuda. La barra de arriba te avisa cuando la capa esté completa.';
+  else if(prac.nivel===3)msg=T.libre;
   else if(prac.dev.length)msg='Ese giro no era. Toca <b>deshacer</b> y seguimos.';
+  else if(prac.caso==='cruzSacar')msg=pieza+' está en la capa blanca, pero mal puesta. Media vuelta a esa cara la lleva a la capa '+CAPA[L.D]+'.';
+  else if(prac.caso==='cruzMedio')msg=pieza+' está en la capa del medio. Llévala a la capa '+CAPA[L.D]+' con 3 giros: el último devuelve a su sitio lo que movió el primero.';
+  else if(prac.leccion==='cruz'&&prac.caso==='alinear')msg=pieza+' está iluminada. Gira la capa '+CAPA[L.D]+' hasta dejarla en la cara del centro '+cara+'.';
+  else if(prac.caso==='cruzSubir')msg=pieza+' ya está en la cara del centro '+cara+' y el blanco mira '+HACIA[L.D]+'. Media vuelta a esa cara y queda en su sitio.';
+  else if(prac.caso==='cruzVolteada')msg=pieza+' está en la cara del centro '+cara+', pero volteada: el blanco mira a un costado. Estos 4 giros la meten al derecho.';
   else if(prac.caso==='alinear')msg='La esquina '+nombre+' está iluminada. Gira la capa '+CAPA[L.D]+' hasta dejarla frente a su hueco, el del marco rosa.';
   else if(prac.caso==='sacar')msg='La esquina '+nombre+' está en la capa blanca, pero mal puesta. Sácala con 3 giros y después la colocamos.';
   else if(prac.caso==='esqFuera')msg='La esquina '+nombre+' está frente a su hueco y el blanco mira '+HACIA[L.D]+'. Son 7 giros: los 4 primeros la voltean y los 3 últimos la meten.';
@@ -499,7 +538,7 @@ function retoLoad(r){reto.state=r&&r.state||'idle';reto.base=r&&r.base||0;reto.m
 function save(){
   try{
     modeStates[mode]=snapshot();
-    const d={v:1,sz:CUBO.size,alt:other[CUBO.size===3?2:3],mode,hist:hist.slice(-300),view:G.getView(),tipDone,states:modeStates,reto:retoSave(),prac:{nivel:prac.nivel,hechos:prac.hechos}};
+    const d={v:1,sz:CUBO.size,alt:other[CUBO.size===3?2:3],mode,hist:hist.slice(-300),view:G.getView(),tipDone,states:modeStates,reto:retoSave(),prac:{leccion:prac.leccion,nivel:prac.nivel,hechos:prac.hechos}};
     localStorage.setItem(KEY,JSON.stringify(d));setSaved(true);
   }catch(e){setSaved(false);}
 }
@@ -511,7 +550,13 @@ function load(){
     if(CUBO.size===2)buildCube();
     tipDone=d.tipDone===true;
     modeStates={reto:d.states&&d.states.reto||null,practica:d.states&&d.states.practica||null};
-    if(d.prac){prac.nivel=[1,2,3].includes(d.prac.nivel)?d.prac.nivel:1;prac.hechos=Math.max(0,Math.floor(+d.prac.hechos)||0);}
+    if(d.prac){
+      const num=v=>Math.max(0,Math.floor(+v)||0),hh=d.prac.hechos;
+      prac.nivel=[1,2,3].includes(d.prac.nivel)?d.prac.nivel:1;
+      // antes solo existía la lección de esquinas y «hechos» era un número
+      prac.leccion=ENTRENADOR.LECCIONES[d.prac.leccion]?d.prac.leccion:'esquinas';
+      prac.hechos=hh&&typeof hh==='object'?{cruz:num(hh.cruz),esquinas:num(hh.esquinas)}:{cruz:0,esquinas:num(hh)};
+    }
     const okQ=a=>Array.isArray(a)&&a.length===4&&a.every(v=>typeof v==='number'&&isFinite(v));
     if(d.view&&okQ(d.view.base))G.setView(+d.view.yaw||0,+d.view.pitch||0,d.view.base);
     if(d.reto)retoLoad(d.reto);
@@ -566,6 +611,7 @@ function updateUI(){
 $('tabPrac').onclick=iniciarModoPractica;
 $('tabReto').onclick=()=>setMode('reto');
 $('pracNew').onclick=pracNuevo;
+document.querySelectorAll('#lecciones button').forEach(b=>b.onclick=()=>setLeccion(b.dataset.lec));
 document.querySelectorAll('#niveles button').forEach(b=>b.onclick=()=>{
   prac.nivel=+b.dataset.nv;
   if(!prac.fin&&!busy&&!queue.length){pracPlan();if(prac.nivel<3)pracVista();}

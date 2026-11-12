@@ -72,5 +72,50 @@ function generarEsquinas(){
   return false;
 }
 
-return {HUECOS,girar,aplicar,casoEsquina,esquinas,resolverEsquinas,generarEsquinas};
+// ================= Cruz blanca =================
+// Receta de principiante, siempre igual: llevar la arista a la capa amarilla, girar esa capa hasta dejarla
+// en la cara de su color y meterla con media vuelta. Las cuatro aristas, en el orden de girar():
+const ARISTAS=['0,1,1','-1,1,0','0,1,-1','1,1,0'];
+// Casos de una arista blanca:
+//   cruzSacar    · está en la capa blanca pero mal puesta: media vuelta a su cara la lleva a la capa amarilla
+//   cruzMedio    · está en la capa del medio: tres giros la llevan a la capa amarilla sin dañar la cruz
+//   alinear      · está en la capa amarilla, pero no en la cara de su color
+//   cruzSubir    · está en su cara con el blanco hacia afuera (cara amarilla): media vuelta y entra
+//   cruzVolteada · está en su cara, pero el blanco mira a un costado: cuatro giros la meten bien orientada
+function casoArista(id){
+  const sts=CUBO.byId[id],p=sts[0].p,h=id.split(',').map(Number),k=ARISTAS.indexOf(id);
+  if(p[1]===1)return {id,caso:'cruzSacar',plan:[{f:FACE_OF[key([p[0],0,p[2]])],n:2}],coste:4};
+  if(p[1]===0)return {id,caso:'cruzMedio',plan:sec('cruzMedio',HUECOS.indexOf(key([p[0],1,p[2]]))),coste:3};
+  if(p[0]!==h[0]||p[2]!==h[2]){
+    let c=0;
+    do{CUBO.quarter('D',1);c++;}while(c<4&&(CUBO.byId[id][0].p[0]!==h[0]||CUBO.byId[id][0].p[2]!==h[2]));
+    for(let i=0;i<c;i++)CUBO.quarter('D',-1);
+    return {id,caso:'alinear',plan:[{f:'D',n:c===3?-1:c}],coste:2};
+  }
+  const caso=sts.find(s=>s.hn[1]===1).n[1]===-1?'cruzSubir':'cruzVolteada';
+  return {id,caso,plan:sec(caso,k),coste:caso==='cruzSubir'?0:1};
+}
+function cruz(actual){
+  const faltan=ARISTAS.filter(id=>!CUBO.resuelta(id));
+  if(!faltan.length)return {listo:true};
+  if(actual&&faltan.includes(actual))return casoArista(actual);
+  return faltan.map(casoArista).sort((a,b)=>a.coste-b.coste)[0];
+}
+// Ejercicio: cubo mezclado del todo, con al menos dos aristas blancas por colocar
+function generarCruz(){
+  for(let intento=0;intento<50;intento++){
+    CUBO.resetLogic();
+    aplicar(CUBO.genScramble(25));
+    if(ARISTAS.filter(id=>!CUBO.resuelta(id)).length>=2)return true;
+  }
+  return false;
+}
+
+// Lecciones del Modo Práctica. paso(actual) dice qué pieza toca y con qué giros; generar() prepara un ejercicio.
+const LECCIONES={
+  cruz:{etapa:0,paso:cruz,generar:generarCruz},
+  esquinas:{etapa:1,paso:esquinas,generar:generarEsquinas}
+};
+
+return {HUECOS,ARISTAS,LECCIONES,girar,aplicar,casoEsquina,esquinas,resolverEsquinas,generarEsquinas,casoArista,cruz,generarCruz};
 })();
