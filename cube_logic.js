@@ -40,9 +40,15 @@ for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
   for(let a=0;a<3;a++){if(!p[a])continue;const n=[0,0,0];n[a]=p[a];HOME.push({id,hn:n});hns.push(n);}
   PIECES.push({id,home:p,hns});
 }
-const AXES=[[1,0,0],[0,1,0],[0,0,1]];
+// Every position and direction in the cube is a vector of -1, 0 and 1: there are only 27, so each one is a single shared
+// array (VEC), never changed in place, and the quarter turn of each is looked up instead of worked out (TURNED). This
+// saves most of the work and the memory of turning (the coach tries thousands of turns per step).
+const vecIndex=v=>(v[0]+1)*9+(v[1]+1)*3+(v[2]+1);
+const VEC=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)VEC.push([x,y,z]);
+const vec=v=>VEC[vecIndex(v)];
+const AXES=[vec([1,0,0]),vec([0,1,0]),vec([0,0,1])];
 // R as its three columns (where x, y and z of the piece point now); R·v
-const times=(R,v)=>[R[0][0]*v[0]+R[1][0]*v[1]+R[2][0]*v[2],R[0][1]*v[0]+R[1][1]*v[1]+R[2][1]*v[2],R[0][2]*v[0]+R[1][2]*v[1]+R[2][2]*v[2]];
+const times=(R,v)=>vec([R[0][0]*v[0]+R[1][0]*v[1]+R[2][0]*v[2],R[0][1]*v[0]+R[1][1]*v[1]+R[2][1]*v[2],R[0][2]*v[0]+R[1][2]*v[1]+R[2][2]*v[2]]);
 // Puts the stickers of a piece where its R says
 function place(pc){
   pc.p=times(pc.R,pc.home);
@@ -51,23 +57,27 @@ function place(pc){
 function resetLogic(){
   pieces=[];pieceOf={};cube=[];byId={};
   for(const h of PIECES){
-    const pc={id:h.id,home:h.home,R:AXES.map(a=>[...a]),st:h.hns.map(hn=>({id:h.id,hn:[...hn],c:FACE_OF[key(hn)],p:null,n:null}))};
+    const pc={id:h.id,home:h.home,R:AXES,st:h.hns.map(hn=>({id:h.id,hn:vec(hn),c:FACE_OF[key(hn)],p:null,n:null}))};
     place(pc);pieces.push(pc);pieceOf[h.id]=pc;cube.push(...pc.st);byId[h.id]=pc.st;
   }
 }
 // A quarter turn of vector v about axis a (s > 0: one way, s < 0: the other)
-function rot(v,a,s){
+function rotCompute(v,a,s){
   const b=(a+1)%3,c=(a+2)%3,w=[v[0],v[1],v[2]];
   if(s>0){w[b]=-v[c];w[c]=v[b];}else{w[b]=v[c];w[c]=-v[b];}
   return w;
 }
+// TURNED[a*2+(s>0)][vector index] → the shared turned vector
+const TURNED=[0,1,2].flatMap(a=>[-1,1].map(s=>VEC.map(v=>vec(rotCompute(v,a,s)))));
+const rot=(v,a,s)=>TURNED[a*2+(s>0?1:0)][vecIndex(v)];
 // A quarter turn f (any name of TURNS; dir: 1 clockwise, -1 counter-clockwise)
 function quarter(f,dir){
   const {a,layers,s}=TURNS[f];const sg=s*dir;
   // the same quarter turn for its rotation, its position and its stickers (cheaper than working them out again)
+  const T=TURNED[a*2+(sg>0?1:0)];
   for(const pc of pieces)if(layers.includes(pc.p[a])){
-    pc.R=[rot(pc.R[0],a,sg),rot(pc.R[1],a,sg),rot(pc.R[2],a,sg)];pc.p=rot(pc.p,a,sg);
-    for(const k of pc.st){k.p=pc.p;k.n=rot(k.n,a,sg);}
+    const R=pc.R;pc.R=[T[vecIndex(R[0])],T[vecIndex(R[1])],T[vecIndex(R[2])]];pc.p=T[vecIndex(pc.p)];
+    for(const k of pc.st){k.p=pc.p;k.n=T[vecIndex(k.n)];}
   }
 }
 // A turn {f,n} (n: 1, -1 or 2) and a sequence of them. The only place where a half turn becomes two quarter turns.
@@ -93,10 +103,20 @@ function snapshot(){return pieces.map(pc=>[...pc.R[0],...pc.R[1],...pc.R[2]]);}
 // Puts back a snapshot taken in this session (no checks: it is always one of ours)
 function restore(s){
   if(!pieces.length)resetLogic();
-  pieces.forEach((pc,i)=>{pc.R=[s[i].slice(0,3),s[i].slice(3,6),s[i].slice(6,9)];place(pc);});
+  pieces.forEach((pc,i)=>{pc.R=[vec(s[i].slice(0,3)),vec(s[i].slice(3,6)),vec(s[i].slice(6,9))];place(pc);});
 }
-// Runs fn and then leaves the cube exactly as it was, even if fn fails: for trying turns without touching the real cube
-function withSnapshot(fn){const s=snapshot();try{return fn();}finally{restore(s);}}
+// Runs fn and then leaves the cube exactly as it was, even if fn fails: for trying turns without touching the real cube.
+// It keeps the arrays themselves (they are never changed in place), so putting them back is only copying references.
+function withSnapshot(fn){
+  const kept=[];
+  for(const pc of pieces){kept.push(pc.R,pc.p);for(const k of pc.st)kept.push(k.n);}
+  try{return fn();}
+  finally{
+    if(!pieces.length)resetLogic();
+    let j=0;
+    for(const pc of pieces){pc.R=kept[j++];pc.p=kept[j++];for(const k of pc.st){k.p=pc.p;k.n=kept[j++];}}
+  }
+}
 // Loads a snapshot from outside (a save), in today's format or in the one saved up to v0.41. If it isn't a cube that can
 // exist, the cube is left solved and it returns false. No snapshot (null) is a solved cube on purpose, and returns true.
 function applySnap(s){
@@ -241,7 +261,8 @@ const pieceSolved=id=>sameR(pieceOf[id].R,frame());
 // A sticker faces the face of its own color (for the yellow cross: yellow facing the yellow center)
 const facesHome=k=>key(k.n)===key(times(frame(),k.hn));
 // Pieces of a layer (y = 1 white, 0 middle, -1 yellow) with "kind" stickers: 2 edges, 3 corners
-const piecesOf=(y,kind)=>Object.keys(byId).filter(id=>{const p=id.split(',').map(Number);return p[1]===y&&nz(p)===kind;});
+const LAYER_PIECES={};
+const piecesOf=(y,kind)=>LAYER_PIECES[y+'|'+kind]||(LAYER_PIECES[y+'|'+kind]=PIECES.filter(h=>h.home[1]===y&&nz(h.home)===kind).map(h=>h.id));
 // The cube exists from the start, solved: it is never an empty list (a snapshot of it always has every piece)
 resetLogic();
 return {FACE_OF,MOVES,TURNS,OPP,FACE_DIR,key,nz,frame,

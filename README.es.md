@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.44-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.45-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -50,7 +50,7 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 - **Blanco arriba, después amarillo arriba:** como en las guías, el cubo se muestra con el blanco arriba en las dos primeras capas y dado vuelta para la última. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para la capa de abajo, que no se ve desde arriba, la flecha se pega en la fila de abajo de las caras visibles.
 - **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
-- **Te corrige, sin castigar rutas válidas:** si giras otra cara a mitad de un paso, te pide deshacerla. Pero si el paso se puede resolver por otro camino igual de bueno (girar la capa al otro lado, o tratar una pieza de la diagonal por la cara de al lado), lo acepta y sigue contigo por ese camino.
+- **Te corrige, sin castigar rutas válidas:** si giras otra cara a mitad de un paso, te pide deshacerla. Pero si el paso se puede resolver por otro camino igual de bueno (girar la capa al otro lado, o tratar una pieza de la diagonal por la cara de al lado), lo acepta y sigue contigo por ese camino. Todo lo mide contra los centros: si una capa del medio o dos capas los movieron, calcula el paso con el cubo sostenido así.
 - **Un panel liviano:** bajo el cubo hay solo una línea con la lección (una imagen de su meta, su nombre, el nivel de ayuda y cuántos llevas), el mensaje y los giros, separados en los grupos que usan las guías (`F · R U R' U' · F'`). Así el cubo puede ser más grande. Al tocar la línea se abre la lista: el nivel de ayuda, las siete etapas con una imagen de cada meta y, en *Más práctica*, las otras tres. Al terminar un ejercicio se ilumina el botón de otro ejercicio, bajo el cubo.
 - **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa), que se eligen en la lista de lecciones. Con menos ayuda, mientras un algoritmo desarma por unos giros la parte resuelta, la app espera en vez de reclamar.
 - **Armado completo:** un cubo mezclado normal, armado con las siete etapas. La ayuda solo llega si la pides: cada toque de **PISTA** muestra un poco más del paso actual (qué pieza → a dónde va → los giros, guiados). Al final dice cuántas pistas usaste. Es el puente hacia el Reto.

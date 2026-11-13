@@ -17,25 +17,34 @@ function rotateToSlot(seq,k){
 // Turns the cube for real (to prepare exercises). To only try turns, use CUBE.withSnapshot: the cube is always left as it
 // was, even if something fails in the middle.
 const apply=CUBE.apply;
-const algoSeq=(name,k)=>rotateToSlot(parseSeq(ALGORITHMS.layers[name].seq),k);
+// (each text is read once: the turns are kept and rotateToSlot makes a new list every time)
+const PARSED={};
+const algoSeq=(name,k)=>rotateToSlot(PARSED[name]||(PARSED[name]=parseSeq(ALGORITHMS.layers[name].seq)),k);
 const rand=n=>Math.floor(Math.random()*n);
 // Where each group of turns starts in a plan (positions after the first one), when the plan is one of the method's
-// algorithms: from any side, done once or twice, or with its first turns already done. [] if it isn't one.
+// algorithms: from any side, done once or twice, or with its first turns already done, however the cube is held.
+// [] if it isn't one.
+let GROUPS=null;
 function groupStarts(plan){
-  const txt=CUBE.seqText(plan);
-  for(const [method,name] of [...Object.keys(ALGORITHMS.layers).map(n=>['layers',n]),...Object.keys(ALGORITHMS.cfop).map(n=>['cfop',n])]){
-    const A=ALGORITHMS[method][name],sizes=A.groups||[parseSeq(A.seq).length];
-    for(let r=0;r<4;r++)for(let c=1;c<=2;c++){
-      const one=method==='cfop'?cfopSeq(name,r):rotateToSlot(parseSeq(A.seq),r);
-      const full=[];for(let i=0;i<c;i++)full.push(...one);
-      for(let j=0;j<full.length;j++){
-        if(CUBE.seqText(full.slice(j))!==txt)continue;
-        const starts=[];let pos=0;
-        for(let i=0;i<c;i++)for(const s of sizes){if(pos>j)starts.push(pos-j);pos+=s;}
-        return starts;
+  // every variant of every algorithm (from each side, once or twice, from each of its turns): its text → group starts
+  if(!GROUPS){
+    GROUPS=new Map();
+    for(const [method,name] of [...Object.keys(ALGORITHMS.layers).map(n=>['layers',n]),...Object.keys(ALGORITHMS.cfop).map(n=>['cfop',n])]){
+      const A=ALGORITHMS[method][name],sizes=A.groups||[parseSeq(A.seq).length];
+      for(let r=0;r<4;r++)for(let c=1;c<=2;c++){
+        const one=method==='cfop'?cfopSeq(name,r):rotateToSlot(parseSeq(A.seq),r);
+        const full=[];for(let k=0;k<c;k++)full.push(...one);
+        for(let j=0;j<full.length;j++){
+          const t=CUBE.seqText(full.slice(j));if(GROUPS.has(t))continue;
+          const starts=[];let pos=0;
+          for(let k=0;k<c;k++)for(const sz of sizes){if(pos>j)starts.push(pos-j);pos+=sz;}
+          GROUPS.set(t,starts);
+        }
       }
     }
   }
+  // with the cube held another way (the centers moved), the same algorithm turns other faces: every way is tried
+  for(const h of HOLDS){const t=CUBE.seqText(realSeq(h.F,plan));if(GROUPS.has(t))return GROUPS.get(t);}
   return [];
 }
 
@@ -470,7 +479,12 @@ const SIDE={R:['F',1],F:['L',1],L:['B',1],B:['R',1],U:['U',1],D:['D',1],r:['f',1
   Rw:['Fw',1],Fw:['Lw',1],Lw:['Bw',1],Bw:['Rw',1],Uw:['Uw',1],Dw:['Dw',1],M:['S',-1],S:['M',1],E:['E',1],x:['z',1],z:['x',-1],y:['y',1]};
 const remap=(T,seq)=>seq.map(m=>{const [f,k]=T[m.f];return {f,n:m.n===2?2:m.n*k};});
 // A CFOP algorithm in model faces, from side k (0 to 3)
-function cfopSeq(name,k=0){let q=remap(OVER,parseSeq(ALGORITHMS.cfop[name].seq));for(let i=0;i<k;i++)q=remap(SIDE,q);return q;}
+const CFOP_SEQ={};
+function cfopSeq(name,k=0){
+  const id=name+k;
+  if(!CFOP_SEQ[id]){let q=remap(OVER,parseSeq(ALGORITHMS.cfop[name].seq));for(let i=0;i<k;i++)q=remap(SIDE,q);CFOP_SEQ[id]=q;}
+  return CFOP_SEQ[id].slice();
+}
 // Any algorithm of a method in model faces, as written (for Help · Algorithms)
 const modelSeq=(method,name)=>method==='cfop'?cfopSeq(name):algoSeq(name,0);
 const cfopStage=()=>METHODS.stage('cfop');
@@ -601,6 +615,43 @@ const LESSONS={
     pieces:()=>[...F2L_PIECES(),...YELLOW_CORNERS]}
 };
 
-return {METHOD,solveStage,orderOf,groupStarts,modelSeq,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
+// ================= Measured against the centers =================
+// The lessons are written with the centers where they belong (white = U, yellow = D). If the centers have moved (a middle
+// layer, two layers or the whole cube turned in the model; on the 2×2, the corner taken as reference), the step is worked
+// out on a copy of the cube turned as a whole until they are back, and its answer is turned back: each turn goes to the
+// face where that center is now, and a spot (slot) to where it is now. Pieces are named by what they are (their solved
+// place), so ids, focus and colors don't change.
+const tm=(F,v)=>[F[0][0]*v[0]+F[1][0]*v[1]+F[2][0]*v[2],F[0][1]*v[0]+F[1][1]*v[1]+F[2][1]*v[2],F[0][2]*v[0]+F[1][2]*v[1]+F[2][2]*v[2]];
+const isIdentity=F=>F.every((c,i)=>c.every((v,j)=>v===(i===j?1:0)));
+// The 24 ways of holding the cube, each as turns of the whole cube (x, y, z) and the frame they give from the solved cube
+const HOLDS=CUBE.withSnapshot(()=>{
+  const out=[],seen=new Set(),queue=[[]];
+  while(queue.length){
+    const seq=queue.shift();CUBE.resetLogic();apply(seq);
+    const F=CUBE.frame().map(c=>c.slice()),k=JSON.stringify(F);
+    if(seen.has(k))continue;
+    seen.add(k);out.push({seq,F});
+    for(const f of ['x','y','z'])queue.push([...seq,{f,n:1}]);
+  }
+  return out;
+});
+// The whole-cube turns that bring the frame F back to the solved one (F turned back: its transpose)
+const backTo=F=>HOLDS.find(h=>h.F.every((c,i)=>c.every((v,j)=>v===F[j][i]))).seq;
+const realFace=(F,f)=>CUBE.MOVES[f]?FACE_OF[key(tm(F,CUBE.FACE_DIR[f]))]:f;
+const realSeq=(F,q)=>q&&q.map(m=>({f:realFace(F,m.f),n:m.n}));
+function againstCenters(step,current){
+  const F=CUBE.frame().map(c=>c.slice());
+  if(isIdentity(F))return step(current);
+  return CUBE.withSnapshot(()=>{
+    apply(backTo(F));
+    const e=step(current);
+    if(!e||!e.plan)return e;
+    return Object.assign({},e,{plan:realSeq(F,e.plan),alt:(e.alt||[]).map(q=>realSeq(F,q)),
+      slot:e.slot?key(tm(F,e.slot.split(',').map(Number))):e.slot});
+  });
+}
+for(const L of Object.values(LESSONS)){const own=L.step;L.step=current=>againstCenters(own,current);}
+
+return {METHOD,solveStage,orderOf,groupStarts,modelSeq,HOLDS,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
   yellowCross,yellowEdges,yellowCornersPlace,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

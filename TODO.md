@@ -41,6 +41,10 @@ Done (v0.42). Phase A: `tests/cube.test.js` checks the logic on its own (identit
 
 The last step, taking the stages out of the logic, was done with phase 1 of "Other methods".
 
+Done (not published yet): the coach works against the centers. Every lesson step is wrapped (`againstCenters` in `coach.js`): if the centers have moved, the step is worked out on a copy turned as a whole until they are back (one of the 24 ways of holding the cube, `COACH.HOLDS`), and its turns and spot are turned back to the real cube. The turn groups are recognized however the cube is held (a lookup table built once, which also made the tests faster), and `tests/lessons.test.js` turns the whole cube at random during the exercises. Also faster (measured, same results step by step on 7 383 steps of every lesson): every position and direction is one of 27 shared vectors and a quarter turn of each is looked up; `CUBE.withSnapshot` keeps and puts back references instead of copying; the pieces of each layer and each algorithm's turns are worked out once. A full solve takes about 8 ms per exercise instead of 21, and the three test files run in about 22 s.
+
+- [ ] **2×2 practice on top of this.** On the 2×2 the frame is one corner, so with `againstCenters` the corner lessons can work on it; what is left is in "Practice lessons".
+
 ## Languages
 
 Done: English is the main language and Spanish is the first translation (v0.34). Since v0.35 the translations are plain JSON files in `locales/` (data only, only `<b>` and `<small>` allowed), the language is detected from the browser (English if there is no match) and can be changed in Help; `node tests/i18n.test.js` checks that every language is complete and safe.

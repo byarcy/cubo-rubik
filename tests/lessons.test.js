@@ -9,6 +9,8 @@
      · the lesson ends (it never loops, and never says "broken");
      · when it ends, the lesson's stage is complete;
      · if its steps say which stage they work on (full solve), that stage never goes back.
+   Now and then the whole cube is turned during an exercise (the centers move): the coach works against the centers,
+   so the lesson must go on the same.
    Loop lessons (repeat until it comes back): the cube must come back after exactly the algorithm's repetitions.
    Quiz lessons (recognize the case): the answer is one of the options and the case is really on the cube. */
 const fs=require('fs'),path=require('path');
@@ -23,10 +25,14 @@ function msgCheck(lesson,kind){const k='msg.'+lesson+'.'+kind;if(!(k in EN)&&!mi
 // (second layer and last layer) must be recognized from any side
 const GROUPED=/^(second(Right|Left|Take)|yCross|yEdges(Swap|Opposite)|yCorners)/;
 // The yellow shape on top, read straight from the stickers (without the coach): only the center, a line or an L
+// (on a copy turned as a whole until the centers are where they belong, so it works however the cube is held)
 function yellowShape(){
-  const at=CUBE.cube.filter(k=>CUBE.nz(k.p)===2&&k.c==='D'&&k.n[1]===-1).map(k=>k.p);
-  if(!at.length)return 'yCrossDot';
-  return at.length===2&&at[0][0]===-at[1][0]&&at[0][2]===-at[1][2]?'yCrossLine':'yCrossL';
+  return CUBE.withSnapshot(()=>{
+    const F=CUBE.frame();CUBE.apply(COACH.HOLDS.find(h=>h.F.every((c,i)=>c.every((v,j)=>v===F[j][i]))).seq);
+    const at=CUBE.cube.filter(k=>CUBE.nz(k.p)===2&&k.c==='D'&&k.n[1]===-1).map(k=>k.p);
+    if(!at.length)return 'yCrossDot';
+    return at.length===2&&at[0][0]===-at[1][0]&&at[0][2]===-at[1][2]?'yCrossLine':'yCrossL';
+  });
 }
 function shapeCheck(name,kind){
   if(/^yCross/.test(kind)&&yellowShape()!==kind)fail(name,'says '+kind+' and the cube shows '+yellowShape());
@@ -87,13 +93,15 @@ for(const name of Object.keys(COACH.LESSONS)){
   if(L.loop){loopLesson(name,L);continue;}
   if(L.quiz){quizLesson(name,L);continue;}
   const MAX_STEPS=L.maxSteps||80;
-  const stats={steps:0,withAlt:0,altUsed:0,kinds:{}};
+  const stats={steps:0,withAlt:0,altUsed:0,turned:0,kinds:{}};
   for(let i=0;i<N;i++){
     if(!L.generate()){fail(name,'could not generate an exercise');continue;}
     if(METHODS.stage(L.method)!==L.stage)fail(name,'the exercise starts at stage '+METHODS.stage(L.method)+' and it should be '+L.stage);
     if(!L.step().plan)fail(name,'the generated exercise is already solved');
     let current=null,n=0,lastStage=-1;
     for(;;){
+      // now and then the whole cube is turned (the centers move): the lesson must go on as if nothing happened
+      if(Math.random()<0.15){CUBE.apply(COACH.HOLDS[1+rand(COACH.HOLDS.length-1)].seq);stats.turned++;}
       const e=L.step(current);
       if(e.broken){fail(name,'says "broken" in an exercise that followed the steps');break;}
       if(e.done)break;
@@ -117,7 +125,7 @@ for(const name of Object.keys(COACH.LESSONS)){
     }
     if(METHODS.stage(L.method)<=L.stage)fail(name,'when finished, stage '+(L.stage+1)+' is not complete');
   }
-  console.log((errors?'✗':'✓')+' '+name+': '+N+' exercises, '+(stats.steps/N).toFixed(1)+' steps each; steps with alternative routes: '+stats.withAlt+', alternatives used: '+stats.altUsed+'; cases '+JSON.stringify(stats.kinds));
+  console.log((errors?'✗':'✓')+' '+name+': '+N+' exercises, '+(stats.steps/N).toFixed(1)+' steps each; whole cube turned '+stats.turned+' times; steps with alternative routes: '+stats.withAlt+', alternatives used: '+stats.altUsed+'; cases '+JSON.stringify(stats.kinds));
 }
 // The groups of turns of each algorithm add up to its length
 for(const [n,A] of Object.entries(ALGORITHMS.layers))

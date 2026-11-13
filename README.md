@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.44-ff2e97)
+![version](https://img.shields.io/badge/version-0.45-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -50,7 +50,7 @@ To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 - **White on top, then yellow on top:** as in the guides, the cube is shown with white on top for the first two layers and turned over for the last one. It turns by itself to bring the faces to move in front of you, but it respects the view you choose with your fingers or with the cube button. For the bottom layer, which can't be seen from above, the arrow is stuck on the bottom row of the visible faces.
 - **Piece in focus:** the piece to move lights up and the rest of the cube is dimmed. A pink frame marks its slot.
 - **Arrow on the cube:** the face you have to turn shows an arrow with the direction of the turn, and the turns appear below as letters so you learn the notation along the way.
-- **It corrects you, without punishing valid routes:** if you turn another face in the middle of a step, it asks you to undo it. But if the step can be solved another way that is just as good (turning the layer the other way, or handling a piece on the diagonal through the face next to it), it accepts that and follows you along that route.
+- **It corrects you, without punishing valid routes:** if you turn another face in the middle of a step, it asks you to undo it. But if the step can be solved another way that is just as good (turning the layer the other way, or handling a piece on the diagonal through the face next to it), it accepts that and follows you along that route. It measures everything against the centers: if a middle layer or two layers moved them, it works the step out with the cube held that way.
 - **A light panel:** under the cube there is only one line with the lesson (a picture of its goal, its name, the help level and how many you have done), the message and the turns, split into the groups the guides use (`F · R U R' U' · F'`). That leaves room for a bigger cube. Tapping the line opens the list: the help level, the seven stages with a picture of each goal and, under *More practice*, the other three. When an exercise is done, the new-exercise button under the cube lights up.
 - **Three help levels:** *Guided* (piece, slot, arrow and turns), *Piece only* (piece and slot, no turns) and *No help* (it only tells you when the layer is complete), chosen in the lesson list. With less help, while an algorithm takes the solved part apart for a few turns, the app waits instead of complaining.
 - **Full solve:** a normal scramble, solved with the seven stages. Help only comes when you ask for it: each tap of **HINT** shows a bit more of the current step (which piece → where it goes → the turns, guided). At the end it says how many hints you used. It is the bridge to Challenge.
