@@ -15,7 +15,7 @@ Done: **1 · Cross**, **2 · Corners** (white layer). Missing, in this order:
 - [ ] Loose ideas: "repeat until it comes back" (sequences that return the cube to solved after 6 repetitions), recognize the case by choosing among 2 or 3 options, 2×2 corners as an earlier step.
 
 Every new lesson is added to `COACH.LESSONS` and must pass `node tests/lessons.test.js`.
-Its texts go in `i18n/en.js` and every other language (`node tests/i18n.test.js` complains if one is missing).
+Its texts go in `locales/en.json` and every other language (`node tests/i18n.test.js` complains if one is missing).
 
 ## Prepare the base for other methods (CFOP, Roux, ZZ)
 
