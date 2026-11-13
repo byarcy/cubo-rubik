@@ -194,14 +194,118 @@ function generateSecond(){
   return false;
 }
 
+// ================= Last layer (yellow) =================
+// From here on the guide turns the cube over: the interface shows these lessons with yellow on top (yellowUp).
+// The model doesn't change: yellow is still D. Each step is one algorithm from one of the four sides, or a turn of
+// the yellow layer; the coach finds the shortest way by trying them (few combinations, so it is instant).
+const YELLOW_EDGES=CROSS_EDGES.map(id=>id.replace(',1,',',-1,'));
+const YELLOW_CORNERS=CORNER_SLOTS.map(id=>id.replace(',1,',',-1,'));
+const MIDDLE_DONE=()=>whiteLayerSolved()&&MIDDLE_EDGES.every(CUBE.pieceSolved);
+const edgeUp=id=>CUBE.byId[id].some(k=>k.hn[1]===-1&&k.n[1]===-1);     // its yellow sticker faces the yellow side
+const fromSides=name=>[0,1,2,3].map(r=>algoSeq(name,r));
+// The routes (algorithm from each side) that start a shortest solution of «goal», looking up to «depth» algorithms ahead
+function shortest(name,goal,depth){
+  const seqs=fromSides(name);
+  const reach=(r,d)=>{
+    const snap=CUBE.snapshot();apply(seqs[r]);
+    const ok=d===1?goal():[0,1,2,3].some(r2=>reach(r2,d-1));
+    CUBE.applySnap(snap);return ok;
+  };
+  for(let d=1;d<=depth;d++){
+    const firsts=seqs.filter((s,r)=>reach(r,d));
+    if(firsts.length)return firsts;
+  }
+  return [];
+}
+// The step as the interface expects it: the first route is the plan, the rest are equivalent routes
+const viaAlgorithm=(kind,routes,extra)=>Object.assign({kind,plan:routes[0],cost:0,alt:routes.slice(1)},extra);
+// Turns of the yellow layer: how many matching pieces each of the four positions leaves (0 = as it is)
+function afterTurns(count){
+  const out=[];
+  for(let k=0;k<4;k++){out.push(count());CUBE.quarter('D',1);}
+  return out;
+}
+const turnOf=k=>k===3?-1:k;
+
+// ---- 4 · Yellow cross: the four yellow edges pointing up (yellow side), in any place ----
+//   yCrossDot / yCrossL / yCrossLine · the shape on top before the algorithm (only the center / an L / a line)
+function yellowCross(){
+  if(!MIDDLE_DONE())return {broken:true};
+  const up=YELLOW_EDGES.filter(edgeUp);
+  if(up.length===4)return {done:true};
+  const kind=up.length===0?'yCrossDot':up.length===2&&up.every((id,i,a)=>a.some(o=>o!==id&&id.split(',').map(Number).every((v,j)=>v===-o.split(',').map(Number)[j]||j===1)))?'yCrossLine':'yCrossL';
+  // the yellow shape on top is lit: the edges that point up and the yellow center
+  return viaAlgorithm(kind,shortest('yellowCross',()=>YELLOW_EDGES.every(edgeUp),3),{focus:[...up,'0,-1,0']});
+}
+
+// ---- 5 · Yellow edges: each yellow edge under the center of its color ----
+//   align · turning the yellow layer is enough to match more edges (or all of them)
+//   yEdgesSwap     · two neighboring edges match: the algorithm swaps the other two (then a turn lines them up)
+//   yEdgesOpposite · the two that match are opposite: the algorithm once makes two neighbors match
+function yellowEdges(){
+  if(!MIDDLE_DONE()||!YELLOW_EDGES.every(edgeUp))return {broken:true};
+  const matching=()=>YELLOW_EDGES.filter(CUBE.pieceSolved).length;
+  if(matching()===4)return {done:true};
+  const counts=afterTurns(matching),best=Math.max(...counts),k=counts.indexOf(best);
+  if(best===4||(counts[0]<2&&best>=2)){
+    const n=turnOf(k);
+    return {kind:'align',plan:[{f:'D',n}],cost:0,alt:alignD(n)};
+  }
+  const solvedAfter=()=>afterTurns(matching).includes(4);
+  const solving=shortest('yellowEdges',solvedAfter,1);
+  const focus=YELLOW_EDGES.filter(CUBE.pieceSolved);
+  if(solving.length)return viaAlgorithm('yEdgesSwap',solving,{focus});
+  return viaAlgorithm('yEdgesOpposite',shortest('yellowEdges',solvedAfter,2),{focus});
+}
+
+// ---- 6 · Yellow corners in place: each yellow corner in its corner (it may still be turned) ----
+//   yCornersNone  · no corner is in place: the algorithm once leaves one in place
+//   yCornersCycle · one corner is in place: the algorithm moves the other three around it (once or twice)
+function yellowCornersPlace(){
+  if(!MIDDLE_DONE()||!YELLOW_EDGES.every(CUBE.pieceSolved))return {broken:true};
+  const placed=YELLOW_CORNERS.filter(CUBE.inPlace);
+  if(placed.length===4)return {done:true};
+  const routes=shortest('yellowCorners',()=>YELLOW_CORNERS.every(CUBE.inPlace),3);
+  return viaAlgorithm(placed.length?'yCornersCycle':'yCornersNone',routes,{focus:placed});
+}
+
+// Exercises of the last layer: a solved cube, the last layer scrambled with the same algorithms (so the first two
+// layers stay done), and the earlier yellow lessons solved by the coach itself, up to the lesson's stage
+function scrambleLastLayer(){
+  CUBE.resetLogic();
+  for(let i=0;i<20;i++){
+    apply(algoSeq(['yellowCross','yellowEdges','yellowCorners'][rand(3)],rand(4)));
+    apply([{f:'D',n:[1,-1,2][rand(3)]}]);
+  }
+}
+function solveWith(step){
+  for(let i=0;i<40;i++){const e=step();if(!e.plan)return !!e.done;apply(e.plan);}
+  return false;
+}
+function generateLastLayer(stage,before){
+  for(let attempt=0;attempt<60;attempt++){
+    scrambleLastLayer();
+    if(before.every(solveWith)&&CUBE.stage()===stage)return true;
+  }
+  return false;
+}
+
 // Lessons of Practice mode. step(current) says which piece is next, with which turns and which equivalent routes exist;
 // generate() prepares an exercise. To add a lesson: add it here and run tests/lessons.test.js.
 // pieces: the ones the lesson places; once one is placed, no step may take it out of its place again
 const LESSONS={
   cross:{stage:0,step:cross,generate:generateCross,pieces:()=>CROSS_EDGES},
   corners:{stage:1,step:corners,generate:generateCorners,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS]},
-  secondLayer:{stage:2,step:secondLayer,generate:generateSecond,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES]}
+  secondLayer:{stage:2,step:secondLayer,generate:generateSecond,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES]},
+  // yellowUp: the interface shows the cube with yellow on top, as the guide does for the last layer
+  yellowCross:{stage:3,step:yellowCross,generate:()=>generateLastLayer(3,[]),yellowUp:true,
+    pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES]},
+  yellowEdges:{stage:4,step:yellowEdges,generate:()=>generateLastLayer(4,[yellowCross]),yellowUp:true,
+    pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES]},
+  yellowCornersPlace:{stage:5,step:yellowCornersPlace,generate:()=>generateLastLayer(5,[yellowCross,yellowEdges]),yellowUp:true,
+    pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES,...YELLOW_EDGES]}
 };
 
-return {CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,LESSONS,middleCase,secondLayer,generateSecond,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
+return {CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
+  yellowCross,yellowEdges,yellowCornersPlace,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

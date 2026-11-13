@@ -130,6 +130,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .levels button.on{background:var(--violet);color:#fff;font-weight:700;box-shadow:0 0 10px rgba(139,92,246,.6)}
 .practice-new{width:100%;font-size:12px;letter-spacing:2px}
 .levels.lesson-tabs{grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 10px}
+.levels.lesson-tabs button{font-size:12px;line-height:1.2;padding:4px 6px}
 .hlang{display:flex;align-items:center;gap:10px;margin:12px 16px 0;font-size:13px;color:var(--soft)}
 .hlang option{background:#1a0b3d;color:#f3efff}
 .hlang select{color-scheme:dark;flex:1;min-height:38px;padding:0 10px;border-radius:9px;border:1px solid rgba(139,92,246,.55);background:rgba(26,11,61,.7);color:var(--ink);font:inherit}

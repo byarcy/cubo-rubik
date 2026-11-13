@@ -4,12 +4,10 @@ Living list of what is missing. When something is finished it is deleted from he
 
 ## Practice lessons
 
-Done: **1 · Cross**, **2 · Corners** (white layer), **3 · 2nd layer**. Missing, in this order:
+Done: lessons **1 to 6** (white cross, white corners, second layer, yellow cross, yellow edges, yellow corners in place). Missing, in this order:
 
-- [ ] 4 · Yellow cross.
-- [ ] 5 · Yellow edges.
-- [ ] 6 · Yellow corners in place.
 - [ ] 7 · Yellow corners oriented (the guide says "don't despair" here: lock turning the whole cube, count repetitions and say that the mess is temporary).
+- [ ] Stage bar during a guided step: while an algorithm is being done the solved part comes apart for a moment and the bar drops (for example to "Stage 1" in the middle of a second-layer insertion). Keep the bar still until the step ends, so beginners are not scared.
 - [ ] Full solve with hints: a normal scramble where the coach only helps when asked (hint in three levels: which piece, where it goes, the turns). It is the bridge to Challenge.
 - [ ] Loose ideas: "repeat until it comes back" (sequences that return the cube to solved after 6 repetitions), recognize the case by choosing among 2 or 3 options, 2×2 corners as an earlier step.
 

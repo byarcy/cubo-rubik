@@ -232,7 +232,7 @@ function practicePlan(){
   userMovedView=false;
   const e=lessonDef().step(practice.target),before=practice.target;
   practice.plan=e.plan||[];practice.alt=e.alt||[];practice.i=0;practice.wrong=[];
-  practice.kind=e.broken?'broken':e.done?'done':e.kind;practice.face=e.face||null;
+  practice.kind=e.broken?'broken':e.done?'done':e.kind;practice.face=e.face||null;practice.focusIds=e.focus||null;
   if(e.id)practice.target=e.id;
   if(e.done){practice.target=null;if(!practice.finished){practice.finished=true;practice.completed[practice.lesson]++;celebrate(tr('lesson.'+practice.lesson+'.done'));}}
   return !!e.id&&e.id!==before;
@@ -253,19 +253,22 @@ function newExercise(){
   updateUI();save();
 }
 // Lesson view: white on top (as in the guide), with the faces to turn, the piece and its slot facing you
+// The last-layer lessons turn the cube over, as the guide does: yellow on top
+const YELLOW_UP=new M3.Quaternion().setFromAxisAngle(new M3.Vector3(0,0,1),Math.PI);
 function practiceView(){
   userMovedView=false;
   const axis=new M3.Vector3(0,1,0),q=new M3.Quaternion(),goal=new M3.Vector3(1,0,1),dirs=[];
+  const base=lessonDef().yellowUp?YELLOW_UP:new M3.Quaternion();
   for(const m of practice.plan)if(m.f!=='U'&&m.f!=='D')dirs.push([FACE_DIR[m.f],1]);
   if(practice.target)dirs.push([CUBE.byId[practice.target][0].p,1],[practice.target.split(',').map(Number),0.6]);
   let y=G.yaw,bestScore=-1e9;
   for(let k=0;k<4;k++){
-    const a=k*Math.PI/2;q.setFromAxisAngle(axis,a);
+    const a=k*Math.PI/2;q.setFromAxisAngle(axis,a).multiply(base);
     let s=-0.01*Math.abs(normAng(a-G.yaw));
     for(const [d,w] of dirs)s+=w*V(d).applyQuaternion(q).dot(goal);
     if(s>bestScore){bestScore=s;y=a;}
   }
-  animView(y,0,new M3.Quaternion(),500);
+  animView(y,0,base,500);
 }
 // Can all the faces to turn in this step be seen now? (the bottom face counts: its arrow sits on the visible sides)
 function practiceFacesVisible(){
@@ -335,18 +338,18 @@ const straightArrowTex=drawTexture(x=>{
 });
 const arrows=[makeMark(arrowTex(false),2.5),makeMark(arrowTex(true),2.5)],frames=[0,1,2].map(()=>makeMark(frameTex,1)),arrowsD=[makeMark(straightArrowTex,1.9),makeMark(straightArrowTex,1.9)];
 let arrowDTurn=null;
-// The bottom layer turns in the direction of "D": the front goes to the right. On each visible side face,
-// the arrow points where its pieces move (D' is the opposite).
+// The layer at the bottom of the view (D, or U when yellow is on top) can't be seen from above. On each visible
+// side face, the arrow points where the pieces of that layer move with the turn g.
 function arrowD(g){
   let k=0;
   if(g){
-    const s=g.n===-1?-1:1;
+    const [,layer,sign]=MOVES[g.f],s=sign*(g.n===-1?-1:1);
     for(const f of ['F','R','B','L']){
       const n=FACE_DIR[f];
       if(V(n).applyQuaternion(container.quaternion).dot(camDir)<0.25||k>=2)continue;
       const m=arrowsD[k++],t=[n[2]*s,0,-n[0]*s];
       m.quaternion.setFromRotationMatrix(new M3.Matrix4().makeBasis(V(t),new M3.Vector3().crossVectors(V(n),V(t)),V(n)));
-      m.position.set(n[0]*1.56,-1,n[2]*1.56);
+      m.position.set(n[0]*1.56,layer,n[2]*1.56);
       m.visible=m.material.visible=true;
     }
   }
@@ -364,22 +367,26 @@ function practiceNextTurn(){
   return practice.plan[practice.i]||null;
 }
 function practiceVisuals(on){
-  const assist=!!on&&!practice.finished&&practice.kind!=='broken'&&!!practice.target;
+  const group=practice.focusIds&&practice.focusIds.length?practice.focusIds:null;
+  const assist=!!on&&!practice.finished&&practice.kind!=='broken'&&(!!practice.target||!!group||practice.plan.length>0);
   const focus=assist&&practice.level<3;
-  const h=focus?practice.target.split(',').map(Number):null;
-  // in the cross, the center of the face the edge goes to is also lit
-  const extra=!focus?null:practice.lesson==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
-  setFocus(focus?practice.target+(extra?'|'+extra:''):null);
+  const h=focus&&practice.target?practice.target.split(',').map(Number):null;
+  // one piece, plus the center it goes to (cross) or the center it has to match (second layer);
+  // in the last layer, a group of pieces (the yellow shape, the edges or corners already in place)
+  const extra=!h?null:practice.lesson==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
+  setFocus(!focus?null:h?practice.target+(extra?'|'+extra:''):group?group.join('|'):null);
   frames.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
     const show=!!h&&h[a]!==0;
     placeMark(m,show,show&&h.map((v,i)=>v+d[i]*0.54),d);
   });
   const g=assist&&practice.level===1?practiceNextTurn():null;
-  arrowDTurn=g&&g.f==='D'?g:null;
+  // the horizontal layer at the bottom of the view gets straight arrows; any other face, the round one on it
+  const bottom=g&&(g.f==='U'||g.f==='D')&&viewMap().D===g.f;
+  arrowDTurn=bottom?g:null;
   arrowD(arrowDTurn);
   arrows.forEach((m,i)=>{
-    const show=!!g&&g.f!=='D'&&(g.n===-1)===(i===1),d=g?FACE_DIR[g.f]:null;
+    const show=!!g&&!bottom&&(g.n===-1)===(i===1),d=g?FACE_DIR[g.f]:null;
     placeMark(m,show,d&&d.map(v=>v*1.56),d);
   });
   markDirty();
@@ -412,9 +419,17 @@ function practiceRender(){
   const piece=trh(practice.lesson==='corners'?'piece.corner':'piece.edge',{colors});
   const layer=esc(tr('layer.'+L.D)),dir=esc(tr('dir.'+L.D));
   if(practice.finished)msg=trh('lesson.'+practice.lesson+'.complete');
-  else if(practice.kind==='broken')msg=trh(practice.lesson==='secondLayer'?'msg.brokenLayer':'msg.broken');
+  else if(practice.kind==='broken')msg=trh({corners:'msg.broken',secondLayer:'msg.brokenLayer'}[practice.lesson]||'msg.brokenSolved');
   else if(practice.level===3)msg=trh('lesson.'+practice.lesson+'.free');
   else if(practice.wrong.length)msg=trh('msg.wrong');
+  else if(practice.kind==='yCrossDot')msg=trh('msg.ycross.dot');
+  else if(practice.kind==='yCrossL')msg=trh('msg.ycross.L');
+  else if(practice.kind==='yCrossLine')msg=trh('msg.ycross.line');
+  else if(practice.lesson==='yellowEdges'&&practice.kind==='align')msg=trh('msg.yedges.align',{layer});
+  else if(practice.kind==='yEdgesSwap')msg=trh('msg.yedges.swap');
+  else if(practice.kind==='yEdgesOpposite')msg=trh('msg.yedges.opposite');
+  else if(practice.kind==='yCornersNone')msg=trh('msg.ycorners.none');
+  else if(practice.kind==='yCornersCycle')msg=trh('msg.ycorners.cycle');
   else if(practice.kind==='secondTake')msg=trh('msg.second.take',{piece,layer});
   else if(practice.lesson==='secondLayer'&&practice.kind==='align')msg=trh('msg.second.align',{piece,layer,face});
   else if(practice.kind==='secondRight')msg=trh('msg.second.right',{piece,face});

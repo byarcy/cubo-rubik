@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.36-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.37-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -28,7 +28,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 > **Desde la versión 0.30 la app está reescrita desde cero**, y desde la 0.34 todo el proyecto (código, comentarios,
 > nombres de archivos y documentación) está en inglés, con los textos de la interfaz en archivos de traducción planos (`locales/`).
-> El modo Práctica trae por ahora tres lecciones (las dos primeras capas); las demás están en camino (ver
+> El modo Práctica trae seis de sus siete lecciones; la última (girar las esquinas amarillas) está en camino (ver
 > [TODO.md](TODO.md), en inglés). La versión anterior quedó guardada en la etiqueta `v0.21`.
 
 ---
@@ -45,7 +45,8 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 - **Lección 1 · Cruz blanca:** parte de un cubo mezclado y enseña una receta que siempre funciona: llevar la arista a la capa amarilla, girarla hasta la cara de su color y meterla con media vuelta.
 - **Lección 2 · Esquinas blancas:** cada ejercicio empieza con la cruz ya hecha y varias esquinas fuera de sitio.
 - **Lección 3 · Segunda capa:** empieza con la capa blanca hecha. Cada arista del medio sube desde la capa amarilla: giras esa capa hasta dejar la arista debajo del centro de su color del costado, y entra hacia la derecha o hacia la izquierda con 8 giros. Si una arista está en la capa del medio pero mal puesta o volteada, esos mismos 8 giros primero la bajan.
-- **Blanco arriba:** como en las guías, el cubo se muestra con el blanco arriba. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para la capa de abajo, que no se ve desde arriba, la flecha se pega en la fila de abajo de las caras visibles.
+- **Lecciones 4 a 6 · Última capa:** como en la guía, el cubo se da vuelta (amarillo arriba) y cada lección usa un algoritmo, que la app muestra desde el lado que haga falta: **4 · Cruz amarilla** (6 giros: la figura amarilla pasa de punto a L, a línea y a cruz), **5 · Aristas amarillas** (7 giros: cambia dos aristas de lugar para que cada una quede sobre su centro) y **6 · Esquinas amarillas** (8 giros: mueve tres esquinas alrededor de la que ya está en su sitio).
+- **Blanco arriba, después amarillo arriba:** como en las guías, el cubo se muestra con el blanco arriba en las dos primeras capas y dado vuelta para la última. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para la capa de abajo, que no se ve desde arriba, la flecha se pega en la fila de abajo de las caras visibles.
 - **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
 - **Te corrige, sin castigar rutas válidas:** si giras otra cara a mitad de un paso, te pide deshacerla. Pero si el paso se puede resolver por otro camino igual de bueno (girar la capa al otro lado, o tratar una pieza de la diagonal por la cara de al lado), lo acepta y sigue contigo por ese camino.
@@ -58,9 +59,9 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 | 1 | Cruz blanca | ✅ Lista |
 | 2 | Esquinas blancas | ✅ Lista |
 | 3 | Segunda capa | ✅ Lista |
-| 4 | Cruz amarilla | En construcción |
-| 5 | Aristas amarillas | En construcción |
-| 6 | Esquinas amarillas en su sitio | En construcción |
+| 4 | Cruz amarilla | ✅ Lista |
+| 5 | Aristas amarillas | ✅ Lista |
+| 6 | Esquinas amarillas en su sitio | ✅ Lista |
 | 7 | Esquinas amarillas giradas | En construcción |
 
 ### 🌍 Idiomas

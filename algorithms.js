@@ -18,7 +18,13 @@ const ALGORITHMS={
     // Second layer: written for the slot between F and R. secondRight: the edge is under the F center (its side
     // color is F) and goes up to the right; secondLeft: it is under the R center (side color R) and goes up to the left
     secondRight:{name:'Edge goes up to the right',group:'Second layer',seq:"D' R' D R D F D' F'"},
-    secondLeft:{name:'Edge goes up to the left',group:'Second layer',seq:"D F D' F' D' R' D R"}
+    secondLeft:{name:'Edge goes up to the left',group:'Second layer',seq:"D F D' F' D' R' D R"},
+    // Last layer. The guide turns the cube over (yellow on top) and writes them as F R U R' U' F', R U R' U R U2 R'
+    // and U R U' L' U R' U' L; here they are in model faces (yellow = D), so U↔D and R↔L. The coach tries them
+    // from the four sides (rotateToSlot), so the side they are written for doesn't matter.
+    yellowCross:{name:'Yellow cross (flips two edges)',group:'Yellow cross',seq:"F L D L' D' F'"},
+    yellowEdges:{name:'Swap yellow edges (Sune)',group:'Yellow edges',seq:"L D L' D L D2 L'"},
+    yellowCorners:{name:'Cycle three yellow corners',group:'Yellow corners',seq:"D L D' R' D L' D' R"}
   },
   cfop:{},
   roux:{},
