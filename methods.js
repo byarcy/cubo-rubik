@@ -71,7 +71,7 @@ const cfop={
     {id:'llEdges',ok:()=>piecesOf(-1,2).every(pieceSolved)}
   ],
   lessons:['cfopCross','f2l','ollEdges','ollCorners','pllCorners','pllEdges'],
-  more:[],
+  more:['cfopSolve','cfopRepeat','cfopRecognize'],
   sheet:[
     {stage:2,algs:['ollLine','ollL'],yellowUp:true,keep:(k,top)=>top&&k.c==='D'&&nz(k.p)<3},
     // OLL diagrams show where every yellow sticker is, on top and on the sides
@@ -85,7 +85,10 @@ const cfop={
     ollEdges:{view:VIEW.yellow,keep:(k,top)=>top&&k.c==='D'&&nz(k.p)<3},
     ollCorners:{view:VIEW.yellow,keep:(k,top)=>top&&k.c==='D'},
     pllCorners:{view:VIEW.yellow,keep:(k,top)=>top?k.c==='D':nz(k.p)===3},
-    pllEdges:{view:VIEW.yellow,keep:()=>true}
+    pllEdges:{view:VIEW.yellow,keep:()=>true},
+    cfopSolve:{view:VIEW.front,keep:()=>true},
+    cfopRepeat:{sign:'↻'},
+    cfopRecognize:{sign:'?'}
   }
 };
 

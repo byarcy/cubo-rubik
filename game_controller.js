@@ -241,7 +241,7 @@ const stepLesson=()=>practice.sub||practice.lesson;
 // The help shown, as the three levels: 1 guided, 2 piece and slot, 3 nothing. In Full solve it depends on the hints
 // asked for (none · which piece · where it goes · the turns); in Recognize, the piece and slot are shown.
 function lvl(){
-  if(practice.lesson==='solve')return [3,2,2,1][practice.hint];
+  if(lessonDef().solve)return [3,2,2,1][practice.hint];
   if(lessonDef().quiz)return 2;
   return practice.level;
 }
@@ -301,7 +301,7 @@ function practicePlan(){
   if(e.id)practice.target=e.id;
   else if(practice.sub)practice.target=null;     // full solve: a last-layer step has no piece
   // full solve: the hints are for one step (the same piece, or the same last-layer stage); a new step starts without help
-  if(practice.lesson==='solve'&&!e.done){const k=e.stage+'|'+(e.id||'');if(k!==practice.hintKey){practice.hint=0;practice.hintKey=k;}}
+  if(lessonDef().solve&&!e.done){const k=e.stage+'|'+(e.id||'');if(k!==practice.hintKey){practice.hint=0;practice.hintKey=k;}}
   if(e.done){practice.target=null;if(!practice.finished){practice.finished=true;doneIn()[practice.lesson]++;celebrate(tr('lesson.'+practice.lesson+'.done'));}}
   return !!e.id&&e.id!==before;
 }
@@ -345,12 +345,12 @@ function startQuiz(){
 function answerQuiz(kind){
   const q=practice.quiz;if(!q||q.chosen)return;
   q.chosen=kind;practice.score.total++;
-  if(kind===q.answer){practice.score.right++;doneIn().recognize++;}
+  if(kind===q.answer){practice.score.right++;doneIn()[practice.lesson]++;}
   updateUI();save();
 }
 // Full solve: each tap shows one more hint for this step (which piece → where it goes → the turns)
 function askHint(){
-  if(practice.lesson!=='solve'||practice.finished||practice.hint>=3||busy||queue.length||scrambling)return;
+  if(!lessonDef().solve||practice.finished||practice.hint>=3||busy||queue.length||scrambling)return;
   // the step is read again from the cube as it is now (unless you are in the middle of an algorithm)
   if(!holdStep())practicePlan();else{practice.i=0;practice.wrong=[];}
   practice.hint++;practice.hints++;
@@ -477,7 +477,7 @@ function practiceVisuals(on){
   const assist=!!on&&!practice.finished&&practice.kind!=='broken'&&(!!practice.target||!!group||practice.plan.length>0);
   const focus=assist&&lvl()<3;
   // full solve, first hint ("which piece"): the piece only, without its slot
-  const where=!(practice.lesson==='solve'&&practice.hint<2);
+  const where=!(lessonDef().solve&&practice.hint<2);
   const h=!focus||!where?null:practice.target?practice.target.split(',').map(Number):practice.slot?practice.slot.split(',').map(Number):null;
   // one piece, plus the center it goes to (cross) or the center it has to match (second layer);
   // in the last layer, a group of pieces (the yellow shape, the edges or corners already in place)
@@ -549,7 +549,7 @@ function practiceRender(){
   document.querySelectorAll('#levels button').forEach(b=>b.classList.toggle('on',+b.dataset.level===practice.level));
   document.querySelectorAll('[data-lesson]').forEach(b=>b.classList.toggle('on',b.dataset.lesson===practice.lesson));
   document.querySelectorAll('[data-method]').forEach(b=>b.classList.toggle('on',b.dataset.method===practice.method));
-  const completed=doneIn()[practice.lesson],solving=practice.lesson==='solve',q=practice.quiz;
+  const completed=doneIn()[practice.lesson],solving=!!lessonDef().solve,q=practice.quiz;
   // the lesson line: the picture of its goal, its number (the seven stages) and its name
   {const n=method().lessons.includes(practice.lesson)?lessonDef().stage:-1;$('practiceTitle').textContent=(n>=0?(n+1)+' · ':'')+tr('lesson.'+practice.lesson+'.title');
    $('lessonPic').innerHTML=stagePic(practice.lesson);}
@@ -580,11 +580,11 @@ function practiceRender(){
   const sub=stepLesson();
   const piece=trh(sts&&sts.length===3?'piece.corner':'piece.edge',{colors});
   const layer=esc(tr('layer.'+L.D)),dir=esc(tr('dir.'+L.D));
-  const info=practice.info,algName=info?'<b>'+esc(tr('alg.'+info.alg))+'</b>':'';
-  if(practice.finished)msg=solving?(practice.hints?trh('lesson.solve.complete',{n:practice.hints}):trh('lesson.solve.completeClean'))
-    :practice.lesson==='repeat'?trh('lesson.repeat.complete',{name:algName,total:info.total})
+  const info=practice.info,algName=info?'<b>'+esc(tr(I18N.has('alg.'+info.alg)?'alg.'+info.alg:'algs.'+info.alg))+'</b>':'';
+  if(practice.finished)msg=solving?(practice.hints?trh('lesson.'+practice.lesson+'.complete',{n:practice.hints}):trh('lesson.'+practice.lesson+'.completeClean'))
+    :lessonDef().loop?trh('lesson.'+practice.lesson+'.complete',{name:algName,total:info.total})
     :trh('lesson.'+practice.lesson+'.complete');
-  else if(practice.kind==='broken')msg=trh({corners:'msg.broken',secondLayer:'msg.brokenLayer',repeat:'msg.repeat.broken'}[practice.lesson]||'msg.brokenSolved');
+  else if(practice.kind==='broken')msg=trh(lessonDef().loop?'msg.repeat.broken':{corners:'msg.broken',secondLayer:'msg.brokenLayer'}[practice.lesson]||'msg.brokenSolved');
   else if(q&&!q.chosen)msg=trh('quiz.q.'+sub);
   else if(lvl()===3)msg=trh('lesson.'+practice.lesson+'.free',info?{name:algName,total:info.total}:undefined);
   else if(solving&&practice.hint===1)msg=trh('msg.hint.piece',{n:practice.stageAt+1,name:esc(tr('stage.'+method().stages[practice.stageAt].id))});

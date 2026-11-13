@@ -402,42 +402,48 @@ function solve(current){
 // ================= Repeat until it comes back =================
 // Starting from a solved cube, the same algorithm again and again: the cube comes apart and, after a few repetitions
 // (6 for most of them), it comes back by itself. It is for learning an algorithm by heart and trusting it.
-const REPEAT=[
+const REPEAT_LAYERS=[
   {alg:'yellowTwist',yellowUp:true},{alg:'yellowCross',yellowUp:true},{alg:'yellowEdges',yellowUp:true},
   {alg:'yellowCorners',yellowUp:true},{alg:'cornerOut',yellowUp:false}
 ];
-let repeatPick=0;
 const orders={};
-// How many repetitions bring the solved cube back
-function orderOf(name){
-  if(!orders[name]){
-    const seq=algoSeq(name,0);
-    orders[name]=CUBE.withSnapshot(()=>{CUBE.resetLogic();let n=0;do{apply(seq);n++;}while(!CUBE.isSolved()&&n<200);return n;});
+// How many repetitions bring the solved cube back (method: whose algorithm it is)
+function orderOf(name,method='layers'){
+  const id=method+'.'+name;
+  if(!orders[id]){
+    const seq=modelSeq(method,name);
+    orders[id]=CUBE.withSnapshot(()=>{CUBE.resetLogic();let n=0;do{apply(seq);n++;}while(!CUBE.isSolved()&&n<200);return n;});
   }
-  return orders[name];
+  return orders[id];
 }
-// Where you are: «reps» whole repetitions plus the first «j» turns of the next one (undoing them gives the solved cube)
-function repeatStep(){
-  const R=REPEAT[repeatPick],seq=algoSeq(R.alg,0),total=orderOf(R.alg),undo=CUBE.invSeq(seq);
-  let found=null;
-  for(let j=0;j<seq.length&&!found;j++)found=CUBE.withSnapshot(()=>{
-    apply(CUBE.invSeq(seq.slice(0,j)));
-    for(let reps=0;reps<total;reps++){if(CUBE.isSolved())return {reps,j};apply(undo);}
-    return null;
-  });
-  if(!found)return {broken:true};
-  return {kind:'repeat',plan:seq.slice(found.j),cost:0,alt:[],reps:found.reps,total,alg:R.alg,yellowUp:R.yellowUp,keepView:true,stage:0};
-}
-function generateRepeat(){
-  let k;do{k=rand(REPEAT.length);}while(k===repeatPick&&REPEAT.length>1);
-  repeatPick=k;CUBE.resetLogic();return true;
+// A Repeat lesson for a list of algorithms ({alg, method, yellowUp}); each exercise picks one (not the same twice in a row).
+// The step says where you are: «reps» whole repetitions plus the first «j» turns of the next one (undoing them gives the
+// solved cube).
+function makeRepeat(list){
+  let pick=0;
+  function step(){
+    const R=list[pick],method=R.method||'layers',seq=modelSeq(method,R.alg),total=orderOf(R.alg,method),undo=CUBE.invSeq(seq);
+    let found=null;
+    for(let j=0;j<seq.length&&!found;j++)found=CUBE.withSnapshot(()=>{
+      apply(CUBE.invSeq(seq.slice(0,j)));
+      for(let reps=0;reps<total;reps++){if(CUBE.isSolved())return {reps,j};apply(undo);}
+      return null;
+    });
+    if(!found)return {broken:true};
+    return {kind:'repeat',plan:seq.slice(found.j),cost:0,alt:[],reps:found.reps,total,alg:R.alg,yellowUp:R.yellowUp,keepView:true,stage:0};
+  }
+  function generate(){
+    let k;do{k=rand(list.length);}while(k===pick&&list.length>1);
+    pick=k;CUBE.resetLogic();return true;
+  }
+  return {step,generate};
 }
 
 // ================= Recognize the case =================
 // The cube shows a case of one lesson and you choose which one it is among 2 or 3 options; then the app shows its turns.
 // focus: what to light up, when the lesson's own focus would give the answer away
 const yellowLayer=()=>[...YELLOW_EDGES,...YELLOW_CORNERS,'0,-1,0'];
-const QUIZ=[
+const QUIZ_LAYERS=[
   {lesson:'cross',kinds:['crossUp','crossFlipped']},
   {lesson:'corners',kinds:['cornerRight','cornerFront','cornerOut']},
   {lesson:'secondLayer',kinds:['secondRight','secondLeft']},
@@ -445,27 +451,34 @@ const QUIZ=[
   {lesson:'yellowEdges',kinds:['yEdgesSwap','yEdgesOpposite'],focus:yellowLayer},
   {lesson:'yellowCornersPlace',kinds:['yCornersNone','yCornersCycle'],focus:yellowLayer}
 ];
-let quizCase=null,quizFamily=-1;
-// Chooses a lesson (not the same one twice in a row) and an answer, and follows that lesson's exercise until the case shows up
-function generateQuiz(){
-  let f;do{f=rand(QUIZ.length);}while(f===quizFamily);
-  const F=QUIZ[f],L=LESSONS[F.lesson],want=F.kinds[rand(F.kinds.length)];
-  for(let attempt=0;attempt<200;attempt++){
-    if(!L.generate())continue;
-    let current=null;
-    for(let i=0;i<60;i++){
-      const e=L.step(current);
-      if(!e.plan)break;
-      if(e.kind===want){
-        quizFamily=f;
-        quizCase=Object.assign({},e,{lesson:F.lesson,options:F.kinds,answer:e.kind,yellowUp:!!L.yellowUp,stage:0});
-        if(F.focus)quizCase.focus=F.focus();
-        return true;
+// A Recognize lesson for a list of families (a lesson and its cases). Each exercise chooses a family (not the same one
+// twice in a row) and an answer, and follows that lesson's exercise until the case shows up. With more than three cases,
+// the options are the answer and two others, so the buttons fit.
+function makeQuiz(families){
+  let quizCase=null,last=-1;
+  function generate(){
+    let f;do{f=rand(families.length);}while(f===last&&families.length>1);
+    const F=families[f],L=LESSONS[F.lesson],want=F.kinds[rand(F.kinds.length)];
+    let options=F.kinds;
+    if(options.length>3){const others=options.filter(k=>k!==want);const keep=new Set([want]);while(keep.size<3)keep.add(others[rand(others.length)]);options=options.filter(k=>keep.has(k));}
+    for(let attempt=0;attempt<200;attempt++){
+      if(!L.generate())continue;
+      let current=null;
+      for(let i=0;i<60;i++){
+        const e=L.step(current);
+        if(!e.plan)break;
+        if(e.kind===want){
+          last=f;
+          quizCase=Object.assign({},e,{lesson:F.lesson,options,answer:e.kind,yellowUp:!!L.yellowUp,stage:0});
+          if(F.focus)quizCase.focus=F.focus();
+          return true;
+        }
+        apply(e.plan);current=e.id;
       }
-      apply(e.plan);current=e.id;
     }
+    return false;
   }
-  return false;
+  return {step:()=>quizCase||{},generate};
 }
 
 // ================= CFOP · the last layer in two looks =================
@@ -578,13 +591,32 @@ function generateF2L(){
   return false;
 }
 
+// ================= CFOP · full solve, repeat and recognize =================
+// Full solve: the stage the cube is at says which of the six lessons gives the step (only shown when you ask for a hint)
+function cfopSolve(current){
+  const st=cfopStage();
+  if(st===6)return {done:true};
+  const lesson=METHODS.get('cfop').lessons[st],e=LESSONS[lesson].step(current);
+  return Object.assign({},e,{stage:st,lesson,yellowUp:true});
+}
+const REPEAT_CFOP=Object.keys(ALGORITHMS.cfop).map(alg=>({alg,method:'cfop',yellowUp:true}));
+const QUIZ_CFOP=[
+  {lesson:'ollEdges',kinds:['yCrossDot','yCrossL','yCrossLine'],focus:yellowLayer},
+  {lesson:'ollCorners',kinds:OLL_CORNERS,focus:yellowLayer},
+  {lesson:'pllCorners',kinds:['tPerm','yPerm'],focus:yellowLayer},
+  {lesson:'pllEdges',kinds:['ua','ub','hPerm','zPerm'],focus:yellowLayer}
+];
+const repeatLayers=makeRepeat(REPEAT_LAYERS),repeatCfop=makeRepeat(REPEAT_CFOP);
+const quizLayers=makeQuiz(QUIZ_LAYERS),quizCfop=makeQuiz(QUIZ_CFOP);
+
 // Lessons of Practice mode. step(current) says which piece is next, with which turns and which equivalent routes exist;
 // generate() prepares an exercise. To add a lesson: add it here and run tests/lessons.test.js.
 // pieces: the ones the lesson places; once one is placed, no step may take it out of its place again
 // A step may also say: stage (the stage being worked on, for the stage bar), lesson (whose case it is, for the messages)
 // and yellowUp (how to show it); without them, the lesson's own values count.
 // Other kinds of lesson: loop (it starts and ends solved: the step is never "done", the interface ends it when the
-// cube comes back) and quiz (nothing is turned: step() gives the case to recognize).
+// cube comes back) and quiz (nothing is turned: step() gives the case to recognize), and solve: a whole cube, where the
+// interface only shows the step when you ask for a hint.
 const LESSONS={
   cross:{stage:0,step:cross,generate:generateCross,pieces:()=>CROSS_EDGES},
   corners:{stage:1,step:corners,generate:generateCorners,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS]},
@@ -600,10 +632,13 @@ const LESSONS={
   yellowCornersTurn:{stage:6,step:yellowCornersTurn,generate:()=>generateLastLayer(6,[yellowCross,yellowEdges,yellowCornersPlace]),
     yellowUp:true,pieces:()=>[]},
   // the whole cube: the stages get done and undone along the way, so no piece is required to stay
-  solve:{stage:0,step:solve,generate:generateCross,pieces:()=>[],maxSteps:200},
-  repeat:{stage:0,step:repeatStep,generate:generateRepeat,pieces:()=>[],loop:true},
-  recognize:{stage:0,step:()=>quizCase||{},generate:generateQuiz,pieces:()=>[],quiz:true},
+  solve:{stage:0,step:solve,generate:generateCross,pieces:()=>[],maxSteps:200,solve:true},
+  repeat:{stage:0,step:repeatLayers.step,generate:repeatLayers.generate,pieces:()=>[],loop:true},
+  recognize:{stage:0,step:quizLayers.step,generate:quizLayers.generate,pieces:()=>[],quiz:true},
   // CFOP (method: which one they belong to; the stages are those of methods.js)
+  cfopSolve:{method:'cfop',stage:0,step:cfopSolve,generate:generateCfopCross,yellowUp:true,pieces:()=>[],maxSteps:200,solve:true},
+  cfopRepeat:{method:'cfop',stage:0,step:repeatCfop.step,generate:repeatCfop.generate,pieces:()=>[],loop:true},
+  cfopRecognize:{method:'cfop',stage:0,step:quizCfop.step,generate:quizCfop.generate,pieces:()=>[],quiz:true},
   cfopCross:{method:'cfop',stage:0,step:cfopCross,generate:generateCfopCross,yellowUp:true,pieces:()=>CROSS_EDGES},
   // in F2L a lone corner or edge may move on the way: what must stay is the cross and every complete pair
   f2l:{method:'cfop',stage:1,step:f2lStep,generate:generateF2L,yellowUp:true,

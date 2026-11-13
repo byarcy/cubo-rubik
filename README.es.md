@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.45-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.46-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -76,7 +76,7 @@ Por ahora, inglés y español. La app toma el idioma de tu navegador (inglés si
 Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño guarda su propio cubo, tiempo y récord. La Práctica usa el 3×3.
 
 ### Y además
-- **CFOP (principiante):** la lista de lecciones tiene un selector de método. CFOP se sostiene con la cruz abajo y el amarillo arriba. **1 · Cruz** da la cruz entera en la menor cantidad de giros (nunca más de 8) y **2 · F2L** mete, cada vez, el par de esquina y arista que entra con menos giros: para estas dos, sin receta, la app busca el camino más corto. Después, la última capa en dos pasos: **3 · OLL cruz** (dos algoritmos: la línea y la L), **4 · OLL cara** (siete: Sune, Antisune, H, Pi, faros, T, corbata), **5 · PLL esquinas** (permutaciones T e Y) y **6 · PLL aristas** (permutaciones U, H y Z). Todos los algoritmos giran solo caras, así que se pueden hacer arrastrando, y cada caso dice cómo reconocerlo. Su propia hoja de Algoritmos está en Ayuda.
+- **CFOP (principiante):** la lista de lecciones tiene un selector de método. CFOP se sostiene con la cruz abajo y el amarillo arriba. **1 · Cruz** da la cruz entera en la menor cantidad de giros (nunca más de 8) y **2 · F2L** mete, cada vez, el par de esquina y arista que entra con menos giros: para estas dos, sin receta, la app busca el camino más corto. Después, la última capa en dos pasos: **3 · OLL cruz** (dos algoritmos: la línea y la L), **4 · OLL cara** (siete: Sune, Antisune, H, Pi, faros, T, corbata), **5 · PLL esquinas** (permutaciones T e Y) y **6 · PLL aristas** (permutaciones U, H y Z). Todos los algoritmos giran solo caras, así que se pueden hacer arrastrando, y cada caso dice cómo reconocerlo. Su propia hoja de Algoritmos está en Ayuda. En *Más práctica*, CFOP tiene su propio **Armado completo** (un cubo mezclado armado con los seis pasos, con pistas), **Repetir** (los 15 algoritmos de OLL y PLL) y **Reconocer** (los casos de OLL y PLL).
 - Gira las caras arrastrando con el dedo (una fila o columna del medio gira esa capa del medio), o usa el menú **GIROS** con la notación, en tres grupos: caras (R, U', F2…), dos capas (r, u…) y capas del medio y cubo entero (M, E, S, x, y, z; los giros del cubo entero giran la vista).
 - Arrastra fuera del cubo para girarlo entero. Con dos dedos, moverlos gira el cubo y rotarlos lo gira en la pantalla, como una perilla, desde cualquier posición; el recuadro de la esquina muestra el lado que no ves.
 - **Ayuda:** cómo se usa la app, la notación con un dibujo de cada giro como en las guías (U mueve la fila de arriba a la izquierda, R la columna derecha hacia arriba…, y también M, r, x…) y una hoja de **Algoritmos**: todos los algoritmos del método elegido, etapa por etapa, escritos como la guía sostiene el cubo, con sus grupos, cuándo usarlos y desde qué lado y, en la última capa, un *antes → después* visto desde arriba.

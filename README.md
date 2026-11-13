@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.45-ff2e97)
+![version](https://img.shields.io/badge/version-0.46-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -76,7 +76,7 @@ English and Spanish for now. The app picks the language of your browser (English
 A button next to the title switches between 3×3 and 2×2 in Challenge. Each size keeps its own cube, time and record. Practice uses the 3×3.
 
 ### And also
-- **CFOP (beginner):** the lesson list has a method selector. CFOP is held with the cross at the bottom and yellow on top. **1 · Cross** gives the whole cross in the fewest turns (never more than 8) and **2 · F2L** puts in, each time, the corner-and-edge pair that goes in with the fewest turns: for these two, with no recipe, the app searches for the shortest way. Then the last layer in two looks: **3 · OLL cross** (two algorithms: the line and the L), **4 · OLL face** (seven: Sune, Antisune, H, Pi, headlights, T, bowtie), **5 · PLL corners** (T and Y perms) and **6 · PLL edges** (U, H and Z perms). Every algorithm only turns faces, so it can be made by dragging, and each case says how to recognize it. Its own Algorithms sheet is in Help.
+- **CFOP (beginner):** the lesson list has a method selector. CFOP is held with the cross at the bottom and yellow on top. **1 · Cross** gives the whole cross in the fewest turns (never more than 8) and **2 · F2L** puts in, each time, the corner-and-edge pair that goes in with the fewest turns: for these two, with no recipe, the app searches for the shortest way. Then the last layer in two looks: **3 · OLL cross** (two algorithms: the line and the L), **4 · OLL face** (seven: Sune, Antisune, H, Pi, headlights, T, bowtie), **5 · PLL corners** (T and Y perms) and **6 · PLL edges** (U, H and Z perms). Every algorithm only turns faces, so it can be made by dragging, and each case says how to recognize it. Its own Algorithms sheet is in Help. Under *More practice*, CFOP has its own **Full solve** (a scrambled cube solved with the six steps, with hints), **Repeat** (the 15 OLL and PLL algorithms) and **Recognize** (the OLL and PLL cases).
 - Turn the faces by dragging with your finger (a middle row or column turns that middle layer), or use the **TURNS** menu with the notation, in three groups: faces (R, U', F2…), two layers (r, u…) and the middle layers and whole cube (M, E, S, x, y, z; the whole-cube turns turn the view).
 - Drag outside the cube to rotate it as a whole. With two fingers, moving them rotates the cube and twisting them turns it on the screen, like a knob, from any position; the box in the corner shows the side you can't see.
 - **Help:** how to use the app, the notation with a drawing of each turn as the guides draw it (U moves the top row to the left, R the right column up…, and also M, r, x…), and an **Algorithms** sheet: every algorithm of the chosen method, stage by stage, written the way the guide holds the cube, with its groups, when to use it and from which side and, for the last layer, a *before → after* seen from above.
