@@ -51,6 +51,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .dsub{font-size:12px;color:var(--soft)}
 .iconbtn{width:44px;height:44px;padding:0;border-radius:12px;border:1.5px solid var(--violet);background:transparent;display:flex;align-items:center;justify-content:center}
 .turnGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.levels.turn-tabs{margin:0}
+.levels.turn-tabs button{min-height:34px;font-size:12px}
 .mv{min-height:48px;border-radius:10px;border:1.5px solid var(--pink);background:rgba(255,46,151,.08);font-family:Orbitron,sans-serif;font-weight:700;font-size:15px;box-shadow:0 0 8px rgba(255,46,151,.45);padding:0}
 .mv.p{border-color:var(--violet);background:rgba(139,92,246,.08);box-shadow:0 0 8px rgba(139,92,246,.45)}
 .mv.d{border-color:var(--cyan);background:rgba(0,229,255,.08);box-shadow:0 0 8px rgba(0,229,255,.45)}
@@ -154,6 +156,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pk-sign{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1.5px solid rgba(0,229,255,.5);color:var(--cyan);font-size:22px;font-weight:700}
 /* The picker: the seven stages in two columns, and the other practices below */
 #picker{max-height:88%;overflow-y:auto}
+.levels.methods{grid-template-columns:repeat(2,minmax(0,1fr));margin:0}
 .pick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .pick-grid.more{grid-template-columns:repeat(3,minmax(0,1fr))}
 .pick-grid button{display:flex;align-items:center;gap:8px;min-height:52px;padding:6px 8px;border-radius:10px;border:1px solid rgba(139,92,246,.5);background:rgba(26,11,61,.7);color:var(--soft);font-size:12.5px;line-height:1.2;text-align:left}

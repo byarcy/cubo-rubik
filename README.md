@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.42-ff2e97)
+![version](https://img.shields.io/badge/version-0.43-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -28,7 +28,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 > **Since version 0.30 the app is rewritten from scratch**, and since 0.34 the whole project (code, comments, file
 > names and documentation) is in English, with the texts of the interface in plain translation files (`locales/`). Practice mode
-> has all seven lessons of the method, a full solve with hints and two drills (see [TODO.md](TODO.md) for what comes next). The previous version
+> has all seven lessons of the layer-by-layer method, a full solve with hints, two drills and the last layer of CFOP (see [TODO.md](TODO.md) for what comes next). The previous version
 > is kept in the `v0.21` tag.
 
 ---
@@ -76,9 +76,10 @@ English and Spanish for now. The app picks the language of your browser (English
 A button next to the title switches between 3×3 and 2×2 in Challenge. Each size keeps its own cube, time and record. Practice uses the 3×3.
 
 ### And also
-- Turn the faces by dragging with your finger, or use the **TURNS** menu with the notation (R, U', F2…).
+- **CFOP (beginner):** the lesson list has a method selector. CFOP has, for now, its last layer in two looks, with yellow on top: **3 · OLL cross** (two algorithms: the line and the L), **4 · OLL face** (seven: Sune, Antisune, H, Pi, headlights, T, bowtie), **5 · PLL corners** (T and Y perms) and **6 · PLL edges** (U, H and Z perms). Every algorithm only turns faces, so it can be made by dragging, and each case says how to recognize it. Its own Algorithms sheet is in Help.
+- Turn the faces by dragging with your finger (a middle row or column turns that middle layer), or use the **TURNS** menu with the notation, in three groups: faces (R, U', F2…), two layers (r, u…) and the middle layers and whole cube (M, E, S, x, y, z; the whole-cube turns turn the view).
 - Drag outside the cube to rotate it as a whole. With two fingers, moving them rotates the cube and twisting them turns it on the screen, like a knob, from any position; the box in the corner shows the side you can't see.
-- **Help:** how to use the app, the notation with a drawing of each turn as the guides draw it (U moves the top row to the left, R the right column up…), and an **Algorithms** sheet: every algorithm of the method, stage by stage, written the way the guide holds the cube, with its groups, when to use it and from which side and, for the last layer, a *before → after* seen from above.
+- **Help:** how to use the app, the notation with a drawing of each turn as the guides draw it (U moves the top row to the left, R the right column up…, and also M, r, x…), and an **Algorithms** sheet: every algorithm of the chosen method, stage by stage, written the way the guide holds the cube, with its groups, when to use it and from which side and, for the last layer, a *before → after* seen from above.
 - Your progress is saved on its own, in your browser (progress saved by older versions is kept). A saved cube that can't exist (a damaged save) is not loaded: that mode starts solved and the app says so.
 - There is a secret hidden for whoever solves the cube. 😉
 
@@ -112,6 +113,7 @@ It works in the browser and it can also be **installed as an app**. Once install
 | `graphics_engine.js` | 3D engine (WebGL), scene, lights and animation of the layers |
 | `cube_logic.js` | Cube state (one rotation per piece), every turn (faces, middle layers, two layers, whole cube), notation, the validity check of a cube and the stage detector |
 | `algorithms.js` | Sequences of each method, in standard notation |
+| `methods.js` | The solving methods as data: their stages, lessons, Algorithms sheet and goal pictures (layer by layer, CFOP) |
 | `coach.js` | The "teacher" of Practice: recognizes the case, offers equivalent routes and prepares exercises |
 | `diagrams.js` | Small flat drawings, as SVG: each turn (Help) and the top layer seen from above (the algorithms' before → after and the goal of each lesson) |
 | `game_controller.js` | Input (finger, buttons), Challenge, Practice, saving and main loop |

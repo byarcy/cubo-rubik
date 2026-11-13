@@ -55,12 +55,11 @@ const used=new Set();
 const html=read('index.html');
 for(const m of html.matchAll(/data-i18n(?:-html)?="([\w.]+)"/g))used.add(m[1]);
 for(const m of html.matchAll(/data-i18n-attr="([^"]+)"/g))for(const p of m[1].split(','))used.add(p.split(':')[1].trim());
-const js=['game_controller.js','coach.js','cube_logic.js'].map(read).join('\n');
+const js=['game_controller.js','coach.js','cube_logic.js','methods.js'].map(read).join('\n');
 for(const m of js.matchAll(/\btrh?\(\s*'([\w.]+)'(?!\s*\+)/g))used.add(m[1]);
-const CUBE=new Function(read('cube_logic.js')+';return CUBE;')();
-const COACH=new Function(read('cube_logic.js')+'\n'+read('algorithms.js')+'\n'+read('coach.js')+';return COACH;')();
+const {COACH,METHODS}=new Function(['cube_logic.js','algorithms.js','methods.js','coach.js'].map(read).join('\n')+';return {COACH,METHODS};')();
 for(const f of 'UDFBRL')for(const fam of ['color','dir','layer'])used.add(fam+'.'+f);
-for(const st of CUBE.STAGES)used.add('stage.'+st.id);
+for(const m of Object.values(METHODS.ALL))for(const st of m.stages)used.add('stage.'+st.id);
 for(const l of Object.keys(COACH.LESSONS))for(const s of ['','.title','.done','.complete','.free'])used.add('lesson.'+l+s);
 for(const k of ['idle','scrambling','ready','running','paused','done'])used.add('challenge.'+k);
 for(const n of [1,2,3])used.add('level.'+n);
@@ -69,7 +68,7 @@ for(const m of js.matchAll(/\btrh?\(\s*'([\w.]+)'\s*\+/g))if(!Object.keys(ref).s
 
 // ---- the service worker keeps every file ----
 const sw=read('sw.js');
-for(const f of ['locales/languages.json',...codes.map(c=>'locales/'+c+'.json'),'styles.css','i18n.js','graphics_engine.js','cube_logic.js','algorithms.js','coach.js','game_controller.js'])
+for(const f of ['locales/languages.json',...codes.map(c=>'locales/'+c+'.json'),'styles.css','i18n.js','graphics_engine.js','cube_logic.js','algorithms.js','methods.js','coach.js','diagrams.js','game_controller.js'])
   if(!sw.includes("'./"+f+"'"))fail('sw.js does not list ./'+f);
 
 // ---- the module works (with fetch reading the files, plus a fake language to test escaping) ----

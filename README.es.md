@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.42-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.43-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -28,7 +28,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 > **Desde la versión 0.30 la app está reescrita desde cero**, y desde la 0.34 todo el proyecto (código, comentarios,
 > nombres de archivos y documentación) está en inglés, con los textos de la interfaz en archivos de traducción planos (`locales/`).
-> El modo Práctica trae las siete lecciones del método, un armado completo con pistas y dos ejercicios más (ver
+> El modo Práctica trae las siete lecciones del método por capas, un armado completo con pistas, dos ejercicios más y la última capa de CFOP (ver
 > [TODO.md](TODO.md), en inglés, para lo que sigue). La versión anterior quedó guardada en la etiqueta `v0.21`.
 
 ---
@@ -76,9 +76,10 @@ Por ahora, inglés y español. La app toma el idioma de tu navegador (inglés si
 Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño guarda su propio cubo, tiempo y récord. La Práctica usa el 3×3.
 
 ### Y además
-- Gira las caras arrastrando con el dedo, o usa el menú **GIROS** con la notación (R, U', F2…).
+- **CFOP (principiante):** la lista de lecciones tiene un selector de método. CFOP trae, por ahora, su última capa en dos pasos, con el amarillo arriba: **3 · OLL cruz** (dos algoritmos: la línea y la L), **4 · OLL cara** (siete: Sune, Antisune, H, Pi, faros, T, corbata), **5 · PLL esquinas** (permutaciones T e Y) y **6 · PLL aristas** (permutaciones U, H y Z). Todos los algoritmos giran solo caras, así que se pueden hacer arrastrando, y cada caso dice cómo reconocerlo. Su propia hoja de Algoritmos está en Ayuda.
+- Gira las caras arrastrando con el dedo (una fila o columna del medio gira esa capa del medio), o usa el menú **GIROS** con la notación, en tres grupos: caras (R, U', F2…), dos capas (r, u…) y capas del medio y cubo entero (M, E, S, x, y, z; los giros del cubo entero giran la vista).
 - Arrastra fuera del cubo para girarlo entero. Con dos dedos, moverlos gira el cubo y rotarlos lo gira en la pantalla, como una perilla, desde cualquier posición; el recuadro de la esquina muestra el lado que no ves.
-- **Ayuda:** cómo se usa la app, la notación con un dibujo de cada giro como en las guías (U mueve la fila de arriba a la izquierda, R la columna derecha hacia arriba…) y una hoja de **Algoritmos**: todos los algoritmos del método, etapa por etapa, escritos como la guía sostiene el cubo, con sus grupos, cuándo usarlos y desde qué lado y, en la última capa, un *antes → después* visto desde arriba.
+- **Ayuda:** cómo se usa la app, la notación con un dibujo de cada giro como en las guías (U mueve la fila de arriba a la izquierda, R la columna derecha hacia arriba…, y también M, r, x…) y una hoja de **Algoritmos**: todos los algoritmos del método elegido, etapa por etapa, escritos como la guía sostiene el cubo, con sus grupos, cuándo usarlos y desde qué lado y, en la última capa, un *antes → después* visto desde arriba.
 - Tu avance se guarda solo, en tu navegador (el avance guardado por versiones anteriores se conserva). Un cubo guardado que no puede existir (un guardado dañado) no se carga: ese modo empieza armado y la app lo avisa.
 - Hay un secreto escondido para quien resuelva el cubo. 😉
 
@@ -112,6 +113,7 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 | `graphics_engine.js` | Motor 3D (WebGL), escena, luces y animación de las capas |
 | `cube_logic.js` | Estado del cubo (una rotación por pieza), todos los giros (caras, capas del medio, dos capas, cubo entero), notación, la comprobación de que un cubo sea posible y el detector de etapas |
 | `algorithms.js` | Secuencias de cada método, en notación estándar |
+| `methods.js` | Los métodos de armado como datos: sus etapas, lecciones, hoja de Algoritmos e imágenes de las metas (por capas, CFOP) |
 | `coach.js` | El «profe» de la Práctica: reconoce el caso, ofrece rutas equivalentes y prepara los ejercicios |
 | `diagrams.js` | Dibujos planos pequeños, en SVG: cada giro (Ayuda) y la capa de arriba vista desde arriba (el antes → después de los algoritmos y la meta de cada lección) |
 | `game_controller.js` | Entrada (dedo, botones), Reto, Práctica, guardado y bucle principal |

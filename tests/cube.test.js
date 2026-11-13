@@ -13,8 +13,8 @@
        today's format (one rotation per piece, centers with their spin) and in the saves made up to v0.41 (stickers);
      · the stages of the layer-by-layer method see what a single turn breaks. */
 const fs=require('fs'),path=require('path');
-const src=fs.readFileSync(path.join(__dirname,'..','cube_logic.js'),'utf8');
-const {CUBE}=new Function(src+';return {CUBE};')();
+const src=['cube_logic.js','methods.js'].map(f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8')).join('\n');
+const {CUBE,METHODS}=new Function(src+';return {CUBE,METHODS};')();
 let errors=0,checks=0;
 const ok=(cond,msg)=>{checks++;if(!cond){errors++;if(errors<=20)console.log('  ✗ '+msg);}};
 const P=CUBE.parseSeq,same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -90,16 +90,16 @@ ok(order("M2 U M2 U2 M2 U M2")===2,"M2 U M2 U2 M2 U M2 should come back after 2 
 for(const txt of ['x','y','z',"x y2 z'","M M' x2"]){
   after(txt);
   ok(CUBE.isSolved(),'after «'+txt+'» the cube is no longer solved');
-  ok(CUBE.stage()===7,'after «'+txt+'» the stages are not all done (stage '+CUBE.stage()+')');
+  ok(METHODS.stage()===7,'after «'+txt+'» the stages are not all done (stage '+METHODS.stage()+')');
   ok(Object.keys(CUBE.byId).every(CUBE.pieceSolved)&&Object.keys(CUBE.byId).every(CUBE.inPlace),'after «'+txt+'» some piece is not in place');
 }
 for(const txt of ['M','E','S','r',"M2 U M U2 M' U"]){after(txt);ok(!CUBE.isSolved(),'after «'+txt+'» the cube says it is solved');}
 // a yellow-cross case seen from another side: the same stage, with the cube turned over (x2) or around (y)
 {
-  const st=CUBE.withSnapshot(()=>{CUBE.resetLogic();CUBE.apply(P("F L D L' D' F'"));return CUBE.stage();});
+  const st=CUBE.withSnapshot(()=>{CUBE.resetLogic();CUBE.apply(P("F L D L' D' F'"));return METHODS.stage();});
   for(const w of ['y','x2','z2 y']){
     CUBE.resetLogic();CUBE.apply(P("F L D L' D' F' "+w));
-    ok(CUBE.stage()===st,'turning the whole cube («'+w+'») changes the stage: '+CUBE.stage()+' instead of '+st);
+    ok(METHODS.stage()===st,'turning the whole cube («'+w+'») changes the stage: '+METHODS.stage()+' instead of '+st);
   }
 }
 // cubes reached with every kind of turn are valid, and the rules hold
@@ -205,11 +205,11 @@ refusedOld('a center moved',s=>{const i=at('0,1,0')[0];s[i]=[0,-1,0,0,-1,0];});
 refusedOld('a value that is not -1, 0 or 1',s=>{s[0][0]=2;});
 refusedOld('a missing sticker',s=>{s.pop();});
 
-// ---- Stages of the layer-by-layer method (white = U, yellow = D) ----
-ok(CUBE.stage()===7||(CUBE.resetLogic(),CUBE.stage()===7),'the solved cube is not at stage 7');
-CUBE.resetLogic();CUBE.apply(P('U'));ok(CUBE.stage()===0,'turning the white face should break the white cross (stage '+CUBE.stage()+')');
-CUBE.resetLogic();CUBE.apply(P('D'));ok(CUBE.stage()===4,'turning the yellow face should only undo the yellow edges (stage '+CUBE.stage()+')');
-CUBE.resetLogic();CUBE.apply(P('R'));ok(CUBE.stage()===0,'turning a side breaks the white cross (stage '+CUBE.stage()+')');
+// ---- Stages of the layer-by-layer method (methods.js; white = U, yellow = D) ----
+ok(METHODS.stage()===7||(CUBE.resetLogic(),METHODS.stage()===7),'the solved cube is not at stage 7');
+CUBE.resetLogic();CUBE.apply(P('U'));ok(METHODS.stage()===0,'turning the white face should break the white cross (stage '+METHODS.stage()+')');
+CUBE.resetLogic();CUBE.apply(P('D'));ok(METHODS.stage()===4,'turning the yellow face should only undo the yellow edges (stage '+METHODS.stage()+')');
+CUBE.resetLogic();CUBE.apply(P('R'));ok(METHODS.stage()===0,'turning a side breaks the white cross (stage '+METHODS.stage()+')');
 
 console.log((errors?'✗':'✓')+' cube logic: '+checks+' checks');
 console.log(errors?'\n'+errors+' errors':'\nAll good');

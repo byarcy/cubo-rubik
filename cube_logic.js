@@ -232,7 +232,7 @@ function parseSeq(txt){
 const seqText=seq=>seq.map(m=>m.f+(m.n===-1?"'":m.n===2?'2':'')).join(' ');
 const invSeq=q=>q.slice().reverse().map(m=>({f:m.f,n:m.n===2?2:-m.n}));
 
-// ================= Stages of the layer-by-layer method (3×3 only) =================
+// ================= Pieces in place (what the stages of each method, in methods.js, are made of) =================
 // White is the model's U face and yellow its D face. A piece is named by its solved position ("1,1,1").
 // In place: where the centers say its spot is now; solved: in place and turned as the centers (see frame).
 const sameR=(A,B)=>A.every((c,i)=>c[0]===B[i][0]&&c[1]===B[i][1]&&c[2]===B[i][2]);
@@ -242,28 +242,11 @@ const pieceSolved=id=>sameR(pieceOf[id].R,frame());
 const facesHome=k=>key(k.n)===key(times(frame(),k.hn));
 // Pieces of a layer (y = 1 white, 0 middle, -1 yellow) with "kind" stickers: 2 edges, 3 corners
 const piecesOf=(y,kind)=>Object.keys(byId).filter(id=>{const p=id.split(',').map(Number);return p[1]===y&&nz(p)===kind;});
-// The name of each stage is in the languages: key "stage.<id>"
-const STAGES=[
-  {id:'cross',ok:()=>piecesOf(1,2).every(pieceSolved)},
-  {id:'corners',ok:()=>piecesOf(1,3).every(pieceSolved)},
-  {id:'secondLayer',ok:()=>piecesOf(0,2).every(pieceSolved)},
-  {id:'yellowCross',ok:()=>piecesOf(-1,2).every(id=>byId[id].some(k=>k.hn[1]===-1&&facesHome(k)))},
-  {id:'yellowEdges',ok:()=>piecesOf(-1,2).every(pieceSolved)},
-  {id:'yellowCornersPlace',ok:()=>piecesOf(-1,3).every(inPlace)},
-  {id:'yellowCornersTurn',ok:()=>piecesOf(-1,3).every(pieceSolved)}
-];
-// How many consecutive stages are complete (0 to 7); each one requires the previous ones
-function stage(){
-  if(size!==3)return 0;
-  let n=0;while(n<STAGES.length&&STAGES[n].ok())n++;
-  return n;
-}
-
 // The cube exists from the start, solved: it is never an empty list (a snapshot of it always has every piece)
 resetLogic();
 return {FACE_OF,MOVES,TURNS,OPP,FACE_DIR,key,nz,frame,
   resetLogic,quarter,isSolved,snapshot,applySnap,forEachPiece,
-  STAGES,stage,inPlace,pieceSolved,piecesOf,
+  inPlace,pieceSolved,piecesOf,facesHome,
   isMove,genScramble,parseSeq,seqText,invSeq,move,apply,withSnapshot,validSnap,frameOf,
   get cube(){return cube;},get byId(){return byId;},
   get size(){return size;},set size(n){size=n===2?2:3;}};

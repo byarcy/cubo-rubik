@@ -13,8 +13,12 @@
    Quiz lessons (recognize the case): the answer is one of the options and the case is really on the cube. */
 const fs=require('fs'),path=require('path');
 const dir=path.join(__dirname,'..');
-const src=['cube_logic.js','algorithms.js','coach.js'].map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
-const {CUBE,COACH,ALGORITHMS}=new Function(src+';return {CUBE,COACH,ALGORITHMS};')();
+const src=['cube_logic.js','algorithms.js','methods.js','coach.js'].map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
+const {CUBE,COACH,ALGORITHMS,METHODS}=new Function(src+';return {CUBE,COACH,ALGORITHMS,METHODS};')();
+// Every case of every lesson has its message: "msg.<lesson>.<case>" in the reference language (the panel looks it up so)
+const EN=JSON.parse(fs.readFileSync(path.join(dir,'locales','en.json'),'utf8'));
+const missingMsg=new Set();
+function msgCheck(lesson,kind){const k='msg.'+lesson+'.'+kind;if(!(k in EN)&&!missingMsg.has(k)){missingMsg.add(k);fail(lesson,'case '+kind+' has no message '+k+' in locales/en.json');}}
 // Where the panel splits a plan into groups of turns: inside the plan, in order; the algorithms the guides split
 // (second layer and last layer) must be recognized from any side
 const GROUPED=/^(second(Right|Left|Take)|yCross|yEdges(Swap|Opposite)|yCorners)/;
@@ -72,7 +76,7 @@ function quizLesson(name,L){
     if(!q.options||!q.options.includes(q.answer)){fail(name,'the answer is not among the options');continue;}
     const again=COACH.LESSONS[q.lesson].step(q.id);
     if(again.kind!==q.answer)fail(name,'the cube shows '+again.kind+' and the answer is '+q.answer);
-    shapeCheck(name,q.answer);
+    shapeCheck(name,q.answer);msgCheck(q.lesson,q.answer);
     seen[q.answer]=(seen[q.answer]||0)+1;
   }
   console.log((errors?'✗':'✓')+' '+name+': '+N+' cases '+JSON.stringify(seen));
@@ -86,7 +90,7 @@ for(const name of Object.keys(COACH.LESSONS)){
   const stats={steps:0,withAlt:0,altUsed:0,kinds:{}};
   for(let i=0;i<N;i++){
     if(!L.generate()){fail(name,'could not generate an exercise');continue;}
-    if(CUBE.stage()!==L.stage)fail(name,'the exercise starts at stage '+CUBE.stage()+' and it should be '+L.stage);
+    if(METHODS.stage(L.method)!==L.stage)fail(name,'the exercise starts at stage '+METHODS.stage(L.method)+' and it should be '+L.stage);
     if(!L.step().plan)fail(name,'the generated exercise is already solved');
     let current=null,n=0,lastStage=-1;
     for(;;){
@@ -96,7 +100,7 @@ for(const name of Object.keys(COACH.LESSONS)){
       if(!e.plan||!e.plan.length){fail(name,'step without turns: '+JSON.stringify(e));break;}
       if(++n>MAX_STEPS){fail(name,'does not end in '+MAX_STEPS+' steps');break;}
       if(e.stage!=null){if(e.stage<lastStage)fail(name,'went back from stage '+lastStage+' to '+e.stage);lastStage=e.stage;}
-      stats.steps++;stats.kinds[e.kind]=(stats.kinds[e.kind]||0)+1;
+      stats.steps++;stats.kinds[e.kind]=(stats.kinds[e.kind]||0)+1;msgCheck(e.lesson||name,e.kind);
       shapeCheck(name,e.kind);
       const routes=[e.plan,...(e.alt||[])];
       if(e.alt&&e.alt.length)stats.withAlt++;
@@ -111,7 +115,7 @@ for(const name of Object.keys(COACH.LESSONS)){
       const k=rand(routes.length);if(k>0)stats.altUsed++;
       COACH.apply(routes[k]);current=e.id;
     }
-    if(CUBE.stage()<=L.stage)fail(name,'when finished, stage '+(L.stage+1)+' is not complete');
+    if(METHODS.stage(L.method)<=L.stage)fail(name,'when finished, stage '+(L.stage+1)+' is not complete');
   }
   console.log((errors?'✗':'✓')+' '+name+': '+N+' exercises, '+(stats.steps/N).toFixed(1)+' steps each; steps with alternative routes: '+stats.withAlt+', alternatives used: '+stats.altUsed+'; cases '+JSON.stringify(stats.kinds));
 }

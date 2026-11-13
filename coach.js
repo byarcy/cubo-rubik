@@ -1,9 +1,11 @@
 /* coach.js · The "teacher" of Practice mode: looks at the cube and says which piece is next and with which turns.
-   Logic only: it draws nothing and knows nothing about the interface. Uses CUBE (cube_logic.js) and ALGORITHMS (algorithms.js).
+   Logic only: it draws nothing and knows nothing about the interface. Uses CUBE (cube_logic.js), ALGORITHMS (algorithms.js)
+   and METHODS (methods.js: the stages of the layer-by-layer method and the order of its lessons).
    Everything is expressed in model faces (white = U, yellow = D); the interface translates it to how the cube looks.
    Exposes a single global object: COACH. */
 const COACH=(function(){
 const {key,FACE_OF,parseSeq}=CUBE;
+const LAYERS=METHODS.get('layers'),stage=()=>METHODS.stage('layers');
 // The four slots of the white layer, in the order you go through them by turning the cube around its vertical axis
 const CORNER_SLOTS=['1,1,1','-1,1,1','-1,1,-1','1,1,-1'];
 const ROT={R:'F',F:'L',L:'B',B:'R',U:'U',D:'D'};
@@ -20,10 +22,11 @@ const rand=n=>Math.floor(Math.random()*n);
 // algorithms: from any side, done once or twice, or with its first turns already done. [] if it isn't one.
 function groupStarts(plan){
   const txt=CUBE.seqText(plan);
-  for(const name in ALGORITHMS.layers){
-    const A=ALGORITHMS.layers[name],one=parseSeq(A.seq),sizes=A.groups||[one.length];
+  for(const [method,name] of [...Object.keys(ALGORITHMS.layers).map(n=>['layers',n]),...Object.keys(ALGORITHMS.cfop).map(n=>['cfop',n])]){
+    const A=ALGORITHMS[method][name],sizes=A.groups||[parseSeq(A.seq).length];
     for(let r=0;r<4;r++)for(let c=1;c<=2;c++){
-      const full=[];for(let i=0;i<c;i++)full.push(...rotateToSlot(one,r));
+      const one=method==='cfop'?cfopSeq(name,r):rotateToSlot(parseSeq(A.seq),r);
+      const full=[];for(let i=0;i<c;i++)full.push(...one);
       for(let j=0;j<full.length;j++){
         if(CUBE.seqText(full.slice(j))!==txt)continue;
         const starts=[];let pos=0;
@@ -92,7 +95,7 @@ function cornerCase(id){
 // Which corner is next. "current" (optional) is kept while it isn't solved, so the piece doesn't jump around.
 // Returns {broken:true} if the white cross isn't there, {done:true} if the layer is complete, or the case from cornerCase.
 function corners(current){
-  if(!CUBE.STAGES[0].ok())return {broken:true};
+  if(!LAYERS.stages[0].ok())return {broken:true};
   const missing=CORNER_SLOTS.filter(id=>!CUBE.pieceSolved(id));
   if(!missing.length)return {done:true};
   if(current&&missing.includes(current))return cornerCase(current);
@@ -243,15 +246,19 @@ function afterTurns(count){
 }
 const turnOf=k=>k===3?-1:k;
 
+// The yellow shape on top from the yellow edges that point up: only the center, an L or a line. The shape is where those
+// edges are now (not where they belong): two on opposite sides make a line.
+function crossShape(up){
+  const at=up.map(id=>CUBE.byId[id][0].p);
+  return up.length===0?'yCrossDot':up.length===2&&at[0][0]===-at[1][0]&&at[0][2]===-at[1][2]?'yCrossLine':'yCrossL';
+}
 // ---- 4 · Yellow cross: the four yellow edges pointing up (yellow side), in any place ----
 //   yCrossDot / yCrossL / yCrossLine · the shape on top before the algorithm (only the center / an L / a line)
 function yellowCross(){
   if(!MIDDLE_DONE())return {broken:true};
   const up=YELLOW_EDGES.filter(edgeUp);
   if(up.length===4)return {done:true};
-  // the shape is where those edges are now (not where they belong): two on opposite sides make a line
-  const at=up.map(id=>CUBE.byId[id][0].p);
-  const kind=up.length===0?'yCrossDot':up.length===2&&at[0][0]===-at[1][0]&&at[0][2]===-at[1][2]?'yCrossLine':'yCrossL';
+  const kind=crossShape(up);
   // the yellow shape on top is lit: the edges that point up and the yellow center
   return viaAlgorithm(kind,shortest('yellowCross',()=>YELLOW_EDGES.every(edgeUp),3),{focus:[...up,'0,-1,0']});
 }
@@ -347,10 +354,10 @@ function solveWith(step){
   for(let i=0;i<40;i++){const e=step();if(!e.plan)return !!e.done;apply(e.plan);}
   return false;
 }
-function generateLastLayer(stage,before){
+function generateLastLayer(want,before){
   for(let attempt=0;attempt<60;attempt++){
     scrambleLastLayer();
-    if(before.every(solveWith)&&CUBE.stage()===stage)return true;
+    if(before.every(solveWith)&&stage()===want)return true;
   }
   return false;
 }
@@ -358,7 +365,7 @@ function generateLastLayer(stage,before){
 // ================= Full solve =================
 // A normal scramble, solved stage by stage with the seven lessons: the coach looks at which stage the cube is at and
 // asks that lesson for the step. The interface only shows it when you ask for a hint.
-const METHOD=['cross','corners','secondLayer','yellowCross','yellowEdges','yellowCornersPlace','yellowCornersTurn'];
+const METHOD=LAYERS.lessons;
 // In the middle of the last step the first layers look messed up on purpose: it is still the last step if undoing the
 // twists (and turning the yellow layer) leaves every corner in place
 function inLastStep(){
@@ -366,13 +373,13 @@ function inLastStep(){
   if(m<0)return false;
   return CUBE.withSnapshot(()=>{
     for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));
-    return afterTurns(()=>CUBE.stage()>=6?1:0).some(Boolean);
+    return afterTurns(()=>stage()>=6?1:0).some(Boolean);
   });
 }
 // The stage the cube is at (0 to 6), or 7 when it is solved
 function solveStage(){
   if(CUBE.isSolved())return 7;
-  return inLastStep()?6:CUBE.stage();
+  return inLastStep()?6:stage();
 }
 // The step of the lesson of that stage, plus: stage, lesson (which lesson it comes from) and yellowUp (how to show it)
 function solve(current){
@@ -451,6 +458,77 @@ function generateQuiz(){
   return false;
 }
 
+// ================= CFOP · the last layer in two looks =================
+// The algorithms of ALGORITHMS.cfop are written as the guides write them, with yellow on top: OVER turns them to model
+// faces (the cube turned over: R↔L, U↔D) and SIDE tries them from the four sides (R→F→L→B, as rotateToSlot). Both
+// tables cover every turn of CUBE.TURNS (a middle layer or the whole cube may change direction), although the
+// algorithms used today only turn faces, so that every one can be made by dragging a face.
+const OVER={R:['L',1],L:['R',1],U:['D',1],D:['U',1],F:['F',1],B:['B',1],r:['l',1],l:['r',1],u:['d',1],d:['u',1],f:['f',1],b:['b',1],
+  Rw:['Lw',1],Lw:['Rw',1],Uw:['Dw',1],Dw:['Uw',1],Fw:['Fw',1],Bw:['Bw',1],M:['M',-1],E:['E',-1],S:['S',1],x:['x',-1],y:['y',-1],z:['z',1]};
+const SIDE={R:['F',1],F:['L',1],L:['B',1],B:['R',1],U:['U',1],D:['D',1],r:['f',1],f:['l',1],l:['b',1],b:['r',1],u:['u',1],d:['d',1],
+  Rw:['Fw',1],Fw:['Lw',1],Lw:['Bw',1],Bw:['Rw',1],Uw:['Uw',1],Dw:['Dw',1],M:['S',-1],S:['M',1],E:['E',1],x:['z',1],z:['x',-1],y:['y',1]};
+const remap=(T,seq)=>seq.map(m=>{const [f,k]=T[m.f];return {f,n:m.n===2?2:m.n*k};});
+// A CFOP algorithm in model faces, from side k (0 to 3)
+function cfopSeq(name,k=0){let q=remap(OVER,parseSeq(ALGORITHMS.cfop[name].seq));for(let i=0;i<k;i++)q=remap(SIDE,q);return q;}
+// Any algorithm of a method in model faces, as written (for Help · Algorithms)
+const modelSeq=(method,name)=>method==='cfop'?cfopSeq(name):algoSeq(name,0);
+const cfopStage=()=>METHODS.stage('cfop');
+// The routes that start a shortest solution of «goal» with these algorithms (each from the four sides), looking up to
+// «depth» algorithms ahead; each route says which algorithm it is (name)
+function shortestOf(names,goal,depth){
+  const routes=names.flatMap(name=>[0,1,2,3].map(k=>({name,seq:cfopSeq(name,k)})));
+  const reach=(q,d)=>CUBE.withSnapshot(()=>{apply(q.seq);return d===1?goal():routes.some(q2=>reach(q2,d-1));});
+  for(let d=1;d<=depth;d++){const f=routes.filter(q=>reach(q,d));if(f.length)return f;}
+  return [];
+}
+// The step: the first route is the plan, the others are equivalent routes; the case is the algorithm, unless given
+const viaRoutes=(kind,routes,extra)=>routes.length?Object.assign({kind:kind||routes[0].name,plan:routes[0].seq,cost:0,alt:routes.slice(1).map(q=>q.seq)},extra):{broken:true};
+const OLL_CORNERS=['sune','antisune','ollH','pi','headlights','ollT','bowtie'];
+const yellowFace=()=>YELLOW_EDGES.every(edgeUp)&&YELLOW_CORNERS.every(yellowDown);
+const llCornersIn=()=>YELLOW_CORNERS.every(CUBE.pieceSolved);
+// a turn of the yellow layer that makes «goal» true (1, 2 or -1), or 0 if none does
+const turnFor=goal=>{const k=afterTurns(()=>goal()?1:0).findIndex((v,i)=>i>0&&v);return k<0?0:turnOf(k);};
+
+// ---- OLL 1 · The yellow cross with two algorithms: the line and the L each in one go (only the center: both) ----
+function ollEdges(){
+  if(!MIDDLE_DONE())return {broken:true};
+  const up=YELLOW_EDGES.filter(edgeUp);
+  if(up.length===4)return {done:true};
+  return viaRoutes(crossShape(up),shortestOf(['ollLine','ollL'],()=>YELLOW_EDGES.every(edgeUp),2),{focus:[...up,'0,-1,0']});
+}
+// ---- OLL 2 · The yellow face: one of seven algorithms, chosen by where the yellow of the corners points ----
+function ollCorners(){
+  if(!MIDDLE_DONE()||!YELLOW_EDGES.every(edgeUp))return {broken:true};
+  if(yellowFace())return {done:true};
+  return viaRoutes(null,shortestOf(OLL_CORNERS,yellowFace,1),{focus:yellowLayer()});
+}
+// ---- PLL 1 · The corners in their places: two neighbors swapped (T perm) or two on a diagonal (Y perm) ----
+//   align · the corners are right among themselves: a turn of the yellow layer puts them in place
+function pllCorners(){
+  if(!MIDDLE_DONE()||!yellowFace())return {broken:true};
+  if(llCornersIn())return {done:true};
+  const n=turnFor(llCornersIn);
+  if(n)return {kind:'align',plan:[{f:'D',n}],cost:0,alt:alignD(n),focus:YELLOW_CORNERS};
+  return viaRoutes(null,shortestOf(['tPerm','yPerm'],()=>llCornersIn()||!!turnFor(llCornersIn),1),{focus:YELLOW_CORNERS});
+}
+// ---- PLL 2 · The edges: three around (U perm, one way or the other) or two pairs swapped (H perm, Z perm) ----
+function pllEdges(){
+  if(!MIDDLE_DONE()||!yellowFace()||!llCornersIn())return {broken:true};
+  if(CUBE.isSolved())return {done:true};
+  return viaRoutes(null,shortestOf(['ua','ub','hPerm','zPerm'],()=>CUBE.isSolved(),1),{focus:YELLOW_EDGES.filter(CUBE.pieceSolved)});
+}
+// Exercises: a solved cube, the last layer scrambled with these algorithms, and the earlier steps solved by the coach
+function generateCfop(want,before){
+  const all=Object.keys(ALGORITHMS.cfop);
+  for(let attempt=0;attempt<80;attempt++){
+    CUBE.resetLogic();
+    for(let i=0;i<14;i++){apply(cfopSeq(all[rand(all.length)],rand(4)));apply([{f:'D',n:[1,-1,2][rand(3)]}]);}
+    if(before.every(solveWith)&&cfopStage()===want)return true;
+  }
+  return false;
+}
+const F2L_PIECES=()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES];
+
 // Lessons of Practice mode. step(current) says which piece is next, with which turns and which equivalent routes exist;
 // generate() prepares an exercise. To add a lesson: add it here and run tests/lessons.test.js.
 // pieces: the ones the lesson places; once one is placed, no step may take it out of its place again
@@ -475,9 +553,15 @@ const LESSONS={
   // the whole cube: the stages get done and undone along the way, so no piece is required to stay
   solve:{stage:0,step:solve,generate:generateCross,pieces:()=>[],maxSteps:200},
   repeat:{stage:0,step:repeatStep,generate:generateRepeat,pieces:()=>[],loop:true},
-  recognize:{stage:0,step:()=>quizCase||{},generate:generateQuiz,pieces:()=>[],quiz:true}
+  recognize:{stage:0,step:()=>quizCase||{},generate:generateQuiz,pieces:()=>[],quiz:true},
+  // CFOP (method: which one they belong to; the stages are those of methods.js)
+  ollEdges:{method:'cfop',stage:2,step:ollEdges,generate:()=>generateCfop(2,[]),yellowUp:true,pieces:F2L_PIECES},
+  ollCorners:{method:'cfop',stage:3,step:ollCorners,generate:()=>generateCfop(3,[ollEdges]),yellowUp:true,pieces:F2L_PIECES},
+  pllCorners:{method:'cfop',stage:4,step:pllCorners,generate:()=>generateCfop(4,[ollEdges,ollCorners]),yellowUp:true,pieces:F2L_PIECES},
+  pllEdges:{method:'cfop',stage:5,step:pllEdges,generate:()=>generateCfop(5,[ollEdges,ollCorners,pllCorners]),yellowUp:true,
+    pieces:()=>[...F2L_PIECES(),...YELLOW_CORNERS]}
 };
 
-return {METHOD,solveStage,orderOf,groupStarts,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
+return {METHOD,solveStage,orderOf,groupStarts,modelSeq,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
   yellowCross,yellowEdges,yellowCornersPlace,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

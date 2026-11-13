@@ -94,6 +94,9 @@ function use(code,save){
 const onChange=f=>listeners.push(f);
 const list=()=>Object.keys(names).map(code=>({code,name:names[code]}));
 
-return {init,use,t,html,escape,apply,detect,list,onChange,REFERENCE,FALLBACK,
+// Whether a key exists (in the current language or in English)
+const has=key=>lookup(key)!=null;
+
+return {init,use,t,html,escape,apply,detect,list,onChange,has,REFERENCE,FALLBACK,
   language:()=>current,isReady:()=>ready,strings:code=>tables[code]||null};
 })();
