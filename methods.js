@@ -56,7 +56,7 @@ const layers={
 // ================= CFOP for beginners =================
 // Cross, the first two layers (F2L), and the last layer in two looks: OLL in two steps (the yellow cross, then the yellow
 // face) and PLL in two steps (the corners, then the edges). Held as the guides hold it: the cross at the bottom, yellow
-// on top. For now it has the four last-layer lessons; the cross and F2L will come with a coach that searches for them.
+// on top. The cross and F2L have no recipe: the coach finds the shortest way (search.js).
 const yellowUp=id=>CUBE.byId[id].some(k=>k.hn[1]===-1&&facesHome(k));
 const cfop={
   id:'cfop',
@@ -70,7 +70,7 @@ const cfop={
     {id:'llCorners',ok:()=>piecesOf(-1,3).every(pieceSolved)},
     {id:'llEdges',ok:()=>piecesOf(-1,2).every(pieceSolved)}
   ],
-  lessons:['ollEdges','ollCorners','pllCorners','pllEdges'],
+  lessons:['cfopCross','f2l','ollEdges','ollCorners','pllCorners','pllEdges'],
   more:[],
   sheet:[
     {stage:2,algs:['ollLine','ollL'],yellowUp:true,keep:(k,top)=>top&&k.c==='D'&&nz(k.p)<3},
@@ -80,6 +80,8 @@ const cfop={
     {stage:5,algs:['ua','ub','hPerm','zPerm'],yellowUp:true,keep:()=>true}
   ],
   pictures:{
+    cfopCross:{view:VIEW.white,keep:k=>nz(k.p)<3},
+    f2l:{view:VIEW.front,keep:k=>k.p[1]>=0},
     ollEdges:{view:VIEW.yellow,keep:(k,top)=>top&&k.c==='D'&&nz(k.p)<3},
     ollCorners:{view:VIEW.yellow,keep:(k,top)=>top&&k.c==='D'},
     pllCorners:{view:VIEW.yellow,keep:(k,top)=>top?k.c==='D':nz(k.p)===3},

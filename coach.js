@@ -1,6 +1,7 @@
 /* coach.js · The "teacher" of Practice mode: looks at the cube and says which piece is next and with which turns.
    Logic only: it draws nothing and knows nothing about the interface. Uses CUBE (cube_logic.js), ALGORITHMS (algorithms.js)
-   and METHODS (methods.js: the stages of the layer-by-layer method and the order of its lessons).
+   METHODS (methods.js: the stages of each method and the order of its lessons) and SEARCH (search.js: the shortest
+   ways for the CFOP cross and F2L pairs).
    Everything is expressed in model faces (white = U, yellow = D); the interface translates it to how the cube looks.
    Exposes a single global object: COACH. */
 const COACH=(function(){
@@ -529,6 +530,40 @@ function generateCfop(want,before){
 }
 const F2L_PIECES=()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES];
 
+// ================= CFOP · the cross and F2L =================
+// No recipe: SEARCH finds the shortest way. The cross is made all at once, at the bottom (white down, yellow on top), in
+// the fewest turns (8 or fewer always do); F2L, one corner-and-edge pair at a time, the one that goes in with the fewest
+// turns without breaking the cross or the pairs already in.
+function cfopCross(){
+  const routes=SEARCH.crossRoutes();
+  if(!routes.length)return {done:true};
+  return {kind:'crossPlan',plan:routes[0],alt:routes.slice(1),cost:0,focus:[...CROSS_EDGES,'0,1,0']};
+}
+function f2lStep(){
+  if(SEARCH.crossDistance()!==0)return {broken:true};
+  const next=SEARCH.f2lNext();
+  if(!next)return {done:true};
+  const [corner,edge]=SEARCH.PAIRS[next.slot];
+  // the corner is the piece (its slot is framed); its edge is lit with it
+  return {id:corner,kind:'f2lPair',plan:next.route,alt:[],cost:0,focus:[edge]};
+}
+// Exercises: a scrambled cube (the cross takes at least 3 turns), or one with the cross already made
+function generateCfopCross(){
+  for(let attempt=0;attempt<50;attempt++){
+    CUBE.resetLogic();apply(CUBE.genScramble(25));
+    if(SEARCH.crossDistance()>=3&&cfopStage()===0)return true;
+  }
+  return false;
+}
+function generateF2L(){
+  for(let attempt=0;attempt<50;attempt++){
+    CUBE.resetLogic();apply(CUBE.genScramble(25));
+    const r=SEARCH.crossRoutes();if(r.length)apply(r[0]);
+    if(cfopStage()===1)return true;
+  }
+  return false;
+}
+
 // Lessons of Practice mode. step(current) says which piece is next, with which turns and which equivalent routes exist;
 // generate() prepares an exercise. To add a lesson: add it here and run tests/lessons.test.js.
 // pieces: the ones the lesson places; once one is placed, no step may take it out of its place again
@@ -555,6 +590,10 @@ const LESSONS={
   repeat:{stage:0,step:repeatStep,generate:generateRepeat,pieces:()=>[],loop:true},
   recognize:{stage:0,step:()=>quizCase||{},generate:generateQuiz,pieces:()=>[],quiz:true},
   // CFOP (method: which one they belong to; the stages are those of methods.js)
+  cfopCross:{method:'cfop',stage:0,step:cfopCross,generate:generateCfopCross,yellowUp:true,pieces:()=>CROSS_EDGES},
+  // in F2L a lone corner or edge may move on the way: what must stay is the cross and every complete pair
+  f2l:{method:'cfop',stage:1,step:f2lStep,generate:generateF2L,yellowUp:true,
+    pieces:()=>[...CROSS_EDGES,...SEARCH.PAIRS.filter(p=>p.every(CUBE.pieceSolved)).flat()]},
   ollEdges:{method:'cfop',stage:2,step:ollEdges,generate:()=>generateCfop(2,[]),yellowUp:true,pieces:F2L_PIECES},
   ollCorners:{method:'cfop',stage:3,step:ollCorners,generate:()=>generateCfop(3,[ollEdges]),yellowUp:true,pieces:F2L_PIECES},
   pllCorners:{method:'cfop',stage:4,step:pllCorners,generate:()=>generateCfop(4,[ollEdges,ollCorners]),yellowUp:true,pieces:F2L_PIECES},

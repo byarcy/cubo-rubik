@@ -24,11 +24,13 @@ The condition to start is met: the seven lessons of the layer-by-layer method ar
 
 Plan, in this order (each phase leaves the app working). Next:
 
-- **Phase 3a · CFOP last layer in two looks (done, not published yet).** A method selector in the lesson list (Layer by layer · CFOP); `ALGORITHMS.cfop` has 15 face-only algorithms written as the guides write them (verified by simulation; the Z perm needs a final U2); the `cfop` method in `methods.js` (6 stages, its sheet and pictures); four lessons in `coach.js` (OLL cross with 2 algorithms, OLL face with 7, PLL corners with the T and Y perms, PLL edges with the U, H and Z perms), each passing 300 exercises with every case; Help · Algorithms shows each method's sheet. Still layer-only: Full solve, Repeat and Recognize.
-- [ ] **Phase 3b · CFOP cross and F2L.** The cross (in 8 turns or fewer) and the F2L pairs, so CFOP has all its six lessons; then Full solve, Repeat and Recognize for CFOP. Needs:
-  - a coach that searches for the intuitive steps (the cross in 8 turns or fewer, the F2L pairs): a small solver with a table of distances, built when the app opens (for the cross, about 190 000 positions);
-  - for Recognize: case recognition by pattern (the same case from any side and any top-layer turn);
-  - lighting only the stickers that matter (OLL);
+- **Phase 3a · CFOP last layer in two looks (done, v0.43).** A method selector in the lesson list (Layer by layer · CFOP); `ALGORITHMS.cfop` has 15 face-only algorithms written as the guides write them (verified by simulation; the Z perm needs a final U2); the `cfop` method in `methods.js` (6 stages, its sheet and pictures); four lessons in `coach.js` (OLL cross with 2 algorithms, OLL face with 7, PLL corners with the T and Y perms, PLL edges with the U, H and Z perms), each passing 300 exercises with every case; Help · Algorithms shows each method's sheet. Still layer-only: Full solve, Repeat and Recognize.
+- **Phase 3b · CFOP cross and F2L (done, v0.44).** `search.js` finds the shortest ways for the intuitive steps: it only follows the pieces that matter, with tables of distances (the cross table is built the first time, in about 0.2 s; an F2L pair takes about 5 ms). Lesson **1 · Cross** gives the whole cross at the bottom in the fewest turns (4 to 7 in practice, never more than 8); lesson **2 · F2L** puts in, each time, the pair that goes in with the fewest turns (3 to 8) without breaking the cross or the pairs already in. CFOP now has its six lessons.
+- [ ] **Phase 3c · Full solve, Repeat and Recognize for CFOP.** Today they only exist for the layer-by-layer method (`METHOD`, `REPEAT` and `QUIZ` in the coach). Needs:
+  - Full solve: the six CFOP lessons in a row, with hints, as the layer-by-layer one;
+  - Repeat: the OLL and PLL algorithms (each comes back after its number of repetitions);
+  - Recognize: the OLL and PLL cases, by pattern (the same case from any side and any top-layer turn);
+  - lighting only the stickers that matter (OLL).
 - [ ] **Phase 4 · ZZ and Roux.** ZZ needs a new idea, edge orientation (good and bad edges); Roux needs `M` and blocks (two 1×2×3 blocks, then the corners, then only `M` and `U`). Full CFOP (57 OLL, 21 PLL, 41 F2L cases) can come after, with filters in the sheet.
 
 `ALGORITHMS.roux` and `zz` are empty, waiting for phase 4.

@@ -13,7 +13,7 @@
    Quiz lessons (recognize the case): the answer is one of the options and the case is really on the cube. */
 const fs=require('fs'),path=require('path');
 const dir=path.join(__dirname,'..');
-const src=['cube_logic.js','algorithms.js','methods.js','coach.js'].map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
+const src=['cube_logic.js','algorithms.js','methods.js','search.js','coach.js'].map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
 const {CUBE,COACH,ALGORITHMS,METHODS}=new Function(src+';return {CUBE,COACH,ALGORITHMS,METHODS};')();
 // Every case of every lesson has its message: "msg.<lesson>.<case>" in the reference language (the panel looks it up so)
 const EN=JSON.parse(fs.readFileSync(path.join(dir,'locales','en.json'),'utf8'));

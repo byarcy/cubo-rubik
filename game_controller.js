@@ -482,7 +482,7 @@ function practiceVisuals(on){
   // one piece, plus the center it goes to (cross) or the center it has to match (second layer);
   // in the last layer, a group of pieces (the yellow shape, the edges or corners already in place)
   const extra=!h||!practice.target?null:stepLesson()==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
-  setFocus(!focus?null:practice.target?practice.target+(extra?'|'+extra:''):group?group.join('|'):null);
+  setFocus(!focus?null:practice.target?[practice.target,extra,...(group||[])].filter(Boolean).join('|'):group?group.join('|'):null);
   frames.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
     const show=!!h&&h[a]!==0;
@@ -578,7 +578,7 @@ function practiceRender(){
   const center=sts&&sts.find(s=>s.c!=='U'),faceCode=practice.face||(center&&center.c);
   const face=faceCode?'<b>'+esc(tr('color.'+faceCode))+'</b>':'';
   const sub=stepLesson();
-  const piece=trh(sub==='corners'?'piece.corner':'piece.edge',{colors});
+  const piece=trh(sts&&sts.length===3?'piece.corner':'piece.edge',{colors});
   const layer=esc(tr('layer.'+L.D)),dir=esc(tr('dir.'+L.D));
   const info=practice.info,algName=info?'<b>'+esc(tr('alg.'+info.alg))+'</b>':'';
   if(practice.finished)msg=solving?(practice.hints?trh('lesson.solve.complete',{n:practice.hints}):trh('lesson.solve.completeClean'))
