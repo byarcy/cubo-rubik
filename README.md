@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.34.1-ff2e97)
+![version](https://img.shields.io/badge/version-0.35-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -27,7 +27,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 <p align="center"><sub>Challenge with a timer · Guided practice, stage by stage</sub></p>
 
 > **Since version 0.30 the app is rewritten from scratch**, and since 0.34 the whole project (code, comments, file
-> names and documentation) is in English, with the texts of the interface in separate language files. Practice mode
+> names and documentation) is in English, with the texts of the interface in plain translation files (`locales/`). Practice mode
 > has two lessons so far (the white layer); the rest are on the way (see [TODO.md](TODO.md)). The previous version
 > is kept in the `v0.21` tag.
 
@@ -63,7 +63,7 @@ To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 | 7 | Yellow corners oriented | Coming |
 
 ### 🌍 Languages
-English and Spanish for now. The app picks the language of your browser (English if it doesn't have yours) and you can change it in **Help**. Adding a language is just adding a text file: see [Adding a language](#adding-a-language).
+English and Spanish for now. The app picks the language of your browser (English if it doesn't have yours) and you can change it in **Help**. Adding a language is just adding a translation file: see [Adding a language](#adding-a-language).
 
 ### 🧊 2×2 cube
 A button next to the title switches between 3×3 and 2×2 in Challenge. Each size keeps its own cube, time and record. Practice uses the 3×3.
@@ -93,22 +93,23 @@ It works in the browser and it can also be **installed as an app**. Once install
 - **Own 3D engine** on WebGL, which only draws when something moves, to save battery.
 - **Logic separated from drawing:** the cube state and the coach don't know the interface, so they can be tested on their own.
 - **Generated exercises:** the coach starts from a solved cube, scrambles what the lesson doesn't use and takes the pieces you will practice out of place. That way every exercise has a solution.
-- **Texts apart from code:** the interface never contains literal text; everything comes from `i18n/` by key.
+- **Texts apart from code:** the interface never contains literal text; everything comes from `locales/` by key. The translations are plain JSON (data, never code) and may only use `<b>` and `<small>`: anything else is escaped, so a translation can't inject anything into the page.
 - **PWA:** `manifest.webmanifest` and a *service worker* (`sw.js`) that keeps the app for use without internet.
 
 ### Repository contents
 
 | File | What it is |
 | --- | --- |
-| `index.html` | The page: structure (its texts come from `i18n/`) |
+| `index.html` | The page: structure (its texts come from `locales/`) |
 | `styles.css` | Visual design |
 | `graphics_engine.js` | 3D engine (WebGL), scene, lights and animation of the layers |
 | `cube_logic.js` | Cube state, turns, notation and the stage detector |
 | `algorithms.js` | Sequences of each method, in standard notation |
 | `coach.js` | The "teacher" of Practice: recognizes the case, offers equivalent routes and prepares exercises |
 | `game_controller.js` | Input (finger, buttons), Challenge, Practice, saving and main loop |
-| `i18n/i18n.js` | Language module: looks up texts by key, plurals, language detection |
-| `i18n/en.js`, `i18n/es.js` | The texts of each language (one file per language) |
+| `i18n.js` | Language module: loads the translations, looks up texts by key, plurals, escaping, language detection |
+| `locales/languages.json` | The list of available languages |
+| `locales/en.json`, `locales/es.json` | The texts of each language (one plain JSON file per language) |
 | `sw.js` | Service worker: keeps the app for offline use |
 | `manifest.webmanifest` | Data to install it as an app |
 | `orbitron.woff` | Font of the titles |
@@ -120,7 +121,7 @@ It works in the browser and it can also be **installed as an app**. Once install
 
 ### Running it on your computer
 
-The app opens straight from `index.html`. To also try the installation and offline use you need a local server; with Python installed:
+The app loads its texts with `fetch`, so it needs to be served by a web server (opening `index.html` as a file doesn't work). With Python installed:
 
 ```bash
 python -m http.server 8123
@@ -135,13 +136,15 @@ node tests/lessons.test.js
 node tests/i18n.test.js
 ```
 
-The first one goes through every lesson that exists, so it also works for the ones that get added. The second one goes through every language file in `i18n/`.
+The first one goes through every lesson that exists, so it also works for the ones that get added. The second one goes through every language in `locales/` and also checks that translations can't inject markup.
 
 ### Adding a language
 
-1. Copy `i18n/en.js` to `i18n/xx.js` (`xx` = language code, for example `pt` or `fr`), change the code and the name at the top, and translate the texts. Keep the `{parameters}` as they are; plurals have the forms of the language (`one`, `other`…).
-2. Add `<script src="i18n/xx.js"></script>` in `index.html` and `'./i18n/xx.js'` in the `FILES` list of `sw.js`.
-3. Run `node tests/i18n.test.js`: it tells you if any key or parameter is missing.
+1. Copy `locales/en.json` to `locales/xx.json` (`xx` = language code, for example `pt` or `fr`) and translate the texts. Keep the keys and the `{parameters}` as they are; plurals have the forms of the language (`one`, `few`, `other`…); only `<b>` and `<small>` are allowed.
+2. Add `"xx": "Name of the language"` to `locales/languages.json` and `'./locales/xx.json'` to the `FILES` list of `sw.js`.
+3. Run `node tests/i18n.test.js`: it tells you if any key, parameter or file is missing.
+
+A translation is a plain data file: no programming is needed, and it can never run code in the app.
 
 ### Publishing a new version
 

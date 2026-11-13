@@ -27,10 +27,11 @@ Do it **when the 7 lessons of the layer-by-layer method are done**, not before: 
 
 ## Languages
 
-Done in v0.34: English is the main language and Spanish is the first translation. Texts live in `i18n/` (one file per language), the language is detected from the browser (English if there is no match) and can be changed in Help; `node tests/i18n.test.js` checks that every language is complete.
+Done: English is the main language and Spanish is the first translation (v0.34). Since v0.35 the translations are plain JSON files in `locales/` (data only, only `<b>` and `<small>` allowed), the language is detected from the browser (English if there is no match) and can be changed in Help; `node tests/i18n.test.js` checks that every language is complete and safe.
 
-- [ ] Portuguese (`i18n/pt.js`) and French (`i18n/fr.js`): translate, then have a native speaker review them before publishing. French needs care with gender agreement in the piece names (arête, coin).
-- [ ] More languages whenever someone wants to add one (see the top of `i18n/i18n.js`: copy `en.js`, translate, add it to `index.html` and `sw.js`).
+- [ ] Portuguese (`locales/pt.json`) and French (`locales/fr.json`): translate, then have a native speaker review them before publishing. French needs care with gender agreement in the piece names (arête, coin).
+- [ ] More languages whenever someone wants to add one (README, "Adding a language": copy `en.json`, translate, list it in `languages.json` and `sw.js`).
+- [ ] Languages with other scripts: the title font (Orbitron) only has Latin letters, so titles fall back to another font; right-to-left languages (Arabic, Hebrew) would need `dir="rtl"` and layout checks.
 - [ ] README: the English one is the main one; add `README.pt.md` and `README.fr.md` together with those languages.
 - [ ] The installed-app name and description (`manifest.webmanifest`) are static, so they stay in English.
 

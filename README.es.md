@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.34.1-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.35-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -27,7 +27,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 <p align="center"><sub>Reto con temporizador · Práctica guiada, etapa por etapa (capturas en inglés)</sub></p>
 
 > **Desde la versión 0.30 la app está reescrita desde cero**, y desde la 0.34 todo el proyecto (código, comentarios,
-> nombres de archivos y documentación) está en inglés, con los textos de la interfaz en archivos de idioma aparte.
+> nombres de archivos y documentación) está en inglés, con los textos de la interfaz en archivos de traducción planos (`locales/`).
 > El modo Práctica trae por ahora dos lecciones (la capa blanca); las demás están en camino (ver
 > [TODO.md](TODO.md), en inglés). La versión anterior quedó guardada en la etiqueta `v0.21`.
 
@@ -63,7 +63,7 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 | 7 | Esquinas amarillas giradas | En construcción |
 
 ### 🌍 Idiomas
-Por ahora, inglés y español. La app toma el idioma de tu navegador (inglés si no tiene el tuyo) y lo puedes cambiar en **Ayuda**. Agregar un idioma es agregar un archivo de textos: ver [Agregar un idioma](#agregar-un-idioma).
+Por ahora, inglés y español. La app toma el idioma de tu navegador (inglés si no tiene el tuyo) y lo puedes cambiar en **Ayuda**. Agregar un idioma es agregar un archivo de traducción: ver [Agregar un idioma](#agregar-un-idioma).
 
 ### 🧊 Cubo 2×2
 Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño guarda su propio cubo, tiempo y récord. La Práctica usa el 3×3.
@@ -93,22 +93,23 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 - **Motor 3D propio** sobre WebGL, que dibuja solo cuando algo se mueve, para cuidar la batería.
 - **Lógica separada del dibujo:** el estado del cubo y el entrenador no conocen la interfaz, así que se pueden probar solos.
 - **Ejercicios generados:** el entrenador parte de un cubo armado, revuelve lo que la lección no usa y saca de sitio las piezas que vas a practicar. Así todos los ejercicios tienen solución.
-- **Textos aparte del código:** la interfaz nunca lleva texto escrito; todo sale de `i18n/` por clave.
+- **Textos aparte del código:** la interfaz nunca lleva texto escrito; todo sale de `locales/` por clave. Las traducciones son JSON planos (datos, nunca código) y solo pueden usar `<b>` y `<small>`: lo demás se escapa, así que una traducción no puede meter nada en la página.
 - **PWA:** `manifest.webmanifest` y un *service worker* (`sw.js`) que guarda la app para usarla sin internet.
 
 ### Contenido del repositorio
 
 | Archivo | Qué es |
 | --- | --- |
-| `index.html` | La página: estructura (sus textos salen de `i18n/`) |
+| `index.html` | La página: estructura (sus textos salen de `locales/`) |
 | `styles.css` | Diseño visual |
 | `graphics_engine.js` | Motor 3D (WebGL), escena, luces y animación de las capas |
 | `cube_logic.js` | Estado del cubo, giros, notación y detector de etapas |
 | `algorithms.js` | Secuencias de cada método, en notación estándar |
 | `coach.js` | El «profe» de la Práctica: reconoce el caso, ofrece rutas equivalentes y prepara los ejercicios |
 | `game_controller.js` | Entrada (dedo, botones), Reto, Práctica, guardado y bucle principal |
-| `i18n/i18n.js` | Módulo de idiomas: busca los textos por clave, plurales, detección del idioma |
-| `i18n/en.js`, `i18n/es.js` | Los textos de cada idioma (un archivo por idioma) |
+| `i18n.js` | Módulo de idiomas: carga las traducciones, busca los textos por clave, plurales, escape, detección del idioma |
+| `locales/languages.json` | La lista de idiomas disponibles |
+| `locales/en.json`, `locales/es.json` | Los textos de cada idioma (un JSON plano por idioma) |
 | `sw.js` | Service worker: guarda la app para usarla sin conexión |
 | `manifest.webmanifest` | Datos para instalarla como app |
 | `orbitron.woff` | Fuente de los títulos |
@@ -120,7 +121,7 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 
 ### Probarla en tu computadora
 
-La app abre directamente desde `index.html`. Para probar también la instalación y el uso sin conexión hace falta un servidor local; con Python instalado:
+La app carga sus textos con `fetch`, así que necesita un servidor web (abrir `index.html` como archivo no funciona). Con Python instalado:
 
 ```bash
 python -m http.server 8123
@@ -135,13 +136,15 @@ node tests/lessons.test.js
 node tests/i18n.test.js
 ```
 
-La primera recorre todas las lecciones que existan, así que sirve también para las que se agreguen. La segunda recorre todos los archivos de idioma de `i18n/`.
+La primera recorre todas las lecciones que existan, así que sirve también para las que se agreguen. La segunda recorre todos los idiomas de `locales/` y además comprueba que una traducción no pueda meter código en la página.
 
 ### Agregar un idioma
 
-1. Copia `i18n/en.js` a `i18n/xx.js` (`xx` = código del idioma, por ejemplo `pt` o `fr`), cambia el código y el nombre del principio, y traduce los textos. Deja los `{parámetros}` tal cual; los plurales llevan las formas del idioma (`one`, `other`…).
-2. Agrega `<script src="i18n/xx.js"></script>` en `index.html` y `'./i18n/xx.js'` en la lista `FILES` de `sw.js`.
-3. Corre `node tests/i18n.test.js`: te avisa si falta alguna clave o parámetro.
+1. Copia `locales/en.json` a `locales/xx.json` (`xx` = código del idioma, por ejemplo `pt` o `fr`) y traduce los textos. Deja las claves y los `{parámetros}` tal cual; los plurales llevan las formas del idioma (`one`, `few`, `other`…); solo se permiten `<b>` y `<small>`.
+2. Agrega `"xx": "Nombre del idioma"` en `locales/languages.json` y `'./locales/xx.json'` en la lista `FILES` de `sw.js`.
+3. Corre `node tests/i18n.test.js`: te avisa si falta alguna clave, parámetro o archivo.
+
+Una traducción es un archivo de datos: no hace falta programar y nunca puede ejecutar código en la app.
 
 ### Publicar una versión nueva
 

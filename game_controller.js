@@ -8,16 +8,23 @@ const DEBUG_FLAG=false;
 
 (function(){
 const $=id=>document.getElementById(id);
-// Texts: everything the user sees comes from i18n/*.js by key (tr). The language is chosen before anything is drawn.
-const tr=I18N.t;
-I18N.use(I18N.detect());
-// Shows any error on screen, so it can be reported
+// Shows any error on screen, so it can be reported. It is set up before anything else, so it also works
+// when the translations can't be loaded (then it uses the module's fallback text, in English).
 function showErr(msg){
   let b=document.getElementById('errbar');
   if(!b){b=document.createElement('div');b.id='errbar';b.setAttribute('role','alert');document.body.appendChild(b);}
   b.textContent=msg;
 }
-window.addEventListener('error',e=>showErr(tr('err.generic',{msg:e.message||tr('err.unknown')})));
+window.addEventListener('error',e=>{
+  const msg=e.message||'?';
+  showErr(I18N.isReady()?I18N.t('err.generic',{msg}):I18N.FALLBACK.generic.replace('{msg}',msg));
+});
+// Texts: everything the user sees comes from locales/*.json by key. tr = plain text; trh = markup for innerHTML
+// (only <b> and <small> survive); esc = escapes a translated piece before putting it inside trh's parameters.
+const tr=I18N.t,trh=I18N.html,esc=I18N.escape;
+// Nothing is drawn until the texts are loaded
+I18N.init().then(start,()=>showErr(I18N.FALLBACK.load));
+function start(){
 {const t=document.createElement('canvas');if(!(t.getContext('webgl')||t.getContext('experimental-webgl'))){
   showErr(tr('err.webgl'));
   return;
@@ -154,7 +161,7 @@ function afterMoves(){
 // Message when the cube is completed: neon text and a ring of light
 function celebrate(sub){
   const m=$('solvedMsg'),r=$('solvedRing');
-  m.innerHTML=tr('celebrate.well')+(sub?'<small></small>':'');if(sub)m.querySelector('small').textContent=sub;
+  m.innerHTML=trh('celebrate.well')+(sub?'<small></small>':'');if(sub)m.querySelector('small').textContent=sub;
   [m,r].forEach(el=>{el.classList.remove('go');void el.offsetWidth;el.classList.add('go');});
   ensureAudio();
 }
@@ -188,7 +195,8 @@ function setMode(m){
 // target: piece to move · plan: turns of this step · i: how many you have done · wrong: extra turns that must be undone
 const practice={lesson:'cross',level:1,completed:{cross:0,corners:0},target:null,kind:null,plan:[],alt:[],i:0,wrong:[],finished:false};
 const lessonDef=()=>COACH.LESSONS[practice.lesson];
-// true if you moved the view yourself (fingers or cube button) after the app arranged it: then the app leaves it alone
+// true if you moved the view yourself (fingers or cube button) during the current step: then the app leaves it alone
+// until the step ends
 let userMovedView=false;
 // The texts of each lesson are in the languages: lesson.<lesson>.title / .done / .complete / .free
 function setLesson(l){
@@ -220,6 +228,8 @@ function practiceMove(m){
 }
 // Asks the coach what is next; returns true if the piece changed
 function practicePlan(){
+  // a new step starts: if you had moved the view, from now on the app may arrange it again if needed
+  userMovedView=false;
   const e=lessonDef().step(practice.target),before=practice.target;
   practice.plan=e.plan||[];practice.alt=e.alt||[];practice.i=0;practice.wrong=[];
   practice.kind=e.broken?'broken':e.done?'done':e.kind;
@@ -257,9 +267,9 @@ function practiceView(){
   }
   animView(y,0,new M3.Quaternion(),500);
 }
-// Can all the faces to turn in this step be seen now?
+// Can all the faces to turn in this step be seen now? (the bottom face counts: its arrow sits on the visible sides)
 function practiceFacesVisible(){
-  const vm=viewMap(),vis=[vm.U,vm.F,vm.R];
+  const vm=viewMap(),vis=[vm.U,vm.F,vm.R,vm.D];
   return practice.plan.every(m=>vis.includes(m.f));
 }
 
@@ -383,7 +393,7 @@ function practiceRender(){
   if(!box.children.length)E.forEach(()=>box.appendChild(document.createElement('i')));
   [...box.children].forEach((el,i)=>{el.className=i<n?'on':i===n?'cur':'';});
   box.setAttribute('aria-label',tr('stage.aria',{n,total:E.length}));
-  $('stageText').innerHTML=n<E.length?tr('stage.label',{n:n+1,total:E.length,name:tr('stage.'+E[n].id)}):tr('stage.solved');
+  $('stageText').innerHTML=n<E.length?trh('stage.label',{n:n+1,total:E.length,name:esc(tr('stage.'+E[n].id))}):trh('stage.solved');
   document.querySelectorAll('#levels button').forEach(b=>b.classList.toggle('on',+b.dataset.level===practice.level));
   document.querySelectorAll('#lessons button').forEach(b=>b.classList.toggle('on',b.dataset.lesson===practice.lesson));
   const completed=practice.completed[practice.lesson];
@@ -393,23 +403,24 @@ function practiceRender(){
   const vm=viewMap(),L={};for(const l in vm)L[vm[l]]=l;
   let msg='',chips=[];
   const sts=practice.target&&CUBE.byId[practice.target];
-  const colors=sts?'<b>'+sts.map(s=>s.c).sort((a,b)=>(b==='U')-(a==='U')).map(c=>tr('color.'+c)).join('-')+'</b>':'';
-  const center=sts&&sts.find(s=>s.c!=='U'),face=center?'<b>'+tr('color.'+center.c)+'</b>':'';
-  const piece=tr(practice.lesson==='cross'?'piece.edge':'piece.corner',{colors});
-  const layer=tr('layer.'+L.D),dir=tr('dir.'+L.D);
-  if(practice.finished)msg=tr('lesson.'+practice.lesson+'.complete');
-  else if(practice.kind==='broken')msg=tr('msg.broken');
-  else if(practice.level===3)msg=tr('lesson.'+practice.lesson+'.free');
-  else if(practice.wrong.length)msg=tr('msg.wrong');
-  else if(practice.kind==='crossTake')msg=tr('msg.cross.take',{piece,layer});
-  else if(practice.kind==='crossMiddle')msg=tr('msg.cross.middle',{piece,layer});
-  else if(practice.lesson==='cross'&&practice.kind==='align')msg=tr('msg.cross.align',{piece,layer,face});
-  else if(practice.kind==='crossUp')msg=tr('msg.cross.up',{piece,face,dir});
-  else if(practice.kind==='crossFlipped')msg=tr('msg.cross.flipped',{piece,face});
-  else if(practice.kind==='align')msg=tr('msg.corner.align',{piece,layer});
-  else if(practice.kind==='take')msg=tr('msg.corner.take',{piece});
-  else if(practice.kind==='cornerOut')msg=tr('msg.corner.out',{piece,dir});
-  else if(sts)msg=tr('msg.corner.in',{piece,dir:tr('dir.'+L[FACE_OF[key(sts.find(s=>s.c==='U').n)]])});
+  // every translated piece is escaped before it goes inside a message (the messages are markup)
+  const colors=sts?'<b>'+sts.map(s=>s.c).sort((a,b)=>(b==='U')-(a==='U')).map(c=>esc(tr('color.'+c))).join('-')+'</b>':'';
+  const center=sts&&sts.find(s=>s.c!=='U'),face=center?'<b>'+esc(tr('color.'+center.c))+'</b>':'';
+  const piece=trh(practice.lesson==='cross'?'piece.edge':'piece.corner',{colors});
+  const layer=esc(tr('layer.'+L.D)),dir=esc(tr('dir.'+L.D));
+  if(practice.finished)msg=trh('lesson.'+practice.lesson+'.complete');
+  else if(practice.kind==='broken')msg=trh('msg.broken');
+  else if(practice.level===3)msg=trh('lesson.'+practice.lesson+'.free');
+  else if(practice.wrong.length)msg=trh('msg.wrong');
+  else if(practice.kind==='crossTake')msg=trh('msg.cross.take',{piece,layer});
+  else if(practice.kind==='crossMiddle')msg=trh('msg.cross.middle',{piece,layer});
+  else if(practice.lesson==='cross'&&practice.kind==='align')msg=trh('msg.cross.align',{piece,layer,face});
+  else if(practice.kind==='crossUp')msg=trh('msg.cross.up',{piece,face,dir});
+  else if(practice.kind==='crossFlipped')msg=trh('msg.cross.flipped',{piece,face});
+  else if(practice.kind==='align')msg=trh('msg.corner.align',{piece,layer});
+  else if(practice.kind==='take')msg=trh('msg.corner.take',{piece});
+  else if(practice.kind==='cornerOut')msg=trh('msg.corner.out',{piece,dir});
+  else if(sts)msg=trh('msg.corner.in',{piece,dir:esc(tr('dir.'+L[FACE_OF[key(sts.find(s=>s.c==='U').n)]]))});
   if(practice.level===1&&!practice.finished&&practice.kind!=='broken'){
     if(practice.wrong.length)chips=[['bad',turnText(practiceNextTurn(),L)]];
     else chips=practice.plan.map((m,i)=>[i<practice.i?'done':i===practice.i?'cur':'',turnText(m,L)]);
@@ -740,12 +751,12 @@ const mg=$('turnGrid');
     mg.appendChild(b);
   });
 });
-// Language selector (in the help): one option per registered language; on change everything is repainted
+// Language selector (in the help): one option per language in locales/languages.json; on change everything is repainted
 {
   const sel=$('langSel');
   for(const {code,name} of I18N.list()){const o=document.createElement('option');o.value=code;o.textContent=name;sel.appendChild(o);}
   sel.value=I18N.language();
-  sel.onchange=()=>I18N.use(sel.value,true);
+  sel.onchange=()=>I18N.use(sel.value,true).catch(()=>{sel.value=I18N.language();showTipFor(sel,tr('err.language'));});
   I18N.onChange(code=>{
     sel.value=code;
     document.title=tr('app.title')+' · v'+document.documentElement.dataset.version;
@@ -1149,4 +1160,5 @@ catch(e){showErr(tr('err.load',{msg:e.message}));try{CUBE.resetLogic();syncFromL
 try{resize();}catch(e){showErr(tr('err.runtime',{msg:e.message}));}
 try{updateUI();}catch(e){showErr(tr('err.runtime',{msg:e.message}));}
 requestAnimationFrame(loop);
+}
 })();
