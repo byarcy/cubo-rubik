@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.34-ff2e97)
+![version](https://img.shields.io/badge/version-0.34.1-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -145,7 +145,7 @@ The first one goes through every lesson that exists, so it also works for the on
 
 ### Publishing a new version
 
-Change the number in four places: `data-version`, the `<title>` and the footer of `index.html`, `CACHE` in `sw.js`, and the badge of this README.
+Change the number in `index.html` (`data-version`, the `<title>` and the footer), in `CACHE` in `sw.js`, and in the version badge of both READMEs.
 
 The page is published with **GitHub Pages** from the `main` branch.
 

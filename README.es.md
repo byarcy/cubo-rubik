@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.34-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.34.1-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -145,7 +145,7 @@ La primera recorre todas las lecciones que existan, así que sirve también para
 
 ### Publicar una versión nueva
 
-Cambia el número en cuatro lugares: `data-version`, el `<title>` y el pie de `index.html`, `CACHE` en `sw.js` y la insignia de este README.
+Cambia el número en `index.html` (`data-version`, el `<title>` y el pie), en `CACHE` de `sw.js` y en la insignia de versión de los dos README.
 
 La página se publica con **GitHub Pages** desde la rama `main`.
 
