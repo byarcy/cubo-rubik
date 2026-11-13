@@ -783,27 +783,22 @@ function buildCube({pieces,scale,offset,colorOf,decalOf}){
   }
   markDirty();
 }
-// sts: stickers of the piece, each with hn (where it faces when solved), n (where it faces now) and p (position)
+// frame: where a piece is and how it is turned, as the cube logic gives it (CUBE.frameOf): p = position,
+// R = its three columns (where the piece's own x, y and z point now)
 const V=a=>new M3.Vector3(a[0],a[1],a[2]);
-function orientFrom(sts){
-  if(sts.length===1)return new M3.Quaternion().setFromUnitVectors(V(sts[0].hn),V(sts[0].n));
-  const h1=V(sts[0].hn),h2=V(sts[1].hn),h3=new M3.Vector3().crossVectors(h1,h2);
-  const n1=V(sts[0].n),n2=V(sts[1].n),n3=new M3.Vector3().crossVectors(n1,n2);
-  const H=new M3.Matrix4().makeBasis(h1,h2,h3);
-  const N=new M3.Matrix4().makeBasis(n1,n2,n3);
-  return new M3.Quaternion().setFromRotationMatrix(N.multiply(H.transpose()));
-}
-function syncGroup(g,sts){
-  g.position.set(sts[0].p[0]*OFF,sts[0].p[1]*OFF,sts[0].p[2]*OFF);
-  g.quaternion.copy(orientFrom(sts));g.scale.setScalar(SC);
+const orientFrom=R=>new M3.Quaternion().setFromRotationMatrix(new M3.Matrix4().makeBasis(V(R[0]),V(R[1]),V(R[2])));
+function syncGroup(g,frame){
+  g.position.set(frame.p[0]*OFF,frame.p[1]*OFF,frame.p[2]*OFF);
+  g.quaternion.copy(orientFrom(frame.R));g.scale.setScalar(SC);
 }
 // Efficient drawing: it is only redrawn if something changed (see "Render")
 let dirty=true;const markDirty=()=>{dirty=true;};
 
 // ================= Animated turn of a layer =================
-// Turns the pieces of layer l by "total" radians around the axis; when done, sync(g) puts each piece in its exact place
+// Turns the pieces of layer l (or of several layers: an array, as in M, r or x) by "total" radians around the axis;
+// when done, sync(g) puts each piece in its exact place
 function animateLayer(a,l,total,dur,sync,done){
-  const mem=cubies.filter(g=>Math.round(g.position.getComponent(a))===l);
+  const layers=[].concat(l),mem=cubies.filter(g=>layers.includes(Math.round(g.position.getComponent(a))));
   const pivot=new M3.Group();container.add(pivot);
   mem.forEach(g=>pivot.attach(g));
   const finish=()=>{

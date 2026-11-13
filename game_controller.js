@@ -61,16 +61,17 @@ function buildCube(){
     decalOf:p=>(size===3?nz(p)===1&&p[1]===1:key(p)==='1,1,1')?piTex:null});
   focusId=undefined;focusMats=[];
 }
-const syncGroup=g=>G.syncGroup(g,CUBE.byId[g.userData.id]);
+const syncGroup=g=>G.syncGroup(g,CUBE.frameOf(g.userData.id));
 function syncFromLogic(){cubies.forEach(syncGroup);markDirty();}
 function applySnap(s){CUBE.applySnap(s);syncFromLogic();}
 
 // ================= Animation and queue =================
 let queue=[],busy=false,scrambling=false;
 function rotateLayer(f,dir,dur,done){
-  const [a,l,s]=MOVES[f];const sg=s*dir;
+  // any turn of the table: a face, a middle layer, two layers or the whole cube
+  const {a,layers,s}=CUBE.TURNS[f];const sg=s*dir;
   CUBE.quarter(f,dir);
-  G.animateLayer(a,l,sg*Math.PI/2,dur,syncGroup,done);
+  G.animateLayer(a,layers,sg*Math.PI/2,dur,syncGroup,done);
 }
 function enqueue(f,n,dur){if(exploded)return;(n===2?[1,1]:[n]).forEach(d=>queue.push({f,d,dur}));pump();}
 function pump(){
@@ -513,8 +514,7 @@ function stagePic(id){
     solve:[FRONT,()=>true]
   }[id];
   if(!P)return C[id]='<span class="pk-sign" aria-hidden="true">'+({repeat:'↻',recognize:'?'}[id]||'')+'</span>';
-  const snap=CUBE.snapshot();CUBE.resetLogic();if(P[2])COACH.apply(P[2]);
-  const g=topGrid(P[0],P[1]);CUBE.applySnap(snap);
+  const g=CUBE.withSnapshot(()=>{CUBE.resetLogic();if(P[2])CUBE.apply(P[2]);return topGrid(P[0],P[1]);});
   return C[id]=DIAGRAMS.top(g);
 }
 
@@ -795,10 +795,19 @@ function upgradeSave(d){
   }
   return d;
 }
+// A saved cube that can't exist (a damaged save) is dropped: that mode starts with a solved cube and the app says so
+let badSave=false;
+function validStates(s){
+  if(!s||typeof s!=='object')return s;
+  for(const m of ['challenge','practice'])if(s[m]!=null&&!CUBE.validSnap(s[m])){s[m]=null;badSave=true;}
+  return s;
+}
 function load(){
   try{
     const d=upgradeSave(JSON.parse(localStorage.getItem(KEY)||'null'));
     if(!d||d.v!==1)return false;
+    d.states=validStates(d.states);
+    if(d.alt&&typeof d.alt==='object')d.alt.states=validStates(d.alt.states);
     CUBE.size=d.sz;other[CUBE.size===3?2:3]=d.alt||null;
     if(CUBE.size===2)buildCube();
     tipDone=d.tipDone===true;
@@ -814,8 +823,8 @@ function load(){
     if(d.view&&okQ(d.view.base))G.setView(+d.view.yaw||0,+d.view.pitch||0,d.view.base,+d.view.roll||0);
     if(d.challenge)challengeLoad(d.challenge);
     applySnap(modeStates[mode]);
-    // the history is only valid if it was saved in this same mode
-    if(Array.isArray(d.hist)&&d.mode===mode)hist=d.hist.filter(CUBE.isMove).map(m=>({f:m.f,n:m.n}));
+    // the history is only valid if it was saved in this same mode, with that mode's cube
+    if(Array.isArray(d.hist)&&d.mode===mode&&modeStates[mode])hist=d.hist.filter(CUBE.isMove).map(m=>({f:m.f,n:m.n}));
     return true;
   }catch(e){return false;}
 }
@@ -875,11 +884,11 @@ document.querySelectorAll('#levels button').forEach(b=>b.onclick=()=>{
   updateUI();save();
 });
 // Holding an icon shows its name (and doesn't activate it)
-function showTipFor(el,txt){
+function showTipFor(el,txt,ms=1600){
   const box=$('gloss');box.textContent=txt;box.hidden=false;
   const ar=$('app').getBoundingClientRect(),br=el.getBoundingClientRect();
   box.style.top=Math.max(8,br.top-ar.top-box.offsetHeight-8)+'px';
-  clearTimeout(glossTimer);glossTimer=setTimeout(()=>{box.hidden=true;},1600);
+  clearTimeout(glossTimer);glossTimer=setTimeout(()=>{box.hidden=true;},ms);
 }
 function tap(id,fn){
   const b=$(id);let t=0;
@@ -994,8 +1003,12 @@ const SHEET_KEEP={
   yellowCorners:(k,top)=>nz(k.p)!==2&&(!top||k.c==='D'),          // the corners and their side colors
   yellowTwist:(k,top)=>!top||k.c==='D'                             // the whole layer
 };
+// (the before → after pictures turn the cube: they are drawn on a copy, and the real cube is left as it was)
 function algSheet(){
-  const snap=CUBE.snapshot();let h='';
+  $('algList').innerHTML=CUBE.withSnapshot(sheetHTML);
+}
+function sheetHTML(){
+  let h='';
   for(const sec of ALG_SHEET){
     h+='<h3>'+(sec.stage+1)+' · '+esc(tr('stage.'+CUBE.STAGES[sec.stage].id))+'</h3><p class="ahold">'+esc(tr(sec.yellowUp?'algs.holdYellow':'algs.holdWhite'))+'</p>';
     for(const name of sec.algs){
@@ -1011,15 +1024,14 @@ function algSheet(){
       let pics='';
       if(SHEET_KEEP[name]){
         const all=[];for(let i=0;i<(sec.times||1);i++)all.push(...seq);all.push(...(sec.extra||[]));
-        CUBE.resetLogic();COACH.apply(CUBE.invSeq(all));
+        CUBE.resetLogic();CUBE.apply(CUBE.invSeq(all));
         const before=topGrid(YELLOW_VIEW,SHEET_KEEP[name]);CUBE.resetLogic();
         pics='<div class="alg-pics">'+picsHTML(before,topGrid(YELLOW_VIEW,SHEET_KEEP[name]))+'</div>';
       }
       h+='<div class="acard"><div class="atitle">'+esc(tr('algs.'+name))+'</div><div class="alg-seq">'+strip+'</div>'+pics+'<p>'+trh('algs.'+name+'.when')+'</p></div>';
     }
   }
-  CUBE.applySnap(snap);
-  $('algList').innerHTML=h;
+  return h;
 }
 algSheet();
 document.addEventListener('keydown',e=>{
@@ -1292,9 +1304,9 @@ function rearm(){
   $('rearm').hidden=true;
   container.updateMatrixWorld(true);
   rearmAnim={t0:performance.now(),items:cubies.map(g=>{
-    const sts=CUBE.byId[g.userData.id];
-    const tp=new M3.Vector3(sts[0].p[0]*OFF,sts[0].p[1]*OFF,sts[0].p[2]*OFF).applyMatrix4(container.matrixWorld);
-    const tq=container.quaternion.clone().multiply(orientFrom(sts));
+    const fr=CUBE.frameOf(g.userData.id);
+    const tp=new M3.Vector3(fr.p[0]*OFF,fr.p[1]*OFF,fr.p[2]*OFF).applyMatrix4(container.matrixWorld);
+    const tq=container.quaternion.clone().multiply(orientFrom(fr.R));
     return {g,p0:g.position.clone(),q0:g.quaternion.clone(),tp,tq,delay:Math.random()*0.25};
   })};
 }
@@ -1410,6 +1422,7 @@ try{buildCube();if(!load()){CUBE.resetLogic();syncFromLogic();}armed=!isSolved()
 catch(e){showErr(tr('err.load',{msg:e.message}));try{CUBE.resetLogic();syncFromLogic();}catch(_){}}
 try{resize();}catch(e){showErr(tr('err.runtime',{msg:e.message}));}
 try{updateUI();}catch(e){showErr(tr('err.runtime',{msg:e.message}));}
+if(badSave)setTimeout(()=>showTipFor($('stage'),tr('err.badSave'),5000),400);
 requestAnimationFrame(loop);
 }
 })();

@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.41-ff2e97)
+![version](https://img.shields.io/badge/version-0.42-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -79,7 +79,7 @@ A button next to the title switches between 3×3 and 2×2 in Challenge. Each siz
 - Turn the faces by dragging with your finger, or use the **TURNS** menu with the notation (R, U', F2…).
 - Drag outside the cube to rotate it as a whole. With two fingers, moving them rotates the cube and twisting them turns it on the screen, like a knob, from any position; the box in the corner shows the side you can't see.
 - **Help:** how to use the app, the notation with a drawing of each turn as the guides draw it (U moves the top row to the left, R the right column up…), and an **Algorithms** sheet: every algorithm of the method, stage by stage, written the way the guide holds the cube, with its groups, when to use it and from which side and, for the last layer, a *before → after* seen from above.
-- Your progress is saved on its own, in your browser (progress saved by older versions is kept).
+- Your progress is saved on its own, in your browser (progress saved by older versions is kept). A saved cube that can't exist (a damaged save) is not loaded: that mode starts solved and the app says so.
 - There is a secret hidden for whoever solves the cube. 😉
 
 ---
@@ -110,7 +110,7 @@ It works in the browser and it can also be **installed as an app**. Once install
 | `index.html` | The page: structure (its texts come from `locales/`) |
 | `styles.css` | Visual design |
 | `graphics_engine.js` | 3D engine (WebGL), scene, lights and animation of the layers |
-| `cube_logic.js` | Cube state, turns, notation and the stage detector |
+| `cube_logic.js` | Cube state (one rotation per piece), every turn (faces, middle layers, two layers, whole cube), notation, the validity check of a cube and the stage detector |
 | `algorithms.js` | Sequences of each method, in standard notation |
 | `coach.js` | The "teacher" of Practice: recognizes the case, offers equivalent routes and prepares exercises |
 | `diagrams.js` | Small flat drawings, as SVG: each turn (Help) and the top layer seen from above (the algorithms' before → after and the goal of each lesson) |
@@ -122,6 +122,7 @@ It works in the browser and it can also be **installed as an app**. Once install
 | `manifest.webmanifest` | Data to install it as an app |
 | `orbitron.woff` | Font of the titles |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Icons |
+| `tests/cube.test.js` | Browser-free test of the cube logic on its own: identities of a real cube, notation, valid and impossible cubes, old saves |
 | `tests/lessons.test.js` | Browser-free test: solves hundreds of exercises of every registered lesson |
 | `tests/i18n.test.js` | Browser-free test: every language is complete and consistent |
 | `TODO.md` | What is missing: lessons, other methods and languages |
@@ -140,11 +141,12 @@ Then open `http://localhost:8123`. With `?debug=true` at the end, scrambling mes
 ### Tests
 
 ```bash
+node tests/cube.test.js
 node tests/lessons.test.js
 node tests/i18n.test.js
 ```
 
-The first one goes through every lesson that exists, so it also works for the ones that get added. The second one goes through every language in `locales/` and also checks that translations can't inject markup.
+The first one checks the cube logic with facts any real cube obeys (each face turned four times gives the same cube, `R U R' U'` comes back after 6 repetitions, `M` is `R L' x'`…) and that a cube that can't exist is refused. The second one goes through every lesson that exists, so it also works for the ones that get added. The third one goes through every language in `locales/` and also checks that translations can't inject markup.
 
 ### Adding a language
 

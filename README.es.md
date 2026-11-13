@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.41-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.42-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -79,7 +79,7 @@ Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño 
 - Gira las caras arrastrando con el dedo, o usa el menú **GIROS** con la notación (R, U', F2…).
 - Arrastra fuera del cubo para girarlo entero. Con dos dedos, moverlos gira el cubo y rotarlos lo gira en la pantalla, como una perilla, desde cualquier posición; el recuadro de la esquina muestra el lado que no ves.
 - **Ayuda:** cómo se usa la app, la notación con un dibujo de cada giro como en las guías (U mueve la fila de arriba a la izquierda, R la columna derecha hacia arriba…) y una hoja de **Algoritmos**: todos los algoritmos del método, etapa por etapa, escritos como la guía sostiene el cubo, con sus grupos, cuándo usarlos y desde qué lado y, en la última capa, un *antes → después* visto desde arriba.
-- Tu avance se guarda solo, en tu navegador (el avance guardado por versiones anteriores se conserva).
+- Tu avance se guarda solo, en tu navegador (el avance guardado por versiones anteriores se conserva). Un cubo guardado que no puede existir (un guardado dañado) no se carga: ese modo empieza armado y la app lo avisa.
 - Hay un secreto escondido para quien resuelva el cubo. 😉
 
 ---
@@ -110,7 +110,7 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 | `index.html` | La página: estructura (sus textos salen de `locales/`) |
 | `styles.css` | Diseño visual |
 | `graphics_engine.js` | Motor 3D (WebGL), escena, luces y animación de las capas |
-| `cube_logic.js` | Estado del cubo, giros, notación y detector de etapas |
+| `cube_logic.js` | Estado del cubo (una rotación por pieza), todos los giros (caras, capas del medio, dos capas, cubo entero), notación, la comprobación de que un cubo sea posible y el detector de etapas |
 | `algorithms.js` | Secuencias de cada método, en notación estándar |
 | `coach.js` | El «profe» de la Práctica: reconoce el caso, ofrece rutas equivalentes y prepara los ejercicios |
 | `diagrams.js` | Dibujos planos pequeños, en SVG: cada giro (Ayuda) y la capa de arriba vista desde arriba (el antes → después de los algoritmos y la meta de cada lección) |
@@ -122,6 +122,7 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 | `manifest.webmanifest` | Datos para instalarla como app |
 | `orbitron.woff` | Fuente de los títulos |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Íconos |
+| `tests/cube.test.js` | Prueba sin navegador de la lógica del cubo por sí sola: identidades de un cubo real, notación, cubos válidos e imposibles, guardados viejos |
 | `tests/lessons.test.js` | Prueba sin navegador: resuelve cientos de ejercicios de cada lección registrada |
 | `tests/i18n.test.js` | Prueba sin navegador: cada idioma está completo y es coherente |
 | `TODO.md` | Lo que falta: lecciones, otros métodos e idiomas |
@@ -140,11 +141,12 @@ Luego abre `http://localhost:8123`. Con `?debug=true` al final, mezclar desorden
 ### Pruebas
 
 ```bash
+node tests/cube.test.js
 node tests/lessons.test.js
 node tests/i18n.test.js
 ```
 
-La primera recorre todas las lecciones que existan, así que sirve también para las que se agreguen. La segunda recorre todos los idiomas de `locales/` y además comprueba que una traducción no pueda meter código en la página.
+La primera revisa la lógica del cubo con hechos que cumple cualquier cubo real (cada cara girada cuatro veces da el mismo cubo, `R U R' U'` vuelve tras 6 repeticiones, `M` es `R L' x'`…) y que un cubo imposible se rechace. La segunda recorre todas las lecciones que existan, así que sirve también para las que se agreguen. La tercera recorre todos los idiomas de `locales/` y además comprueba que una traducción no pueda meter código en la página.
 
 ### Agregar un idioma
 

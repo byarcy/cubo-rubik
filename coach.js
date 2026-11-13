@@ -11,9 +11,9 @@ const ROT={R:'F',F:'L',L:'B',B:'R',U:'U',D:'D'};
 function rotateToSlot(seq,k){
   return seq.map(m=>{let f=m.f;for(let i=0;i<k;i++)f=ROT[f];return {f,n:m.n};});
 }
-function apply(seq){
-  for(const m of seq){CUBE.quarter(m.f,m.n===2?1:m.n);if(m.n===2)CUBE.quarter(m.f,1);}
-}
+// Turns the cube for real (to prepare exercises). To only try turns, use CUBE.withSnapshot: the cube is always left as it
+// was, even if something fails in the middle.
+const apply=CUBE.apply;
 const algoSeq=(name,k)=>rotateToSlot(parseSeq(ALGORITHMS.layers[name].seq),k);
 const rand=n=>Math.floor(Math.random()*n);
 // Where each group of turns starts in a plan (positions after the first one), when the plan is one of the method's
@@ -50,8 +50,7 @@ function mirror(plan,p){
 }
 // Applies a plan, checks whether "goal" holds and leaves the cube as it was
 function trial(plan,goal){
-  const snap=CUBE.snapshot();apply(plan);
-  const ok=goal();CUBE.applySnap(snap);return ok;
+  return CUBE.withSnapshot(()=>{apply(plan);return goal();});
 }
 // Mirror routes of a plan that reach the goal
 function alternatives(plan,pos,goal){
@@ -64,10 +63,11 @@ function alignD(n){
 }
 // How many quarter turns of D bring the piece above its slot (1 to 3), as a single turn: 1, 2 or -1
 function alignTurn(id,h){
-  let c=0;
-  do{CUBE.quarter('D',1);c++;}while(c<4&&(CUBE.byId[id][0].p[0]!==h[0]||CUBE.byId[id][0].p[2]!==h[2]));
-  for(let i=0;i<c;i++)CUBE.quarter('D',-1);
-  return c===3?-1:c;
+  return CUBE.withSnapshot(()=>{
+    let c=0;
+    do{CUBE.quarter('D',1);c++;}while(c<4&&(CUBE.byId[id][0].p[0]!==h[0]||CUBE.byId[id][0].p[2]!==h[2]));
+    return c===3?-1:c;
+  });
 }
 
 // ================= White corners =================
@@ -224,11 +224,7 @@ const fromSides=name=>[0,1,2,3].map(r=>algoSeq(name,r));
 // The routes (algorithm from each side) that start a shortest solution of «goal», looking up to «depth» algorithms ahead
 function shortest(name,goal,depth){
   const seqs=fromSides(name);
-  const reach=(r,d)=>{
-    const snap=CUBE.snapshot();apply(seqs[r]);
-    const ok=d===1?goal():[0,1,2,3].some(r2=>reach(r2,d-1));
-    CUBE.applySnap(snap);return ok;
-  };
+  const reach=(r,d)=>CUBE.withSnapshot(()=>{apply(seqs[r]);return d===1?goal():[0,1,2,3].some(r2=>reach(r2,d-1));});
   for(let d=1;d<=depth;d++){
     const firsts=seqs.filter((s,r)=>reach(r,d));
     if(firsts.length)return firsts;
@@ -239,9 +235,11 @@ function shortest(name,goal,depth){
 const viaAlgorithm=(kind,routes,extra)=>Object.assign({kind,plan:routes[0],cost:0,alt:routes.slice(1)},extra);
 // Turns of the yellow layer: how many matching pieces each of the four positions leaves (0 = as it is)
 function afterTurns(count){
-  const out=[];
-  for(let k=0;k<4;k++){out.push(count());CUBE.quarter('D',1);}
-  return out;
+  return CUBE.withSnapshot(()=>{
+    const out=[];
+    for(let k=0;k<4;k++){out.push(count());CUBE.quarter('D',1);}
+    return out;
+  });
 }
 const turnOf=k=>k===3?-1:k;
 
@@ -311,10 +309,8 @@ const firstTwoLayers=()=>whiteLayerSolved()&&MIDDLE_EDGES.every(CUBE.pieceSolved
 // m = -1 if none works. With m = 0 the side is free (nothing is messed up): side 0.
 function twistsDone(){
   if(firstTwoLayers())return {m:0,r:0};
-  const snap=CUBE.snapshot();
   for(let m=1;m<6;m++)for(let r=0;r<4;r++){
-    for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));
-    const ok=firstTwoLayers();CUBE.applySnap(snap);
+    const ok=CUBE.withSnapshot(()=>{for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));return firstTwoLayers();});
     if(ok)return {m,r};
   }
   return {m:-1,r:0};
@@ -368,10 +364,10 @@ const METHOD=['cross','corners','secondLayer','yellowCross','yellowEdges','yello
 function inLastStep(){
   const {m,r}=twistsDone();
   if(m<0)return false;
-  const snap=CUBE.snapshot();
-  for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));
-  const ok=afterTurns(()=>CUBE.stage()>=6?1:0).some(Boolean);
-  CUBE.applySnap(snap);return ok;
+  return CUBE.withSnapshot(()=>{
+    for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));
+    return afterTurns(()=>CUBE.stage()>=6?1:0).some(Boolean);
+  });
 }
 // The stage the cube is at (0 to 6), or 7 when it is solved
 function solveStage(){
@@ -398,21 +394,20 @@ const orders={};
 // How many repetitions bring the solved cube back
 function orderOf(name){
   if(!orders[name]){
-    const snap=CUBE.snapshot(),seq=algoSeq(name,0);CUBE.resetLogic();
-    let n=0;do{apply(seq);n++;}while(!CUBE.isSolved()&&n<200);
-    CUBE.applySnap(snap);orders[name]=n;
+    const seq=algoSeq(name,0);
+    orders[name]=CUBE.withSnapshot(()=>{CUBE.resetLogic();let n=0;do{apply(seq);n++;}while(!CUBE.isSolved()&&n<200);return n;});
   }
   return orders[name];
 }
 // Where you are: «reps» whole repetitions plus the first «j» turns of the next one (undoing them gives the solved cube)
 function repeatStep(){
   const R=REPEAT[repeatPick],seq=algoSeq(R.alg,0),total=orderOf(R.alg),undo=CUBE.invSeq(seq);
-  const snap=CUBE.snapshot();let found=null;
-  for(let j=0;j<seq.length&&!found;j++){
+  let found=null;
+  for(let j=0;j<seq.length&&!found;j++)found=CUBE.withSnapshot(()=>{
     apply(CUBE.invSeq(seq.slice(0,j)));
-    for(let reps=0;reps<total;reps++){if(CUBE.isSolved()){found={reps,j};break;}apply(undo);}
-    CUBE.applySnap(snap);
-  }
+    for(let reps=0;reps<total;reps++){if(CUBE.isSolved())return {reps,j};apply(undo);}
+    return null;
+  });
   if(!found)return {broken:true};
   return {kind:'repeat',plan:seq.slice(found.j),cost:0,alt:[],reps:found.reps,total,alg:R.alg,yellowUp:R.yellowUp,keepView:true,stage:0};
 }

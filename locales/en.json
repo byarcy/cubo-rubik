@@ -276,6 +276,7 @@
   "err.unknown": "unknown",
   "err.runtime": "Error: {msg} · Reload the page.",
   "err.load": "Error loading your progress: {msg}. Started with a new cube.",
+  "err.badSave": "Your saved cube wasn't a valid cube, so it starts solved.",
   "err.webgl": "This browser can't show the 3D cube (WebGL is turned off). Try an up-to-date Chrome, Safari, Edge or Firefox.",
   "err.language": "Couldn't load that language. Check your connection and try again."
 }
