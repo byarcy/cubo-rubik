@@ -35,6 +35,11 @@ Done: English is the main language and Spanish is the first translation (v0.34).
 - [ ] README: the English one is the main one; add `README.pt.md` and `README.fr.md` together with those languages.
 - [ ] The installed-app name and description (`manifest.webmanifest`) are static, so they stay in English.
 
+## Offline and weak connections
+
+- [ ] **Bad connection (not offline):** the service worker always asks the network first, with no time limit. In airplane mode the app opens at once from the cache, but on a connection that exists and doesn't answer (Wi-Fi without internet) it waits for the network and can take long to open. Fix: give the network a short time limit (for example 3 seconds) and fall back to the cache, or serve the cache first and update in the background.
+- [ ] Confirm on a real phone with the app installed: open it once online, close it, turn on airplane mode and open it again (it was checked in a desktop browser with the server off, v0.35).
+
 ## Pending checks
 
 - [ ] Retake the README screenshots when the interface changes (the current ones show lessons 1 and 2 in English).
