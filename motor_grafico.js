@@ -830,19 +830,20 @@ let viewAnim=null,inertia=null;
 function stopViewMotion(){viewAnim=null;inertia=null;}
 // ---- Giro del conjunto entero: suave, sin torcerse de lado ----
 // La orientación es siempre: base · giro horizontal (sobre su eje vertical) · inclinación (hacia ti / atrás)
-let yaw=0,pitch=0;const base=new M3.Quaternion();
+// roll: giro en el plano de la pantalla (dos dedos rotando), como una perilla; se aplica al final, sobre todo lo demás
+let yaw=0,pitch=0,roll=0;const base=new M3.Quaternion();
 const normAng=a=>{const t=2*Math.PI;return ((a+Math.PI)%t+t)%t-Math.PI;};
-const _qy=new M3.Quaternion(),_qp=new M3.Quaternion();
+const _qy=new M3.Quaternion(),_qp=new M3.Quaternion(),_qr=new M3.Quaternion();
 function compose(){
   markDirty();
-  if(!isFinite(yaw)||!isFinite(pitch)){yaw=0;pitch=0;}
-  _qy.setFromAxisAngle(upW,yaw);_qp.setFromAxisAngle(rightW,pitch);
-  container.quaternion.copy(_qp).multiply(_qy).multiply(base);
+  if(!isFinite(yaw)||!isFinite(pitch)||!isFinite(roll)){yaw=0;pitch=0;roll=0;}
+  _qy.setFromAxisAngle(upW,yaw);_qp.setFromAxisAngle(rightW,pitch);_qr.setFromAxisAngle(camDir,roll);
+  container.quaternion.copy(_qr).multiply(_qp).multiply(_qy).multiply(base);
 }
-// Animación suave de la vista hacia un giro, una inclinación y una base
-function animView(y1,p1,b1,dur){
+// Animación suave de la vista hacia un giro, una inclinación, una base y (por omisión, sin torcer) un giro de pantalla
+function animView(y1,p1,b1,dur,r1=0){
   stopViewMotion();
-  viewAnim={y0:yaw,y1:yaw+normAng(y1-yaw),p0:pitch,p1:pitch+normAng(p1-pitch),b0:base.clone(),b1:b1.clone(),t0:performance.now(),dur};
+  viewAnim={y0:yaw,y1:yaw+normAng(y1-yaw),p0:pitch,p1:pitch+normAng(p1-pitch),r0:roll,r1:roll+normAng(r1-roll),b0:base.clone(),b1:b1.clone(),t0:performance.now(),dur};
 }
 function viewStart(){stopViewMotion();return {vy:0,vp:0,t:performance.now(),moved:false};}
 function viewDrag(V,dx,dy){
@@ -851,16 +852,17 @@ function viewDrag(V,dx,dy){
   const k=3.4/size;
   // de cabeza, el arrastre horizontal se invierte para sentirse igual
   const flip=Math.abs(pitch)>Math.PI/2?-1:1;
-  const dyw=dx*k*flip,dp=dy*k;
+  // con el cubo torcido en la pantalla, el arrastre se endereza primero para que siga al dedo
+  const cr=Math.cos(roll),sr=Math.sin(roll);
+  const dyw=(dx*cr-dy*sr)*k*flip,dp=(dx*sr+dy*cr)*k;
   yaw=normAng(yaw+dyw);pitch=normAng(pitch+dp);compose();
   const now=performance.now(),dt=Math.max(8,now-V.t);
   V.vy=0.6*V.vy+0.4*(dyw/dt);V.vp=0.6*V.vp+0.4*(dp/dt);V.t=now;V.moved=true;
 }
-// Dos dedos rotando: gira el cubo sobre su eje vertical
+// Dos dedos rotando: el cubo gira en el plano de la pantalla, igual que los dedos, desde cualquier posición
 function viewTwist(V,da){
   if(!da)return;
-  const flip=Math.abs(pitch)>Math.PI/2?-1:1;
-  yaw=normAng(yaw-da*flip);compose();V.moved=true;V.t=performance.now();
+  roll=normAng(roll-da);compose();V.moved=true;V.t=performance.now();
 }
 // Suma un giro horizontal y una inclinación a la vista
 function turnView(dy,dp){yaw=normAng(yaw+dy);pitch=normAng(pitch+dp);compose();}
@@ -883,14 +885,14 @@ function stepView(now){
   if(viewAnim){
     const t=Math.min(1,(now-viewAnim.t0)/viewAnim.dur);
     const e=1-Math.pow(1-t,3);
-    yaw=viewAnim.y0+(viewAnim.y1-viewAnim.y0)*e;pitch=viewAnim.p0+(viewAnim.p1-viewAnim.p0)*e;
+    yaw=viewAnim.y0+(viewAnim.y1-viewAnim.y0)*e;pitch=viewAnim.p0+(viewAnim.p1-viewAnim.p0)*e;roll=viewAnim.r0+(viewAnim.r1-viewAnim.r0)*e;
     base.copy(viewAnim.b0).slerp(viewAnim.b1,e);compose();
-    if(t>=1){yaw=normAng(viewAnim.y1);pitch=normAng(viewAnim.p1);base.copy(viewAnim.b1);compose();viewAnim=null;ended=true;}
+    if(t>=1){yaw=normAng(viewAnim.y1);pitch=normAng(viewAnim.p1);roll=normAng(viewAnim.r1);base.copy(viewAnim.b1);compose();viewAnim=null;ended=true;}
   }
   return ended;
 }
-const getView=()=>({yaw,pitch,base:base.toArray()});
-function setView(y,p,b){base.fromArray(b).normalize();yaw=y;pitch=p;compose();}
+const getView=()=>({yaw,pitch,roll,base:base.toArray()});
+function setView(y,p,b,r=0){base.fromArray(b).normalize();yaw=y;pitch=p;roll=r;compose();}
 // Balanceo suave: mientras «idle» sea cierto, el conjunto se mece un poco sin cambiar su posición
 let swayAmp=0;const _qs=new M3.Quaternion();
 function idleSway(now,dt,idle){
@@ -934,7 +936,7 @@ return {canvas,scene,camera,container,camDir,rightW,upT,MINI,STICKER_GLOW,cubies
   buildCube,syncGroup,orientFrom,animateLayer,markDirty,isDirty:()=>dirty,
   normAng,animView,viewStart,viewDrag,viewTwist,viewEnd,turnView,stepView,getView,setView,idleSway,stopSway,
   resize,render,base,
-  get yaw(){return yaw;},get pitch(){return pitch;},get viewAnim(){return viewAnim;},get inertia(){return inertia;},get swayAmp(){return swayAmp;}};
+  get yaw(){return yaw;},get pitch(){return pitch;},get roll(){return roll;},get viewAnim(){return viewAnim;},get inertia(){return inertia;},get swayAmp(){return swayAmp;}};
 }
 
 return {LOOK,crearEscena};

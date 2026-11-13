@@ -41,7 +41,7 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 - **Barra de etapas:** la app mira tu cubo y muestra cuántas etapas llevas completas y cuál toca.
 - **Lección 1 · Cruz blanca:** parte de un cubo mezclado y enseña una receta que siempre funciona: llevar la arista a la capa amarilla, girarla hasta la cara de su color y meterla con media vuelta.
 - **Lección 2 · Esquinas blancas:** cada ejercicio empieza con la cruz ya hecha y varias esquinas fuera de sitio.
-- **Blanco arriba:** como en las guías, el cubo se muestra con el blanco arriba. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para las capas de abajo, la flecha se dibuja alrededor del cubo.
+- **Blanco arriba:** como en las guías, el cubo se muestra con el blanco arriba. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para la capa de abajo, que no se ve desde arriba, la flecha se pega en la fila de abajo de las caras visibles.
 - **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
 - **Te corrige:** si giras otra cara a mitad de un paso, te pide deshacerla antes de seguir.
@@ -64,7 +64,7 @@ Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño 
 
 ### Y además
 - Gira las caras arrastrando con el dedo, o usa el menú **GIROS** con la notación (R, U', F2…).
-- Arrastra fuera del cubo para girarlo entero; el recuadro de la esquina muestra el lado que no ves.
+- Arrastra fuera del cubo para girarlo entero. Con dos dedos, mover gira el cubo y rotar los dedos lo gira en la pantalla, como una perilla, desde cualquier posición; el recuadro de la esquina muestra el lado que no ves.
 - Ayuda con el uso de la app y la notación.
 - Tu avance se guarda solo, en tu navegador.
 - Hay un secreto escondido para quien resuelva el cubo. 😉

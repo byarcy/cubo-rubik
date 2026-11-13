@@ -310,7 +310,36 @@ function marca(tex,tam){
   const m=new M3.Mesh(new M3.PlaneGeometry(tam,tam),new M3.MeshBasicMaterial({map:tex,transparent:true,opacity:1,depthWrite:false}));
   m.material.side=2;m.visible=false;m.material.visible=false;m.renderOrder=5;container.add(m);return m;
 }
-const flechas=[marca(flechaTex(false),2.5),marca(flechaTex(true),2.5)],marcos=[0,1,2].map(()=>marca(marcoTex,1));
+// Flecha recta para la capa de abajo (no se ve desde arriba): se pega en la fila de abajo de las caras que sí se ven
+const flechaRectaTex=lienzo(x=>{
+  x.lineCap='round';x.lineJoin='round';
+  const trazo=(w,col,p)=>{
+    x.strokeStyle=x.fillStyle=col;x.lineWidth=w;
+    x.beginPath();x.moveTo(34,128);x.lineTo(176,128);x.stroke();
+    x.beginPath();x.moveTo(226+p,128);x.lineTo(148-p/2,64-p);x.lineTo(148-p/2,192+p);x.closePath();x.fill();
+  };
+  trazo(34,'rgba(13,2,33,.92)',10);trazo(16,'#00e5ff',0);
+});
+const flechas=[marca(flechaTex(false),2.5),marca(flechaTex(true),2.5)],marcos=[0,1,2].map(()=>marca(marcoTex,1)),flechasD=[marca(flechaRectaTex,1.9),marca(flechaRectaTex,1.9)];
+let flechaDG=null;
+// La capa de abajo gira en el sentido de «D»: el frente se va hacia la derecha. En cada cara lateral visible,
+// la flecha apunta hacia donde se mueven sus piezas (D' al revés).
+function flechaD(g){
+  let k=0;
+  if(g){
+    const s=g.n===-1?-1:1;
+    for(const f of ['F','R','B','L']){
+      const n=FACE_DIR[f];
+      if(V(n).applyQuaternion(container.quaternion).dot(camDir)<0.25||k>=2)continue;
+      const m=flechasD[k++],t=[n[2]*s,0,-n[0]*s];
+      m.quaternion.setFromRotationMatrix(new M3.Matrix4().makeBasis(V(t),new M3.Vector3().crossVectors(V(n),V(t)),V(n)));
+      m.position.set(n[0]*1.56,-1,n[2]*1.56);
+      m.visible=m.material.visible=true;
+    }
+  }
+  for(;k<2;k++)flechasD[k].visible=flechasD[k].material.visible=false;
+  markDirty();
+}
 function ponMarca(m,ver,pos,dir,esc=1){
   m.visible=m.material.visible=ver;
   if(ver){m.position.set(pos[0],pos[1],pos[2]);m.quaternion.setFromUnitVectors(ZV,V(dir));m.scale.setScalar(esc);}
@@ -333,10 +362,11 @@ function pracVisual(on){
     ponMarca(m,ver,ver&&h.map((v,i)=>v+d[i]*0.54),d);
   });
   const g=ayuda&&prac.nivel===1?pracSig():null;
+  flechaDG=g&&g.f==='D'?g:null;
+  flechaD(flechaDG);
   flechas.forEach((m,i)=>{
-    const ver=!!g&&(g.n===-1)===(i===1),d=g?FACE_DIR[g.f]:null;
-    // la cara de abajo no se ve desde arriba: su flecha se dibuja más grande, para que asome alrededor del cubo
-    ponMarca(m,ver,d&&d.map(v=>v*1.56),d,g&&g.f==='D'?2.5:1);
+    const ver=!!g&&g.f!=='D'&&(g.n===-1)===(i===1),d=g?FACE_DIR[g.f]:null;
+    ponMarca(m,ver,d&&d.map(v=>v*1.56),d);
   });
   markDirty();
 }
@@ -528,7 +558,7 @@ canvas.addEventListener('pointercancel',endPointer);
     // Enderezar: giro al cuarto de vuelta más cercano y sin inclinación (o de cabeza)
     const yaw=G.yaw,pitch=G.pitch;
     const y1=Math.round(yaw/(Math.PI/2))*(Math.PI/2),p1=Math.abs(pitch)>Math.PI/2?Math.PI*Math.sign(pitch):0;
-    if(Math.abs(normAng(y1-yaw))<0.01&&Math.abs(normAng(p1-pitch))<0.01)showTipFor(b,'Ya está derecho · toca dos veces para la posición inicial');
+    if(Math.abs(normAng(y1-yaw))<0.01&&Math.abs(normAng(p1-pitch))<0.01&&Math.abs(normAng(G.roll))<0.01)showTipFor(b,'Ya está derecho · toca dos veces para la posición inicial');
     animView(y1,p1,G.base,380);
   });
 }
@@ -562,7 +592,7 @@ function load(){
       prac.hechos=hh&&typeof hh==='object'?{cruz:num(hh.cruz),esquinas:num(hh.esquinas)}:{cruz:0,esquinas:num(hh)};
     }
     const okQ=a=>Array.isArray(a)&&a.length===4&&a.every(v=>typeof v==='number'&&isFinite(v));
-    if(d.view&&okQ(d.view.base))G.setView(+d.view.yaw||0,+d.view.pitch||0,d.view.base);
+    if(d.view&&okQ(d.view.base))G.setView(+d.view.yaw||0,+d.view.pitch||0,d.view.base,+d.view.roll||0);
     if(d.reto)retoLoad(d.reto);
     applySnap(modeStates[mode]);
     // el historial solo sirve si se guardó en este mismo modo
@@ -1039,6 +1069,8 @@ function loopBody(now){
   if(G.stepView(now)){updateUI();save();}
   for(const m of stickerMats)m.emissiveIntensity=STICKER_GLOW;
   for(const m of focoMats)m.emissiveIntensity=0.42;
+  // la flecha recta sigue al cubo mientras lo giras
+  if(flechaDG&&(G.viewAnim||G.inertia||pd))flechaD(flechaDG);
   const dt=Math.min(50,now-(lastFrame||now));lastFrame=now;
   eggFrame(now,dt);
   // Tras unos segundos sin tocar el cubo, se mece un poco
