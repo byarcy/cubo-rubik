@@ -104,6 +104,7 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 | `manifest.webmanifest` | Datos para instalarla como app |
 | `orbitron.woff` | Fuente de los títulos |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Íconos |
+| `PENDIENTES.md` | Lo que falta: lecciones, otros métodos e idiomas |
 | `pruebas/lecciones.test.js` | Prueba sin navegador: resuelve cientos de ejercicios de cada lección registrada |
 | `capturas/` | Imágenes de este README |
 
