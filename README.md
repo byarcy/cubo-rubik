@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.40-ff2e97)
+![version](https://img.shields.io/badge/version-0.41-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -51,8 +51,8 @@ To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 - **Piece in focus:** the piece to move lights up and the rest of the cube is dimmed. A pink frame marks its slot.
 - **Arrow on the cube:** the face you have to turn shows an arrow with the direction of the turn, and the turns appear below as letters so you learn the notation along the way.
 - **It corrects you, without punishing valid routes:** if you turn another face in the middle of a step, it asks you to undo it. But if the step can be solved another way that is just as good (turning the layer the other way, or handling a piece on the diagonal through the face next to it), it accepts that and follows you along that route.
-- **Turns drawn as in the guides:** each turn of the step is a small drawing of the front face with its arrow (U moves the top row to the left, R the right column up…), with its letter underneath and the algorithms split into the groups the guides use (`F · R U R' U' · F'`). In the last layer, a *before → after* seen from above shows what the algorithm does.
-- **Three help levels:** *Guided* (piece, slot, arrow and turns), *Piece only* (piece and slot, no turns) and *No help* (it only tells you when the layer is complete). With less help, while an algorithm takes the solved part apart for a few turns, the app waits instead of complaining.
+- **A light panel:** under the cube there is only one line with the lesson (a picture of its goal, its name, the help level and how many you have done), the message and the turns, split into the groups the guides use (`F · R U R' U' · F'`). That leaves room for a bigger cube. Tapping the line opens the list: the help level, the seven stages with a picture of each goal and, under *More practice*, the other three. When an exercise is done, the new-exercise button under the cube lights up.
+- **Three help levels:** *Guided* (piece, slot, arrow and turns), *Piece only* (piece and slot, no turns) and *No help* (it only tells you when the layer is complete), chosen in the lesson list. With less help, while an algorithm takes the solved part apart for a few turns, the app waits instead of complaining.
 - **Full solve:** a normal scramble, solved with the seven stages. Help only comes when you ask for it: each tap of **HINT** shows a bit more of the current step (which piece → where it goes → the turns, guided). At the end it says how many hints you used. It is the bridge to Challenge.
 - **Repeat:** starting from a solved cube, one algorithm of the method again and again. The cube comes apart and, after a few repetitions (6 for most of them), it comes back by itself. It is for learning the algorithm by heart; with *Piece only* you do it from memory.
 - **Recognize:** the cube shows a case from one of the lessons and you choose which one it is among 2 or 3 options (where the white sticker points, which way the edge goes up, the yellow shape on top…). Then the app shows that case's turns.
@@ -78,7 +78,7 @@ A button next to the title switches between 3×3 and 2×2 in Challenge. Each siz
 ### And also
 - Turn the faces by dragging with your finger, or use the **TURNS** menu with the notation (R, U', F2…).
 - Drag outside the cube to rotate it as a whole. With two fingers, moving them rotates the cube and twisting them turns it on the screen, like a knob, from any position; the box in the corner shows the side you can't see.
-- Help with the use of the app and the notation.
+- **Help:** how to use the app, the notation with a drawing of each turn as the guides draw it (U moves the top row to the left, R the right column up…), and an **Algorithms** sheet: every algorithm of the method, stage by stage, written the way the guide holds the cube, with its groups, when to use it and from which side and, for the last layer, a *before → after* seen from above.
 - Your progress is saved on its own, in your browser (progress saved by older versions is kept).
 - There is a secret hidden for whoever solves the cube. 😉
 
@@ -113,7 +113,7 @@ It works in the browser and it can also be **installed as an app**. Once install
 | `cube_logic.js` | Cube state, turns, notation and the stage detector |
 | `algorithms.js` | Sequences of each method, in standard notation |
 | `coach.js` | The "teacher" of Practice: recognizes the case, offers equivalent routes and prepares exercises |
-| `diagrams.js` | Small flat drawings for the practice panel (each turn, and the top layer seen from above), as SVG |
+| `diagrams.js` | Small flat drawings, as SVG: each turn (Help) and the top layer seen from above (the algorithms' before → after and the goal of each lesson) |
 | `game_controller.js` | Input (finger, buttons), Challenge, Practice, saving and main loop |
 | `i18n.js` | Language module: loads the translations, looks up texts by key, plurals, escaping, language detection |
 | `locales/languages.json` | The list of available languages |

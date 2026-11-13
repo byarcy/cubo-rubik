@@ -89,7 +89,7 @@ function pump(){
 let mode='challenge',hist=[];
 let modeStates={challenge:null,practice:null};
 const challenge={state:'idle',base:0,start:0,moves:0,best:null};
-let helpOpen=false,drawerOpen=false;
+let helpOpen=false,drawerOpen=false,pickerOpen=false;
 // The "Drag a face…" hint goes away once you have turned a face and the whole cube
 let tipDone=false,tipFace=false,tipView=false,glossTimer=0;
 
@@ -468,19 +468,18 @@ function practiceVisuals(on){
   markDirty();
 }
 
-// ---- Before and after: what the algorithm does to the layer on top, seen from above (last layer) ----
+// ---- Before and after: what an algorithm does to the layer on top, seen from above (Help · Algorithms) ----
 const hexOf=c=>'#'+COLHEX[c].toString(16).padStart(6,'0');
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
-// The layer on top as the cube is held now (vm: viewMap), for DIAGRAMS.top: the back at the top of the drawing.
-// As in the guides, on top only the color of that face shows (the rest is gray); sides: false grays the side stickers too
-// (the yellow cross only looks at the shape on top).
+// The layer on top with the cube held as vm says ({U,F,R}: model faces), for DIAGRAMS.top: the back at the top of the
+// drawing. keep(sticker,onTop) says which stickers keep their color; the rest are gray, as in the guides.
 const GRAY='#4a4458';
-function topGrid(vm,sides){
+function topGrid(vm,keep){
   const up=FACE_DIR[vm.U],fr=FACE_DIR[vm.F],rt=FACE_DIR[vm.R],g={top:[],back:[],front:[],left:[],right:[]};
   for(const k of CUBE.cube){
     if(dot(k.p,up)!==1)continue;
     const row=dot(k.p,fr)+1,col=dot(k.p,rt)+1,onTop=dot(k.n,up)===1;
-    const c=onTop?(k.c===vm.U?hexOf(k.c):GRAY):sides?hexOf(k.c):GRAY;
+    const c=keep(k,onTop)?hexOf(k.c):GRAY;
     if(onTop)g.top[row*3+col]=c;
     else if(dot(k.n,fr)===1)g.front[col]=c;
     else if(dot(k.n,fr)===-1)g.back[col]=c;
@@ -489,20 +488,34 @@ function topGrid(vm,sides){
   }
   return g;
 }
-function practicePictures(show,vm){
-  const box=$('practicePics');
-  box.hidden=!show;
-  if(!show){box.textContent='';return;}
-  // while the view is still turning over, the drawings wait for it (they are redrawn when it stops)
-  if(vm.U!==(practice.yellowUp?'D':'U'))return;
-  // the step as it was when it started: undo the turns off the route and the ones of the plan already done
-  const snap=CUBE.snapshot();
-  COACH.apply(CUBE.invSeq(practice.wrong));COACH.apply(CUBE.invSeq(practice.plan.slice(0,practice.i)));
-  const sides=!(stepLesson()==='yellowCross'||(practice.info&&practice.info.alg==='yellowCross'&&practice.lesson==='repeat'));
-  const before=topGrid(vm,sides);COACH.apply(practice.plan);const after=topGrid(vm,sides);
-  CUBE.applySnap(snap);
+function picsHTML(before,after){
   const fig=(g,k)=>'<figure>'+DIAGRAMS.top(g)+'<figcaption>'+esc(tr(k))+'</figcaption></figure>';
-  box.innerHTML=fig(before,'pics.before')+'<span class="pics-arrow" aria-hidden="true">→</span>'+fig(after,'pics.after');
+  return fig(before,'pics.before')+'<span class="pics-arrow" aria-hidden="true">→</span>'+fig(after,'pics.after');
+}
+
+// ---- The goal of each lesson, drawn from a solved cube: what is in color is what that stage leaves done ----
+// The first stages are seen with white on top (the second layer, from the front); the last layer, with yellow on top.
+// Repeat and Recognize have a sign instead of a picture.
+function stagePic(id){
+  const C=stagePic.cache||(stagePic.cache={});
+  if(id in C)return C[id];
+  const WHITE={U:'U',F:'F',R:'R'},YELLOW={U:'D',F:'F',R:'L'},FRONT={U:'F',F:'D',R:'R'};
+  const twist=CUBE.parseSeq(ALGORITHMS.layers.yellowTwist.seq);
+  const P={
+    cross:[WHITE,k=>nz(k.p)<3],
+    corners:[WHITE,()=>true],
+    secondLayer:[FRONT,k=>k.p[1]>=0],
+    yellowCross:[YELLOW,(k,top)=>top&&k.c==='D'&&nz(k.p)<3],
+    yellowEdges:[YELLOW,k=>nz(k.p)<3],
+    // the corners in their place, one of them still turned
+    yellowCornersPlace:[YELLOW,(k,top)=>!top||k.c==='D',[...twist,...twist]],
+    yellowCornersTurn:[YELLOW,()=>true],
+    solve:[FRONT,()=>true]
+  }[id];
+  if(!P)return C[id]='<span class="pk-sign" aria-hidden="true">'+({repeat:'↻',recognize:'?'}[id]||'')+'</span>';
+  const snap=CUBE.snapshot();CUBE.resetLogic();if(P[2])COACH.apply(P[2]);
+  const g=topGrid(P[0],P[1]);CUBE.applySnap(snap);
+  return C[id]=DIAGRAMS.top(g);
 }
 
 // ---- Lesson panel ----
@@ -519,12 +532,16 @@ function practiceRender(){
   document.querySelectorAll('#levels button').forEach(b=>b.classList.toggle('on',+b.dataset.level===practice.level));
   document.querySelectorAll('[data-lesson]').forEach(b=>b.classList.toggle('on',b.dataset.lesson===practice.lesson));
   const completed=practice.completed[practice.lesson],solving=practice.lesson==='solve',q=practice.quiz;
-  $('practiceTitle').textContent=tr('lesson.'+practice.lesson+'.title');
-  $('practiceCount').textContent=q&&practice.score.total?tr('quiz.score',{right:practice.score.right,n:practice.score.total})
+  // the lesson line: the picture of its goal, its number (the seven stages) and its name
+  {const n=COACH.METHOD.indexOf(practice.lesson);$('practiceTitle').textContent=(n>=0?(n+1)+' · ':'')+tr('lesson.'+practice.lesson+'.title');
+   $('lessonPic').innerHTML=stagePic(practice.lesson);}
+  const count=q&&practice.score.total?tr('quiz.score',{right:practice.score.right,n:practice.score.total})
     :solving&&!practice.finished&&practice.hints?tr('practice.hints',{n:practice.hints})
     :completed?tr('practice.done',{n:completed}):'';
-  // the help-level buttons are for the lessons; Full solve has the hint button and Recognize the answers
-  $('levels').hidden=solving||!!q;
+  // the help-level buttons (in the lesson picker) are for the lessons; Full solve has the hint button and Recognize the
+  // answers. The lesson line says the level in use, next to the count.
+  $('levels').hidden=$('levelsLabel').hidden=solving||!!q;
+  $('practiceCount').textContent=[solving||q?'':tr('level.'+practice.level),count].filter(Boolean).join(' · ');
   $('quizOptions').hidden=!q;
   {const b=$('hintBtn');b.hidden=!solving;b.disabled=practice.finished||practice.hint>=3||practice.kind==='broken';
     b.textContent=tr(practice.hint>=3?'hint.all':'hint.'+(practice.hint+1));}
@@ -583,7 +600,7 @@ function practiceRender(){
   else if(sts)msg=trh('msg.corner.in',{piece,dir:esc(tr('dir.'+L[FACE_OF[key(sts.find(s=>s.c==='U').n)]]))});
   // recognize, once answered: right or not, then what that case is and its turns
   if(q&&q.chosen)msg=(q.chosen===q.answer?trh('quiz.right'):trh('quiz.wrong',{answer:'<b>'+esc(tr('case.'+q.answer))+'</b>'}))+' '+msg;
-  // each turn of the step: its drawing (as the guides draw it) and its letter; a gap where a new group of turns starts
+  // the turns of the step, as letters; a gap where a new group of turns starts
   const group=i=>practice.breaks.includes(i)?' gs':'';
   const guided=lvl()===1&&!practice.finished&&practice.kind!=='broken',answered=!!(q&&q.chosen);
   if(guided){
@@ -593,11 +610,7 @@ function practiceRender(){
   if(answered)chips=practice.plan.map((m,i)=>[group(i),m]);
   $('practiceMsg').innerHTML=msg;
   const seq=$('practiceSeq');seq.textContent='';seq.hidden=!(lvl()===1||answered);
-  for(const [cls,m] of chips){
-    const s=document.createElement('span');s.className=cls;
-    s.innerHTML=DIAGRAMS.turn(L[m.f],m.n)+'<b>'+esc(turnText(m,L))+'</b>';seq.appendChild(s);
-  }
-  practicePictures((guided||answered)&&practice.yellowUp&&practice.plan.length>1,vm);
+  for(const [cls,m] of chips){const s=document.createElement('span');s.className=cls;s.textContent=turnText(m,L);seq.appendChild(s);}
   practiceVisuals(true);
 }
 
@@ -834,7 +847,9 @@ function updateUI(){
   $('challengeBar').hidden=mode!=='challenge';
   $('challengePanel').hidden=mode!=='challenge';
   $('practiceBar').hidden=$('practicePanel').hidden=mode!=='practice';
-  {const b=$('bScramble'),txt=tr(mode==='practice'?'btn.newExercise':'btn.scramble');b.dataset.tip=txt;b.setAttribute('aria-label',txt);}
+  // in Practice this button is «new exercise»: it lights up when the exercise is done
+  {const b=$('bScramble'),txt=tr(mode==='practice'?'btn.newExercise':'btn.scramble');b.dataset.tip=txt;b.setAttribute('aria-label',txt);
+   b.classList.toggle('ready',mode==='practice'&&practice.finished);}
   if(mode==='practice')practiceRender();else practiceVisuals(false);
   $('pauseOv').hidden=!(mode==='challenge'&&challenge.state==='paused');
   // Challenge
@@ -848,9 +863,11 @@ function updateUI(){
 
 // Buttons
 $('tabPractice').onclick=startPractice;
-$('tabChallenge').onclick=()=>setMode('challenge');
-$('practiceNew').onclick=newExercise;
-document.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>setLesson(b.dataset.lesson));
+$('tabChallenge').onclick=()=>{openPicker(false);setMode('challenge');};
+// The lesson is chosen in the picker (a drawer like the turns one); the panel only shows one line with the current lesson
+document.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>{openPicker(false);setLesson(b.dataset.lesson);});
+$('lessonPick').onclick=()=>openPicker(!pickerOpen);
+$('pClose').onclick=()=>openPicker(false);
 $('hintBtn').onclick=askHint;
 document.querySelectorAll('#levels button').forEach(b=>b.onclick=()=>{
   practice.level=+b.dataset.level;
@@ -911,7 +928,17 @@ tap('sizeBtn',()=>{
   setSize(CUBE.size===3?2:3);
 });
 
-function openDrawer(o){drawerOpen=o;$('drawer').classList.toggle('open',o);$('drawer').setAttribute('aria-hidden',o?'false':'true');}
+function openDrawer(o){
+  if(o)openPicker(false);
+  drawerOpen=o;$('drawer').classList.toggle('open',o);$('drawer').setAttribute('aria-hidden',o?'false':'true');
+}
+function openPicker(o){
+  if(o&&drawerOpen)openDrawer(false);
+  pickerOpen=o;$('picker').classList.toggle('open',o);$('picker').setAttribute('aria-hidden',o?'false':'true');
+  $('lessonPick').setAttribute('aria-expanded',o?'true':'false');
+}
+// each lesson in the picker with the picture of its goal
+document.querySelectorAll('#picker [data-lesson] .pk-pic').forEach(p=>p.innerHTML=stagePic(p.parentNode.dataset.lesson));
 $('dClose').onclick=()=>openDrawer(false);
 const mg=$('turnGrid');
 [['',1,''],["'",-1,' p'],['2',2,' d']].forEach(([suf,n,cls])=>{
@@ -931,7 +958,7 @@ const mg=$('turnGrid');
   I18N.onChange(code=>{
     sel.value=code;
     document.title=tr('app.title')+' · v'+document.documentElement.dataset.version;
-    setSaved(savedOk);updateUI();
+    setSaved(savedOk);updateUI();algSheet();
   });
   document.title=tr('app.title')+' · v'+document.documentElement.dataset.version;
 }
@@ -943,9 +970,62 @@ document.querySelectorAll('.htabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('[data-help-panel]').forEach(panel=>panel.hidden=panel.dataset.helpPanel!==b.dataset.helpTab);
   $('help').scrollTop=0;
 });
+// Help · Notation: each letter, its name and its drawing (the same ones as in the Algorithms sheet)
+document.querySelectorAll('[data-turn]').forEach(c=>{
+  const t=c.dataset.turn;c.insertAdjacentHTML('beforeend',DIAGRAMS.turn(t[0],t[1]==="'"?-1:t[1]==='2'?2:1));
+});
+// Help · Algorithms: every algorithm of the method, stage by stage, written the way the guide holds the cube: white on
+// top for the first three stages, yellow on top for the rest (the model is turned over: U↔D and R↔L)
+const ALG_SHEET=[
+  {stage:0,algs:['crossUp','crossFlipped','crossMiddle']},
+  {stage:1,algs:['cornerRight','cornerFront','cornerOut']},
+  {stage:2,algs:['secondRight','secondLeft']},
+  {stage:3,algs:['yellowCross'],yellowUp:true},
+  // the guide adds a last turn of the top layer (U, model D) once the two neighbors are held at the back and on the right
+  {stage:4,algs:['yellowEdges'],yellowUp:true,extra:[{f:'D',n:1}]},
+  {stage:5,algs:['yellowCorners'],yellowUp:true},
+  {stage:6,algs:['yellowTwist'],yellowUp:true,times:2}
+];
+const TURNED_OVER={U:'D',D:'U',R:'L',L:'R',F:'F',B:'B'},YELLOW_VIEW={U:'D',F:'F',R:'L'};
+// Last layer: what each before → after shows (the rest is gray), that is, what the algorithm is for
+const SHEET_KEEP={
+  yellowCross:(k,top)=>top&&k.c==='D'&&nz(k.p)<3,                 // the yellow shape of the edges
+  yellowEdges:(k,top)=>nz(k.p)<3&&(!top||k.c==='D'),              // the edges and their side colors
+  yellowCorners:(k,top)=>nz(k.p)!==2&&(!top||k.c==='D'),          // the corners and their side colors
+  yellowTwist:(k,top)=>!top||k.c==='D'                             // the whole layer
+};
+function algSheet(){
+  const snap=CUBE.snapshot();let h='';
+  for(const sec of ALG_SHEET){
+    h+='<h3>'+(sec.stage+1)+' · '+esc(tr('stage.'+CUBE.STAGES[sec.stage].id))+'</h3><p class="ahold">'+esc(tr(sec.yellowUp?'algs.holdYellow':'algs.holdWhite'))+'</p>';
+    for(const name of sec.algs){
+      const A=ALGORITHMS.layers[name],seq=CUBE.parseSeq(A.seq),starts=[];
+      let pos=0;for(const g of A.groups||[seq.length]){if(pos)starts.push(pos);pos+=g;}
+      let strip='';
+      seq.forEach((m,i)=>{
+        const t=sec.yellowUp?TURNED_OVER[m.f]:m.f;
+        strip+='<span'+(starts.includes(i)?' class="gs"':'')+'>'+DIAGRAMS.turn(t,m.n)+'<b>'+t+(m.n===-1?"'":m.n===2?'2':'')+'</b></span>';
+      });
+      for(const [i,m] of (sec.extra||[]).entries()){const t=TURNED_OVER[m.f];strip+='<span'+(i?'':' class="gs"')+'>'+DIAGRAMS.turn(t,m.n)+'<b>'+t+(m.n===-1?"'":m.n===2?'2':'')+'</b></span>';}
+      if(sec.times)strip+='<span class="times">×'+sec.times+'</span>';
+      let pics='';
+      if(SHEET_KEEP[name]){
+        const all=[];for(let i=0;i<(sec.times||1);i++)all.push(...seq);all.push(...(sec.extra||[]));
+        CUBE.resetLogic();COACH.apply(CUBE.invSeq(all));
+        const before=topGrid(YELLOW_VIEW,SHEET_KEEP[name]);CUBE.resetLogic();
+        pics='<div class="alg-pics">'+picsHTML(before,topGrid(YELLOW_VIEW,SHEET_KEEP[name]))+'</div>';
+      }
+      h+='<div class="acard"><div class="atitle">'+esc(tr('algs.'+name))+'</div><div class="alg-seq">'+strip+'</div>'+pics+'<p>'+trh('algs.'+name+'.when')+'</p></div>';
+    }
+  }
+  CUBE.applySnap(snap);
+  $('algList').innerHTML=h;
+}
+algSheet();
 document.addEventListener('keydown',e=>{
   if(helpOpen){if(e.key==='Escape')$('hClose').click();return;}
   if(e.key==='Escape'&&drawerOpen)openDrawer(false);
+  if(e.key==='Escape'&&pickerOpen)openPicker(false);
 });
 window.addEventListener('pagehide',save);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();});
