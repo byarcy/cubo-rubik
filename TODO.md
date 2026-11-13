@@ -4,10 +4,11 @@ Living list of what is missing. When something is finished it is deleted from he
 
 ## Practice lessons
 
-Done: the seven lessons of the layer-by-layer method (white cross, white corners, second layer, yellow cross, yellow edges, yellow corners in place, yellow corners turned). Next:
+Done: the seven lessons of the layer-by-layer method (white cross, white corners, second layer, yellow cross, yellow edges, yellow corners in place, yellow corners turned), Full solve with hints (v0.39), and the drills Repeat and Recognize (v0.39). Next:
 
-- [ ] Full solve with hints: a normal scramble where the coach only helps when asked (hint in three levels: which piece, where it goes, the turns). It is the bridge to Challenge.
-- [ ] Loose ideas: "repeat until it comes back" (sequences that return the cube to solved after 6 repetitions), recognize the case by choosing among 2 or 3 options, 2×2 corners as an earlier step.
+- [ ] 2×2 corners as an earlier step: Practice only works on the 3×3 today. On the 2×2 there are no centers, so "solved" has to be measured against one corner taken as fixed, and turning the left face is the same as turning the right one plus the whole cube. The coach would need that normalization first; then the white-corner and last-layer corner lessons could be reused.
+- [ ] Recognize: add the remaining cases (white corner in the wrong slot, edge flipped in the middle layer) and the yellow-corner twists of lesson 7.
+- [ ] Full solve: keep a record (time, turns and hints of each solve) to see progress.
 
 Every new lesson is added to `COACH.LESSONS` and must pass `node tests/lessons.test.js`.
 Its texts go in `locales/en.json` and every other language (`node tests/i18n.test.js` complains if one is missing).

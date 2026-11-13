@@ -114,6 +114,9 @@ function canInput(){return !helpOpen&&!scrambling&&!exploded&&!resetAnim&&!(mode
 function userTurn(f,n){
   lastTouch=performance.now();
   if(!canInput())return;
+  // recognizing a case: the cube stays as it is (you can still look at it from every side)
+  if(mode==='practice'&&lessonDef().quiz){showTipFor($('practiceMsg'),tr('quiz.noTurns'));return;}
+  if(mode==='practice')practice.turns++;
   if(mode==='challenge'){
     if(challenge.state==='ready'){challenge.state='running';challenge.start=performance.now();challenge.base=0;challenge.moves=0;}
     if(challenge.state==='running')challenge.moves++;
@@ -128,7 +131,7 @@ function userTurnView(letter,n){if(G.viewAnim)return;userTurn(viewMap()[letter],
 function undo(){
   if(!canInput())return;
   const m=hist.pop();if(!m)return;
-  if(mode==='practice')practiceMove({f:m.f,n:m.n===2?2:-m.n});
+  if(mode==='practice'){practice.turns++;practiceMove({f:m.f,n:m.n===2?2:-m.n});}
   enqueue(m.f,m.n===2?2:-m.n,200);
   updateUI();
 }
@@ -178,10 +181,10 @@ function setMode(m){
   mode=m;openDrawer(false);cancelPress();hist=[];earned=false;armed=false;
   if(m==='practice'){
     applySnap(modeStates.practice);
-    practice.target=null;practice.finished=false;
-    // no saved exercise (or already finished): a new one is prepared
-    if(!modeStates.practice||!lessonDef().step().plan){lessonDef().generate();syncFromLogic();}
-    practicePlan();practiceView();
+    resetExercise();
+    // no saved exercise (or already finished, or a case to recognize, which isn't saved): a new one is prepared
+    if(lessonDef().quiz||!modeStates.practice||!lessonDef().step().plan){lessonDef().generate();syncFromLogic();}
+    practicePlan();startQuiz();practiceView();
   }else{
     applySnap(modeStates.challenge);armed=!isSolved();
     animView(0,0,new M3.Quaternion(),450);
@@ -193,8 +196,27 @@ function setMode(m){
 // lesson: which one is open · completed: finished exercises of each one
 // level: 1 guided (piece, slot, arrow and turns) · 2 piece and slot only · 3 no help
 // target: piece to move · plan: turns of this step · i: how many you have done · wrong: extra turns that must be undone
-const practice={lesson:'cross',level:1,completed:Object.fromEntries(Object.keys(COACH.LESSONS).map(l=>[l,0])),target:null,kind:null,face:null,plan:[],alt:[],i:0,wrong:[],finished:false};
+// Also, per exercise: stageAt (the stage being worked on, for the bar) · sub (whose case the step is: in Full solve and
+// Recognize, one of the seven lessons) · yellowUp (how to show it) · info (repeat: repetitions done and total)
+// · turns / okTurn (your turns, and the last one with the coach happy: see holdStep) · away (repeat: the cube left solved)
+// · hint, hintKey, hints (Full solve: help asked for the current step, which step, and how many in the exercise)
+// · quiz (Recognize: {answer, options, chosen})
+const practice={lesson:'cross',level:1,completed:Object.fromEntries(Object.keys(COACH.LESSONS).map(l=>[l,0])),target:null,kind:null,face:null,plan:[],alt:[],i:0,wrong:[],finished:false,
+  stageAt:0,sub:null,yellowUp:false,info:null,turns:0,okTurn:0,away:false,hint:0,hintKey:null,hints:0,quiz:null,score:{right:0,total:0}};
 const lessonDef=()=>COACH.LESSONS[practice.lesson];
+// The lesson whose case is shown now (for the messages)
+const stepLesson=()=>practice.sub||practice.lesson;
+// The help shown, as the three levels: 1 guided, 2 piece and slot, 3 nothing. In Full solve it depends on the hints
+// asked for (none · which piece · where it goes · the turns); in Recognize, the piece and slot are shown.
+function lvl(){
+  if(practice.lesson==='solve')return [3,2,2,1][practice.hint];
+  if(lessonDef().quiz)return 2;
+  return practice.level;
+}
+function resetExercise(){
+  practice.target=null;practice.finished=false;practice.away=false;practice.turns=practice.okTurn=0;
+  practice.hint=0;practice.hintKey=null;practice.hints=0;practice.quiz=null;
+}
 // true if you moved the view yourself (fingers or cube button) during the current step: then the app leaves it alone
 // until the step ends
 let userMovedView=false;
@@ -208,7 +230,7 @@ const isInverse=(a,b)=>a.f===b.f&&(b.n===2?a.n===2:a.n===-b.n);
 const matches=(s,m)=>!!s&&m.f===s.f&&(m.n===s.n||s.n===2);
 // Keeps track of the guided step with each turn of yours (and each undo)
 function practiceMove(m){
-  if(practice.level!==1||practice.finished)return;
+  if(lvl()!==1||practice.finished)return;
   const D=practice.wrong;
   if(D.length){if(isInverse(m,D[D.length-1]))D.pop();else D.push(m);return;}
   // on the first turn any of the equivalent routes is fine; from there that one is followed
@@ -230,28 +252,75 @@ function practiceMove(m){
 function practicePlan(){
   // a new step starts: if you had moved the view, from now on the app may arrange it again if needed
   userMovedView=false;
-  const e=lessonDef().step(practice.target),before=practice.target;
+  let e=lessonDef().step(practice.target);
+  const before=practice.target;
+  // repeat: the exercise ends when the cube comes back after leaving
+  if(lessonDef().loop){if(!isSolved())practice.away=true;else if(practice.away)e={done:true};}
   practice.plan=e.plan||[];practice.alt=e.alt||[];practice.i=0;practice.wrong=[];
   practice.kind=e.broken?'broken':e.done?'done':e.kind;practice.face=e.face||null;practice.focusIds=e.focus||null;
   // slot: a fixed spot to frame (lesson 7); keepView: the guide says to keep the same side facing you
   practice.slot=e.slot||null;practice.keepView=!!e.keepView;
+  practice.stageAt=e.stage!=null?e.stage:lessonDef().stage;practice.sub=e.lesson||null;
+  practice.yellowUp='yellowUp' in e?!!e.yellowUp:!!lessonDef().yellowUp;
+  practice.info=e.total?{reps:e.reps,total:e.total,alg:e.alg}:practice.info;
+  if(!e.broken)practice.okTurn=practice.turns;
   if(e.id)practice.target=e.id;
+  else if(practice.sub)practice.target=null;     // full solve: a last-layer step has no piece
+  // full solve: the hints are for one step (the same piece, or the same last-layer stage); a new step starts without help
+  if(practice.lesson==='solve'&&!e.done){const k=e.stage+'|'+(e.id||'');if(k!==practice.hintKey){practice.hint=0;practice.hintKey=k;}}
   if(e.done){practice.target=null;if(!practice.finished){practice.finished=true;practice.completed[practice.lesson]++;celebrate(tr('lesson.'+practice.lesson+'.done'));}}
   return !!e.id&&e.id!==before;
 }
+// With less help, an algorithm takes the solved part apart for a few turns and puts it back. Meanwhile the coach
+// keeps the step it had (no "it came apart" message, the stage bar doesn't drop), unless it lasts longer than any
+// algorithm: then it shows what is really there.
+const HOLD=10;
+function holdStep(){
+  if(practice.turns-practice.okTurn>HOLD)return false;
+  const e=lessonDef().step(practice.target);
+  return !!e.broken||(e.stage!=null&&e.stage<practice.stageAt);
+}
 // With the cube at rest: if you are not in the middle of a step, the coach looks at the cube again
 function practiceAfter(){
-  if(practice.finished)return;
-  if(practice.level===1&&(practice.wrong.length||(practice.i>0&&practice.i<practice.plan.length)))return;
+  if(practice.finished||lessonDef().quiz)return;
+  if(lvl()===1&&(practice.wrong.length||(practice.i>0&&practice.i<practice.plan.length)))return;
+  if(lvl()>1&&holdStep())return;
   const changed=practicePlan();
   // the cube turns by itself only if the piece changed or the face to turn is hidden (and you did not move the view)
-  if(!practice.finished&&practice.level<3&&!practice.keepView&&(changed||(practice.level===1&&!userMovedView&&!practiceFacesVisible())))practiceView();
+  if(!practice.finished&&lvl()<3&&!practice.keepView&&(changed||(lvl()===1&&!userMovedView&&!practiceFacesVisible())))practiceView();
 }
 function newExercise(){
   if(helpOpen||busy||queue.length||scrambling||resetAnim||exploded)return;
   if(!lessonDef().generate())return;
   syncFromLogic();hist=[];earned=false;armed=false;
-  practice.target=null;practice.finished=false;practicePlan();practiceView();
+  resetExercise();practicePlan();startQuiz();practiceView();
+  updateUI();save();
+}
+// Recognize: the case to answer, and its option buttons
+function startQuiz(){
+  const box=$('quizOptions');box.textContent='';
+  if(!lessonDef().quiz)return;
+  const q=lessonDef().step();
+  practice.quiz={answer:q.answer,options:q.options,chosen:null};
+  for(const kind of q.options){
+    const b=document.createElement('button');b.dataset.kind=kind;b.textContent=tr('case.'+kind);
+    b.onclick=()=>answerQuiz(kind);box.appendChild(b);
+  }
+  box.style.gridTemplateColumns='repeat('+q.options.length+',minmax(0,1fr))';
+}
+function answerQuiz(kind){
+  const q=practice.quiz;if(!q||q.chosen)return;
+  q.chosen=kind;practice.score.total++;
+  if(kind===q.answer){practice.score.right++;practice.completed.recognize++;}
+  updateUI();save();
+}
+// Full solve: each tap shows one more hint for this step (which piece → where it goes → the turns)
+function askHint(){
+  if(practice.lesson!=='solve'||practice.finished||practice.hint>=3||busy||queue.length||scrambling)return;
+  // the step is read again from the cube as it is now (unless you are in the middle of an algorithm)
+  if(!holdStep())practicePlan();else{practice.i=0;practice.wrong=[];}
+  practice.hint++;practice.hints++;
+  practiceView();
   updateUI();save();
 }
 // Lesson view: white on top (as in the guide), with the faces to turn, the piece and its slot facing you
@@ -260,7 +329,7 @@ const YELLOW_UP=new M3.Quaternion().setFromAxisAngle(new M3.Vector3(0,0,1),Math.
 function practiceView(){
   userMovedView=false;
   const axis=new M3.Vector3(0,1,0),q=new M3.Quaternion(),goal=new M3.Vector3(1,0,1),dirs=[];
-  const base=lessonDef().yellowUp?YELLOW_UP:new M3.Quaternion();
+  const base=practice.yellowUp?YELLOW_UP:new M3.Quaternion();
   for(const m of practice.plan)if(m.f!=='U'&&m.f!=='D')dirs.push([FACE_DIR[m.f],1]);
   if(practice.target)dirs.push([CUBE.byId[practice.target][0].p,1],[practice.target.split(',').map(Number),0.6]);
   if(practice.slot)dirs.push([practice.slot.split(',').map(Number),1]);
@@ -372,18 +441,20 @@ function practiceNextTurn(){
 function practiceVisuals(on){
   const group=practice.focusIds&&practice.focusIds.length?practice.focusIds:null;
   const assist=!!on&&!practice.finished&&practice.kind!=='broken'&&(!!practice.target||!!group||practice.plan.length>0);
-  const focus=assist&&practice.level<3;
-  const h=!focus?null:practice.target?practice.target.split(',').map(Number):practice.slot?practice.slot.split(',').map(Number):null;
+  const focus=assist&&lvl()<3;
+  // full solve, first hint ("which piece"): the piece only, without its slot
+  const where=!(practice.lesson==='solve'&&practice.hint<2);
+  const h=!focus||!where?null:practice.target?practice.target.split(',').map(Number):practice.slot?practice.slot.split(',').map(Number):null;
   // one piece, plus the center it goes to (cross) or the center it has to match (second layer);
   // in the last layer, a group of pieces (the yellow shape, the edges or corners already in place)
-  const extra=!h||!practice.target?null:practice.lesson==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
+  const extra=!h||!practice.target?null:stepLesson()==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
   setFocus(!focus?null:practice.target?practice.target+(extra?'|'+extra:''):group?group.join('|'):null);
   frames.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
     const show=!!h&&h[a]!==0;
     placeMark(m,show,show&&h.map((v,i)=>v+d[i]*0.54),d);
   });
-  const g=assist&&practice.level===1?practiceNextTurn():null;
+  const g=assist&&lvl()===1?practiceNextTurn():null;
   // the horizontal layer at the bottom of the view gets straight arrows; any other face, the round one on it
   const bottom=g&&(g.f==='U'||g.f==='D')&&viewMap().D===g.f;
   arrowDTurn=bottom?g:null;
@@ -401,16 +472,28 @@ const turnText=(m,L)=>L[m.f]+(m.n===-1?"'":m.n===2?'2':'');
 function practiceRender(){
   // Stage bar
   const E=CUBE.STAGES,box=$('stages'),real=CUBE.stage();
-  const n=!practice.finished&&practice.kind!=='broken'?Math.max(real,lessonDef().stage):real;
+  const n=!practice.finished&&practice.kind!=='broken'?Math.max(real,practice.stageAt):real;
   if(!box.children.length)E.forEach(()=>box.appendChild(document.createElement('i')));
   [...box.children].forEach((el,i)=>{el.className=i<n?'on':i===n?'cur':'';});
   box.setAttribute('aria-label',tr('stage.aria',{n,total:E.length}));
   $('stageText').innerHTML=n<E.length?trh('stage.label',{n:n+1,total:E.length,name:esc(tr('stage.'+E[n].id))}):trh('stage.solved');
   document.querySelectorAll('#levels button').forEach(b=>b.classList.toggle('on',+b.dataset.level===practice.level));
-  document.querySelectorAll('#lessons button').forEach(b=>b.classList.toggle('on',b.dataset.lesson===practice.lesson));
-  const completed=practice.completed[practice.lesson];
+  document.querySelectorAll('[data-lesson]').forEach(b=>b.classList.toggle('on',b.dataset.lesson===practice.lesson));
+  const completed=practice.completed[practice.lesson],solving=practice.lesson==='solve',q=practice.quiz;
   $('practiceTitle').textContent=tr('lesson.'+practice.lesson+'.title');
-  $('practiceCount').textContent=completed?tr('practice.done',{n:completed}):'';
+  $('practiceCount').textContent=q&&practice.score.total?tr('quiz.score',{right:practice.score.right,n:practice.score.total})
+    :solving&&!practice.finished&&practice.hints?tr('practice.hints',{n:practice.hints})
+    :completed?tr('practice.done',{n:completed}):'';
+  // the help-level buttons are for the lessons; Full solve has the hint button and Recognize the answers
+  $('levels').hidden=solving||!!q;
+  $('quizOptions').hidden=!q;
+  {const b=$('hintBtn');b.hidden=!solving;b.disabled=practice.finished||practice.hint>=3||practice.kind==='broken';
+    b.textContent=tr(practice.hint>=3?'hint.all':'hint.'+(practice.hint+1));}
+  if(q)$('quizOptions').querySelectorAll('button').forEach(b=>{
+    b.disabled=!!q.chosen;b.textContent=tr('case.'+b.dataset.kind);
+    b.classList.toggle('right',!!q.chosen&&b.dataset.kind===q.answer);
+    b.classList.toggle('wrong',!!q.chosen&&b.dataset.kind===q.chosen&&q.chosen!==q.answer);
+  });
   // Letters as the cube looks now: model face → letter
   const vm=viewMap(),L={};for(const l in vm)L[vm[l]]=l;
   let msg='',chips=[];
@@ -420,12 +503,19 @@ function practiceRender(){
   const colors=sts?'<b>'+sts.map(s=>s.c).sort((a,b)=>first(b)-first(a)).map(c=>esc(tr('color.'+c))).join('-')+'</b>':'';
   const center=sts&&sts.find(s=>s.c!=='U'),faceCode=practice.face||(center&&center.c);
   const face=faceCode?'<b>'+esc(tr('color.'+faceCode))+'</b>':'';
-  const piece=trh(practice.lesson==='corners'?'piece.corner':'piece.edge',{colors});
+  const sub=stepLesson();
+  const piece=trh(sub==='corners'?'piece.corner':'piece.edge',{colors});
   const layer=esc(tr('layer.'+L.D)),dir=esc(tr('dir.'+L.D));
-  if(practice.finished)msg=trh('lesson.'+practice.lesson+'.complete');
-  else if(practice.kind==='broken')msg=trh({corners:'msg.broken',secondLayer:'msg.brokenLayer'}[practice.lesson]||'msg.brokenSolved');
-  else if(practice.level===3)msg=trh('lesson.'+practice.lesson+'.free');
+  const info=practice.info,algName=info?'<b>'+esc(tr('alg.'+info.alg))+'</b>':'';
+  if(practice.finished)msg=solving?(practice.hints?trh('lesson.solve.complete',{n:practice.hints}):trh('lesson.solve.completeClean'))
+    :practice.lesson==='repeat'?trh('lesson.repeat.complete',{name:algName,total:info.total})
+    :trh('lesson.'+practice.lesson+'.complete');
+  else if(practice.kind==='broken')msg=trh({corners:'msg.broken',secondLayer:'msg.brokenLayer',repeat:'msg.repeat.broken'}[practice.lesson]||'msg.brokenSolved');
+  else if(q&&!q.chosen)msg=trh('quiz.q.'+sub);
+  else if(lvl()===3)msg=trh('lesson.'+practice.lesson+'.free',info?{name:algName,total:info.total}:undefined);
+  else if(solving&&practice.hint===1)msg=trh('msg.hint.piece',{n:practice.stageAt+1,name:esc(tr('stage.'+CUBE.STAGES[practice.stageAt].id))});
   else if(practice.wrong.length)msg=trh('msg.wrong');
+  else if(practice.kind==='repeat')msg=trh(lvl()===1?'msg.repeat.guided':'msg.repeat.alone',{name:algName,n:info.reps+1,total:info.total});
   else if(practice.kind==='yTurnTwist')msg=trh('msg.yturn.twist');
   else if(practice.kind==='yTurnKeep')msg=trh('msg.yturn.keep');
   else if(practice.kind==='yTurnHalf')msg=trh('msg.yturn.half');
@@ -434,30 +524,33 @@ function practiceRender(){
   else if(practice.kind==='yCrossDot')msg=trh('msg.ycross.dot');
   else if(practice.kind==='yCrossL')msg=trh('msg.ycross.L');
   else if(practice.kind==='yCrossLine')msg=trh('msg.ycross.line');
-  else if(practice.lesson==='yellowEdges'&&practice.kind==='align')msg=trh('msg.yedges.align',{layer});
+  else if(sub==='yellowEdges'&&practice.kind==='align')msg=trh('msg.yedges.align',{layer});
   else if(practice.kind==='yEdgesSwap')msg=trh('msg.yedges.swap');
   else if(practice.kind==='yEdgesOpposite')msg=trh('msg.yedges.opposite');
   else if(practice.kind==='yCornersNone')msg=trh('msg.ycorners.none');
   else if(practice.kind==='yCornersCycle')msg=trh('msg.ycorners.cycle');
   else if(practice.kind==='secondTake')msg=trh('msg.second.take',{piece,layer});
-  else if(practice.lesson==='secondLayer'&&practice.kind==='align')msg=trh('msg.second.align',{piece,layer,face});
+  else if(sub==='secondLayer'&&practice.kind==='align')msg=trh('msg.second.align',{piece,layer,face});
   else if(practice.kind==='secondRight')msg=trh('msg.second.right',{piece,face});
   else if(practice.kind==='secondLeft')msg=trh('msg.second.left',{piece,face});
   else if(practice.kind==='crossTake')msg=trh('msg.cross.take',{piece,layer});
   else if(practice.kind==='crossMiddle')msg=trh('msg.cross.middle',{piece,layer});
-  else if(practice.lesson==='cross'&&practice.kind==='align')msg=trh('msg.cross.align',{piece,layer,face});
+  else if(sub==='cross'&&practice.kind==='align')msg=trh('msg.cross.align',{piece,layer,face});
   else if(practice.kind==='crossUp')msg=trh('msg.cross.up',{piece,face,dir});
   else if(practice.kind==='crossFlipped')msg=trh('msg.cross.flipped',{piece,face});
   else if(practice.kind==='align')msg=trh('msg.corner.align',{piece,layer});
   else if(practice.kind==='take')msg=trh('msg.corner.take',{piece});
   else if(practice.kind==='cornerOut')msg=trh('msg.corner.out',{piece,dir});
   else if(sts)msg=trh('msg.corner.in',{piece,dir:esc(tr('dir.'+L[FACE_OF[key(sts.find(s=>s.c==='U').n)]]))});
-  if(practice.level===1&&!practice.finished&&practice.kind!=='broken'){
+  // recognize, once answered: right or not, then what that case is and its turns
+  if(q&&q.chosen)msg=(q.chosen===q.answer?trh('quiz.right'):trh('quiz.wrong',{answer:'<b>'+esc(tr('case.'+q.answer))+'</b>'}))+' '+msg;
+  if(lvl()===1&&!practice.finished&&practice.kind!=='broken'){
     if(practice.wrong.length)chips=[['bad',turnText(practiceNextTurn(),L)]];
     else chips=practice.plan.map((m,i)=>[i<practice.i?'done':i===practice.i?'cur':'',turnText(m,L)]);
   }
+  if(q&&q.chosen)chips=practice.plan.map(m=>['',turnText(m,L)]);
   $('practiceMsg').innerHTML=msg;
-  const seq=$('practiceSeq');seq.textContent='';seq.hidden=practice.level!==1;
+  const seq=$('practiceSeq');seq.textContent='';seq.hidden=!(lvl()===1||(q&&q.chosen));
   for(const [cls,t] of chips){const s=document.createElement('span');s.className=cls;s.textContent=t;seq.appendChild(s);}
   practiceVisuals(true);
 }
@@ -711,10 +804,11 @@ function updateUI(){
 $('tabPractice').onclick=startPractice;
 $('tabChallenge').onclick=()=>setMode('challenge');
 $('practiceNew').onclick=newExercise;
-document.querySelectorAll('#lessons button').forEach(b=>b.onclick=()=>setLesson(b.dataset.lesson));
+document.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>setLesson(b.dataset.lesson));
+$('hintBtn').onclick=askHint;
 document.querySelectorAll('#levels button').forEach(b=>b.onclick=()=>{
   practice.level=+b.dataset.level;
-  if(!practice.finished&&!busy&&!queue.length){practicePlan();if(practice.level<3)practiceView();}
+  if(!practice.finished&&!busy&&!queue.length){practicePlan();if(lvl()<3)practiceView();}
   updateUI();save();
 });
 // Holding an icon shows its name (and doesn't activate it)

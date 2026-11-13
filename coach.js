@@ -279,31 +279,38 @@ function yellowCornersPlace(){
 //   yTurnHalf   · an odd number of yellowTwist was done (only possible without the guide): finish the pair
 //   yTurnNext   · the corner in the spot is right: turn the yellow layer to bring one that isn't
 //   yTurnFinish · every corner is right and the rest came back: a turn of the yellow layer finishes the cube
-const WORK_SPOT='-1,-1,1';
-const TWIST=()=>algoSeq('yellowTwist',0);
-const UNTWIST=()=>CUBE.invSeq(TWIST());
+// The lesson always uses the spot of side 0; without the guide (full solve, no help) you may have chosen another side:
+// side r is the same spot and the same algorithm turned with rotateToSlot (the spot is where faces L and F meet D).
+const TWIST=(r=0)=>algoSeq('yellowTwist',r);
+const spotOf=r=>{const [l,f]=rotateToSlot([{f:'L'},{f:'F'}],r).map(m=>CUBE.FACE_DIR[m.f]);return key([l[0]+f[0],-1,l[2]+f[2]]);};
+const WORK_SPOT=spotOf(0);
 const yellowDown=id=>CUBE.byId[id].find(k=>k.hn[1]===-1).n[1]===-1;     // id: a yellow corner (by its solved place)
 const cornerAt=pos=>YELLOW_CORNERS.find(id=>key(CUBE.byId[id][0].p)===pos);
-// How many yellowTwist have to be undone to get the first two layers back (0 to 5), or -1 if none works
+const firstTwoLayers=()=>whiteLayerSolved()&&MIDDLE_EDGES.every(CUBE.pieceSolved);
+// How many yellowTwist (m, 0 to 5) from which side (r) have to be undone to get the first two layers back;
+// m = -1 if none works. With m = 0 the side is free (nothing is messed up): side 0.
 function twistsDone(){
-  const snap=CUBE.snapshot();let m=-1;
-  for(let i=0;i<6;i++){
-    if(whiteLayerSolved()&&MIDDLE_EDGES.every(CUBE.pieceSolved)){m=i;break;}
-    apply(UNTWIST());
+  if(firstTwoLayers())return {m:0,r:0};
+  const snap=CUBE.snapshot();
+  for(let m=1;m<6;m++)for(let r=0;r<4;r++){
+    for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));
+    const ok=firstTwoLayers();CUBE.applySnap(snap);
+    if(ok)return {m,r};
   }
-  CUBE.applySnap(snap);return m;
+  return {m:-1,r:0};
 }
 function yellowCornersTurn(){
   if(CUBE.isSolved())return {done:true};
-  const m=twistsDone(),spot=cornerAt(WORK_SPOT);
-  if(m<0||!spot)return {broken:true};
-  const extra={slot:WORK_SPOT,focus:[spot],keepView:true};
-  if(m%2)return Object.assign({kind:'yTurnHalf',plan:TWIST(),cost:0},extra);
-  if(!yellowDown(spot))return Object.assign({kind:m?'yTurnKeep':'yTurnTwist',plan:[...TWIST(),...TWIST()],cost:0},extra);
+  const {m,r}=twistsDone(),place=spotOf(r),spot=cornerAt(place);
+  if(m<0)return {broken:true};
+  const extra={slot:place,focus:spot?[spot]:[],keepView:true};
+  if(m%2)return Object.assign({kind:'yTurnHalf',plan:TWIST(r),cost:0},extra);
+  if(!spot)return {broken:true};
+  if(!yellowDown(spot))return Object.assign({kind:m?'yTurnKeep':'yTurnTwist',plan:[...TWIST(r),...TWIST(r)],cost:0},extra);
   const all=YELLOW_CORNERS.every(yellowDown);
   if(all&&m)return {broken:true};
   // the turn of the yellow layer: the nearest one that brings a corner still to be turned (or, at the end, solves the cube)
-  const want=all?()=>CUBE.isSolved():()=>!yellowDown(cornerAt(WORK_SPOT));
+  const want=all?()=>CUBE.isSolved():()=>!yellowDown(cornerAt(place));
   const ok=afterTurns(()=>want()?1:0);
   const k=[1,3,2].find(i=>ok[i]);
   if(k===undefined)return {broken:true};
@@ -332,9 +339,110 @@ function generateLastLayer(stage,before){
   return false;
 }
 
+// ================= Full solve =================
+// A normal scramble, solved stage by stage with the seven lessons: the coach looks at which stage the cube is at and
+// asks that lesson for the step. The interface only shows it when you ask for a hint.
+const METHOD=['cross','corners','secondLayer','yellowCross','yellowEdges','yellowCornersPlace','yellowCornersTurn'];
+// In the middle of the last step the first layers look messed up on purpose: it is still the last step if undoing the
+// twists (and turning the yellow layer) leaves every corner in place
+function inLastStep(){
+  const {m,r}=twistsDone();
+  if(m<0)return false;
+  const snap=CUBE.snapshot();
+  for(let i=0;i<m;i++)apply(CUBE.invSeq(TWIST(r)));
+  const ok=afterTurns(()=>CUBE.stage()>=6?1:0).some(Boolean);
+  CUBE.applySnap(snap);return ok;
+}
+// The stage the cube is at (0 to 6), or 7 when it is solved
+function solveStage(){
+  if(CUBE.isSolved())return 7;
+  return inLastStep()?6:CUBE.stage();
+}
+// The step of the lesson of that stage, plus: stage, lesson (which lesson it comes from) and yellowUp (how to show it)
+function solve(current){
+  const s=solveStage();
+  if(s===7)return {done:true};
+  const lesson=METHOD[s],e=LESSONS[lesson].step(current);
+  return Object.assign({},e,{stage:s,lesson,yellowUp:!!LESSONS[lesson].yellowUp});
+}
+
+// ================= Repeat until it comes back =================
+// Starting from a solved cube, the same algorithm again and again: the cube comes apart and, after a few repetitions
+// (6 for most of them), it comes back by itself. It is for learning an algorithm by heart and trusting it.
+const REPEAT=[
+  {alg:'yellowTwist',yellowUp:true},{alg:'yellowCross',yellowUp:true},{alg:'yellowEdges',yellowUp:true},
+  {alg:'yellowCorners',yellowUp:true},{alg:'cornerOut',yellowUp:false}
+];
+let repeatPick=0;
+const orders={};
+// How many repetitions bring the solved cube back
+function orderOf(name){
+  if(!orders[name]){
+    const snap=CUBE.snapshot(),seq=algoSeq(name,0);CUBE.resetLogic();
+    let n=0;do{apply(seq);n++;}while(!CUBE.isSolved()&&n<200);
+    CUBE.applySnap(snap);orders[name]=n;
+  }
+  return orders[name];
+}
+// Where you are: «reps» whole repetitions plus the first «j» turns of the next one (undoing them gives the solved cube)
+function repeatStep(){
+  const R=REPEAT[repeatPick],seq=algoSeq(R.alg,0),total=orderOf(R.alg),undo=CUBE.invSeq(seq);
+  const snap=CUBE.snapshot();let found=null;
+  for(let j=0;j<seq.length&&!found;j++){
+    apply(CUBE.invSeq(seq.slice(0,j)));
+    for(let reps=0;reps<total;reps++){if(CUBE.isSolved()){found={reps,j};break;}apply(undo);}
+    CUBE.applySnap(snap);
+  }
+  if(!found)return {broken:true};
+  return {kind:'repeat',plan:seq.slice(found.j),cost:0,alt:[],reps:found.reps,total,alg:R.alg,yellowUp:R.yellowUp,keepView:true,stage:0};
+}
+function generateRepeat(){
+  let k;do{k=rand(REPEAT.length);}while(k===repeatPick&&REPEAT.length>1);
+  repeatPick=k;CUBE.resetLogic();return true;
+}
+
+// ================= Recognize the case =================
+// The cube shows a case of one lesson and you choose which one it is among 2 or 3 options; then the app shows its turns.
+// focus: what to light up, when the lesson's own focus would give the answer away
+const yellowLayer=()=>[...YELLOW_EDGES,...YELLOW_CORNERS,'0,-1,0'];
+const QUIZ=[
+  {lesson:'cross',kinds:['crossUp','crossFlipped']},
+  {lesson:'corners',kinds:['cornerRight','cornerFront','cornerOut']},
+  {lesson:'secondLayer',kinds:['secondRight','secondLeft']},
+  {lesson:'yellowCross',kinds:['yCrossDot','yCrossL','yCrossLine'],focus:yellowLayer},
+  {lesson:'yellowEdges',kinds:['yEdgesSwap','yEdgesOpposite'],focus:yellowLayer},
+  {lesson:'yellowCornersPlace',kinds:['yCornersNone','yCornersCycle'],focus:yellowLayer}
+];
+let quizCase=null,quizFamily=-1;
+// Chooses a lesson (not the same one twice in a row) and an answer, and follows that lesson's exercise until the case shows up
+function generateQuiz(){
+  let f;do{f=rand(QUIZ.length);}while(f===quizFamily);
+  const F=QUIZ[f],L=LESSONS[F.lesson],want=F.kinds[rand(F.kinds.length)];
+  for(let attempt=0;attempt<200;attempt++){
+    if(!L.generate())continue;
+    let current=null;
+    for(let i=0;i<60;i++){
+      const e=L.step(current);
+      if(!e.plan)break;
+      if(e.kind===want){
+        quizFamily=f;
+        quizCase=Object.assign({},e,{lesson:F.lesson,options:F.kinds,answer:e.kind,yellowUp:!!L.yellowUp,stage:0});
+        if(F.focus)quizCase.focus=F.focus();
+        return true;
+      }
+      apply(e.plan);current=e.id;
+    }
+  }
+  return false;
+}
+
 // Lessons of Practice mode. step(current) says which piece is next, with which turns and which equivalent routes exist;
 // generate() prepares an exercise. To add a lesson: add it here and run tests/lessons.test.js.
 // pieces: the ones the lesson places; once one is placed, no step may take it out of its place again
+// A step may also say: stage (the stage being worked on, for the stage bar), lesson (whose case it is, for the messages)
+// and yellowUp (how to show it); without them, the lesson's own values count.
+// Other kinds of lesson: loop (it starts and ends solved: the step is never "done", the interface ends it when the
+// cube comes back) and quiz (nothing is turned: step() gives the case to recognize).
 const LESSONS={
   cross:{stage:0,step:cross,generate:generateCross,pieces:()=>CROSS_EDGES},
   corners:{stage:1,step:corners,generate:generateCorners,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS]},
@@ -348,9 +456,13 @@ const LESSONS={
     pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES,...YELLOW_EDGES]},
   // in the middle of this lesson the solved part comes apart on purpose, so no piece is required to stay in place
   yellowCornersTurn:{stage:6,step:yellowCornersTurn,generate:()=>generateLastLayer(6,[yellowCross,yellowEdges,yellowCornersPlace]),
-    yellowUp:true,pieces:()=>[]}
+    yellowUp:true,pieces:()=>[]},
+  // the whole cube: the stages get done and undone along the way, so no piece is required to stay
+  solve:{stage:0,step:solve,generate:generateCross,pieces:()=>[],maxSteps:200},
+  repeat:{stage:0,step:repeatStep,generate:generateRepeat,pieces:()=>[],loop:true},
+  recognize:{stage:0,step:()=>quizCase||{},generate:generateQuiz,pieces:()=>[],quiz:true}
 };
 
-return {CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
+return {METHOD,solveStage,orderOf,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
   yellowCross,yellowEdges,yellowCornersPlace,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

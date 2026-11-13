@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.38-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.39-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -28,7 +28,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 > **Desde la versión 0.30 la app está reescrita desde cero**, y desde la 0.34 todo el proyecto (código, comentarios,
 > nombres de archivos y documentación) está en inglés, con los textos de la interfaz en archivos de traducción planos (`locales/`).
-> El modo Práctica trae las siete lecciones del método (ver
+> El modo Práctica trae las siete lecciones del método, un armado completo con pistas y dos ejercicios más (ver
 > [TODO.md](TODO.md), en inglés, para lo que sigue). La versión anterior quedó guardada en la etiqueta `v0.21`.
 
 ---
@@ -51,7 +51,10 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 - **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
 - **Te corrige, sin castigar rutas válidas:** si giras otra cara a mitad de un paso, te pide deshacerla. Pero si el paso se puede resolver por otro camino igual de bueno (girar la capa al otro lado, o tratar una pieza de la diagonal por la cara de al lado), lo acepta y sigue contigo por ese camino.
-- **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa).
+- **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa). Con menos ayuda, mientras un algoritmo desarma por unos giros la parte resuelta, la app espera en vez de reclamar.
+- **Armado completo:** un cubo mezclado normal, armado con las siete etapas. La ayuda solo llega si la pides: cada toque de **PISTA** muestra un poco más del paso actual (qué pieza → a dónde va → los giros, guiados). Al final dice cuántas pistas usaste. Es el puente hacia el Reto.
+- **Repetir:** desde el cubo armado, un algoritmo del método una y otra vez. El cubo se desarma y, tras unas repeticiones (6 en la mayoría), vuelve solo. Sirve para aprender el algoritmo de memoria; con *Solo la pieza* lo haces sin ver los giros.
+- **Reconocer:** el cubo muestra un caso de alguna lección y eliges cuál es entre 2 o 3 opciones (hacia dónde apunta el blanco, hacia qué lado sube la arista, la forma amarilla de arriba…). Después la app muestra los giros de ese caso.
 
 #### Las 7 etapas
 
