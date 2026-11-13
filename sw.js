@@ -1,6 +1,6 @@
 // Cubo Rubik · byarcy — guarda la app para usarla sin internet
 // Al publicar una versión nueva, cambia el número de CACHE: así se borra lo guardado de la anterior.
-const CACHE = 'cubo-rubik-v0.32';
+const CACHE = 'cubo-rubik-v0.33';
 const FILES = [
   './', './index.html', './estilos.css',
   './motor_grafico.js', './logica_cubo.js', './algoritmos.js', './entrenador.js', './controlador_juego.js',

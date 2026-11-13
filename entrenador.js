@@ -17,6 +17,33 @@ function aplicar(seq){
 const sec=(nombre,k)=>girar(parseSeq(ALGORITMOS.capas[nombre].sec),k);
 const azar=n=>Math.floor(Math.random()*n);
 
+// ================= Rutas equivalentes =================
+// Cada paso trae su plan principal y, si las hay, rutas distintas que también sirven (`alt`). La interfaz acepta
+// cualquiera de ellas en el primer giro y desde ahí sigue esa. Reglas para que una lección nueva las aporte:
+//   · Girar una capa de un lado equivale a girarla tres veces del otro: alinearD(n).
+//   · Una pieza en una diagonal (esquina o arista entre dos caras) se puede tratar por la cara de un lado o por la
+//     del otro: reflejar(plan,pos) da la ruta espejo, y solo se ofrece si ensayar(...) comprueba que cumple la meta.
+const REFLEJO_XZ={R:'F',F:'R',L:'B',B:'L',U:'U',D:'D'};   // plano x=z
+const REFLEJO_X_Z={R:'B',B:'R',L:'F',F:'L',U:'U',D:'D'};  // plano x=-z
+function reflejar(plan,p){
+  const mapa=p[0]*p[2]>0?REFLEJO_XZ:REFLEJO_X_Z;
+  return plan.map(m=>({f:mapa[m.f],n:m.n===2?2:-m.n}));
+}
+// Aplica un plan, mira si se cumple «meta» y deja el cubo como estaba
+function ensayar(plan,meta){
+  const foto=CUBO.snapshot();aplicar(plan);
+  const ok=meta();CUBO.applySnap(foto);return ok;
+}
+// Rutas espejo de un plan que cumplen la meta
+function alternativas(plan,pos,meta){
+  const r=reflejar(plan,pos);
+  return CUBO.seqText(r)===CUBO.seqText(plan)||!ensayar(r,meta)?[]:[r];
+}
+// Alinear una capa: el cuarto de vuelta de un lado equivale a tres del otro (la media vuelta no tiene alternativa)
+function alinearD(n){
+  return n===2?[]:[[1,2,3].map(()=>({f:'D',n:-n}))];
+}
+
 // ================= Esquinas blancas =================
 // Mira una esquina blanca y devuelve su caso y los giros que la acercan a su hueco:
 //   sacar   · está en la capa blanca pero mal puesta: hay que bajarla a la capa amarilla
@@ -25,13 +52,15 @@ const azar=n=>Math.floor(Math.random()*n);
 function casoEsquina(id){
   const sts=CUBO.byId[id],p=sts[0].p,h=id.split(',').map(Number);
   if(p[1]===1){
-    return {id,caso:'sacar',plan:sec('esqSacar',HUECOS.indexOf(key([p[0],1,p[2]]))),coste:2};
+    const plan=sec('esqSacar',HUECOS.indexOf(key([p[0],1,p[2]]))),antes=HUECOS.filter(CUBO.resuelta);
+    return {id,caso:'sacar',plan,coste:2,alt:alternativas(plan,p,()=>CUBO.byId[id][0].p[1]===-1&&antes.every(CUBO.resuelta))};
   }
   if(p[0]!==h[0]||p[2]!==h[2]){
     let c=0;
     do{CUBO.quarter('D',1);c++;}while(c<4&&(CUBO.byId[id][0].p[0]!==h[0]||CUBO.byId[id][0].p[2]!==h[2]));
     for(let i=0;i<c;i++)CUBO.quarter('D',-1);
-    return {id,caso:'alinear',plan:[{f:'D',n:c===3?-1:c}],coste:1};
+    const n=c===3?-1:c;
+    return {id,caso:'alinear',plan:[{f:'D',n}],coste:1,alt:alinearD(n)};
   }
   const k=HUECOS.indexOf(id),blanco=sts.find(s=>s.hn[1]===1).n;
   const caso=blanco[1]===-1?'esqFuera':FACE_OF[key(blanco)]===girar([{f:'R',n:1}],k)[0].f?'esqDer':'esqFrente';
@@ -85,12 +114,16 @@ const ARISTAS=['0,1,1','-1,1,0','0,1,-1','1,1,0'];
 function casoArista(id){
   const sts=CUBO.byId[id],p=sts[0].p,h=id.split(',').map(Number),k=ARISTAS.indexOf(id);
   if(p[1]===1)return {id,caso:'cruzSacar',plan:[{f:FACE_OF[key([p[0],0,p[2]])],n:2}],coste:4};
-  if(p[1]===0)return {id,caso:'cruzMedio',plan:sec('cruzMedio',HUECOS.indexOf(key([p[0],1,p[2]]))),coste:3};
+  if(p[1]===0){
+    const plan=sec('cruzMedio',HUECOS.indexOf(key([p[0],1,p[2]]))),antes=ARISTAS.filter(CUBO.resuelta);
+    return {id,caso:'cruzMedio',plan,coste:3,alt:alternativas(plan,p,()=>CUBO.byId[id][0].p[1]===-1&&antes.every(CUBO.resuelta))};
+  }
   if(p[0]!==h[0]||p[2]!==h[2]){
     let c=0;
     do{CUBO.quarter('D',1);c++;}while(c<4&&(CUBO.byId[id][0].p[0]!==h[0]||CUBO.byId[id][0].p[2]!==h[2]));
     for(let i=0;i<c;i++)CUBO.quarter('D',-1);
-    return {id,caso:'alinear',plan:[{f:'D',n:c===3?-1:c}],coste:2};
+    const n=c===3?-1:c;
+    return {id,caso:'alinear',plan:[{f:'D',n}],coste:2,alt:alinearD(n)};
   }
   const caso=sts.find(s=>s.hn[1]===1).n[1]===-1?'cruzSubir':'cruzVolteada';
   return {id,caso,plan:sec(caso,k),coste:caso==='cruzSubir'?0:1};
@@ -111,10 +144,12 @@ function generarCruz(){
   return false;
 }
 
-// Lecciones del Modo Práctica. paso(actual) dice qué pieza toca y con qué giros; generar() prepara un ejercicio.
+// Lecciones del Modo Práctica. paso(actual) dice qué pieza toca, con qué giros y qué rutas equivalentes hay;
+// generar() prepara un ejercicio. Para agregar una lección: sumarla aquí y correr pruebas/lecciones.test.js.
+// piezas: las que la lección coloca; una vez colocada una, ningún paso debe volver a sacarla de su sitio
 const LECCIONES={
-  cruz:{etapa:0,paso:cruz,generar:generarCruz},
-  esquinas:{etapa:1,paso:esquinas,generar:generarEsquinas}
+  cruz:{etapa:0,paso:cruz,generar:generarCruz,piezas:()=>ARISTAS},
+  esquinas:{etapa:1,paso:esquinas,generar:generarEsquinas,piezas:()=>[...ARISTAS,...HUECOS]}
 };
 
 return {HUECOS,ARISTAS,LECCIONES,girar,aplicar,casoEsquina,esquinas,resolverEsquinas,generarEsquinas,casoArista,cruz,generarCruz};

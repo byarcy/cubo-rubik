@@ -183,7 +183,7 @@ function setMode(m){
 // leccion: cuál está abierta · hechos: ejercicios terminados de cada una
 // nivel: 1 guiado (pieza, hueco, flecha y giros) · 2 solo la pieza y su hueco · 3 sin ayuda
 // obj: pieza que toca · plan: giros de este paso · i: cuántos llevas · dev: giros de más que hay que deshacer
-const prac={leccion:'cruz',nivel:1,hechos:{cruz:0,esquinas:0},obj:null,caso:null,plan:[],i:0,dev:[],fin:false};
+const prac={leccion:'cruz',nivel:1,hechos:{cruz:0,esquinas:0},obj:null,caso:null,plan:[],alt:[],i:0,dev:[],fin:false};
 const lec=()=>ENTRENADOR.LECCIONES[prac.leccion];
 // true si moviste la vista tú (dedos o botón de cubo) después de que la app la acomodó: entonces no te la quita
 let vistaUsuario=false;
@@ -201,11 +201,19 @@ function setLeccion(l){
   prac.leccion=l;pracNuevo();
 }
 const esInverso=(a,b)=>a.f===b.f&&(b.n===2?a.n===2:a.n===-b.n);
+// ¿el giro m es el giro s del plan (una media vuelta también se puede hacer de cuarto en cuarto)?
+const coincide=(s,m)=>!!s&&m.f===s.f&&(m.n===s.n||s.n===2);
 // Lleva la cuenta del paso guiado con cada giro tuyo (y con cada deshacer)
 function pracMove(m){
   if(prac.nivel!==1||prac.fin)return;
-  const P=prac.plan,i=prac.i,D=prac.dev;
+  const D=prac.dev;
   if(D.length){if(esInverso(m,D[D.length-1]))D.pop();else D.push(m);return;}
+  // en el primer giro vale cualquiera de las rutas equivalentes; desde ahí se sigue esa
+  if(prac.i===0&&!coincide(prac.plan[0],m)){
+    const otra=prac.alt.find(a=>coincide(a[0],m));
+    if(otra){prac.plan=otra;prac.alt=[];}
+  }
+  const P=prac.plan,i=prac.i;
   const sig=P[i];
   if(sig&&m.f===sig.f&&m.n===sig.n){prac.i++;return;}
   // una media vuelta hecha de cuarto en cuarto, hacia cualquier lado
@@ -218,7 +226,7 @@ function pracMove(m){
 // Pregunta al entrenador qué toca; devuelve true si cambió de pieza
 function pracPlan(){
   const e=lec().paso(prac.obj),antes=prac.obj;
-  prac.plan=e.plan||[];prac.i=0;prac.dev=[];
+  prac.plan=e.plan||[];prac.alt=e.alt||[];prac.i=0;prac.dev=[];
   prac.caso=e.roto?'roto':e.listo?'listo':e.caso;
   if(e.id)prac.obj=e.id;
   if(e.listo){prac.obj=null;if(!prac.fin){prac.fin=true;prac.hechos[prac.leccion]++;celebrate(LEC_UI[prac.leccion].aviso);}}

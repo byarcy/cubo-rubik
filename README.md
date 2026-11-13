@@ -10,7 +10,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.32-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.33-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -44,7 +44,7 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 - **Blanco arriba:** como en las guías, el cubo se muestra con el blanco arriba. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para la capa de abajo, que no se ve desde arriba, la flecha se pega en la fila de abajo de las caras visibles.
 - **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
-- **Te corrige:** si giras otra cara a mitad de un paso, te pide deshacerla antes de seguir.
+- **Te corrige, sin castigar rutas válidas:** si giras otra cara a mitad de un paso, te pide deshacerla. Pero si el paso se puede resolver por otro camino igual de bueno (girar la capa al otro lado, o tratar una pieza de la diagonal por la cara de al lado), lo acepta y sigue contigo por ese camino.
 - **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa).
 
 #### Las 7 etapas
@@ -104,6 +104,7 @@ Funciona en el navegador y también se puede **instalar como app**. Una vez inst
 | `manifest.webmanifest` | Datos para instalarla como app |
 | `orbitron.woff` | Fuente de los títulos |
 | `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Íconos |
+| `pruebas/lecciones.test.js` | Prueba sin navegador: resuelve cientos de ejercicios de cada lección registrada |
 | `capturas/` | Imágenes de este README |
 
 ### Probarla en tu computadora
@@ -115,6 +116,14 @@ python -m http.server 8123
 ```
 
 Luego abre `http://localhost:8123`. Con `?debug=true` al final, mezclar desordena un solo giro y el avance se guarda aparte.
+
+Para comprobar las lecciones sin abrir el navegador:
+
+```bash
+node pruebas/lecciones.test.js
+```
+
+Recorre solas todas las lecciones que existan, así que sirve también para las que se agreguen.
 
 Al publicar una versión nueva hay que cambiar el número en tres lugares: `index.html` (título y pie de la ayuda), `sw.js` (`CACHE`) y la insignia de este README.
 
