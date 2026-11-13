@@ -1,8 +1,8 @@
 {
-  "name": "Cubo Rubik · byarcy",
-  "short_name": "Cubo Rubik",
-  "description": "Tutorial interactivo del cubo Rubik: reto con temporizador y práctica guiada.",
-  "lang": "es",
+  "name": "Rubik's Cube · byarcy",
+  "short_name": "Rubik's Cube",
+  "description": "Interactive Rubik's Cube tutorial: timed challenge and guided practice.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

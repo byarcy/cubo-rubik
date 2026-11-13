@@ -1,81 +1,81 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en" data-version="0.34">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="theme-color" content="#0d0221">
-<meta name="description" content="Cubo Rubik interactivo en 3D: reto con temporizador y práctica guiada.">
+<meta name="description" content="Interactive 3D Rubik's Cube: timed challenge and guided practice." data-i18n-attr="content:app.description">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<!--PWA: se puede instalar y abre sin conexión-->
+<!--PWA: can be installed and opens offline-->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Cubo Rubik">
+<meta name="apple-mobile-web-app-title" content="Rubik's Cube" data-i18n-attr="content:app.pwaTitle">
 <script>if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
-<title>Cubo Rubik · byarcy · v0.33</title>
-<link rel="stylesheet" href="estilos.css">
+<title>Rubik's Cube · byarcy · v0.34</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="app" class="m-reto">
+<div id="app" class="m-challenge">
   <div class="top">
     <div class="titleRow">
-      <div class="lgrp"><div class="logo">CUBO RUBIK</div><button class="sizebtn" id="sizeBtn" aria-label="Cambiar tamaño del cubo" data-tip="Tamaño del cubo">3×3</button></div>
+      <div class="lgrp"><div class="logo" data-i18n="app.logo"></div><button class="sizebtn" id="sizeBtn" data-i18n-attr="aria-label:size.label,data-tip:size.tip">3×3</button></div>
       <div class="right">
-        <span class="saved" id="saved" role="img" aria-label="Progreso guardado"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
-        <button class="help-btn" id="helpBtn" aria-label="Ayuda"><span>?</span></button>
+        <span class="saved" id="saved" role="img"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+        <button class="help-btn" id="helpBtn" data-i18n-attr="aria-label:help.open"><span>?</span></button>
       </div>
     </div>
     <div class="tabs">
-      <button class="tab on" id="tabReto">RETO</button>
-      <button class="tab" id="tabPrac">PRÁCTICA</button>
+      <button class="tab on" id="tabChallenge" data-i18n="tab.challenge"></button>
+      <button class="tab" id="tabPractice" data-i18n="tab.practice"></button>
     </div>
   </div>
 
-  <div class="sub" id="retoBar">
-    <div class="trow"><div class="tval" id="tval">00:00.00</div><button class="pausebtn" id="rPause" aria-label="Pausa" data-tip="Pausa"><span id="pauseIco"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14M15 5v14"></path></svg></span></button></div>
-    <div class="stats"><span>Movimientos <b id="tmoves">0</b></span><span>Mejor <b class="best" id="tbest">--:--.--</b></span></div>
+  <div class="sub" id="challengeBar">
+    <div class="trow"><div class="timeVal" id="timeVal">00:00.00</div><button class="pausebtn" id="pauseBtn" data-i18n-attr="aria-label:challenge.pause,data-tip:challenge.pause"><span id="pauseIco"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5v14M15 5v14"></path></svg></span></button></div>
+    <div class="stats"><span><span data-i18n="challenge.moves"></span> <b id="movesVal">0</b></span><span><span data-i18n="challenge.best"></span> <b class="best" id="bestVal">--:--.--</b></span></div>
   </div>
 
-  <div class="sub" id="pracBar" hidden>
-    <div class="etapas" id="etapas" role="img"></div>
-    <div class="etxt" id="etapaTxt"></div>
+  <div class="sub" id="practiceBar" hidden>
+    <div class="stages" id="stages" role="img"></div>
+    <div class="stage-text" id="stageText"></div>
   </div>
 
   <div id="stage">
-    <button class="restore" id="restore" aria-label="Enderezar el cubo; dos toques para la posición inicial" data-tip="Enderezar"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"></path></svg></button>
+    <button class="restore" id="restore" data-i18n-attr="aria-label:view.aria,data-tip:view.tip"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"></path></svg></button>
     <div class="mini" id="miniFrame" aria-hidden="true"></div>
-    <div class="tip" id="tip">Arrastra una cara para girarla · fuera del cubo para girarlo entero</div>
+    <div class="tip" id="tip"></div>
     <div class="ring" id="solvedRing" aria-hidden="true"></div>
     <div class="solved" id="solvedMsg" role="status"></div>
-    <div class="pause" id="pauseOv" hidden>PAUSA</div>
-    <button class="neon c rearm" id="rearm" hidden>REARMAR</button>
+    <div class="pause" id="pauseOv" data-i18n="overlay.paused" hidden></div>
+    <button class="neon c rearm" id="rearm" data-i18n="overlay.reassemble" hidden></button>
     <div class="stbar">
-      <button class="sb v" id="bUndo" aria-label="Deshacer" data-tip="Deshacer"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></button>
-      <button class="sb p" id="bGiros" aria-label="Giros" data-tip="Giros"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg></button>
-      <button class="sb c" id="bScr" aria-label="Mezclar" data-tip="Mezclar"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg></button>
+      <button class="sb v" id="bUndo" data-i18n-attr="aria-label:btn.undo,data-tip:btn.undo"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></button>
+      <button class="sb p" id="bTurns" data-i18n-attr="aria-label:btn.turns,data-tip:btn.turns"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg></button>
+      <button class="sb c" id="bScramble" data-i18n-attr="aria-label:btn.scramble,data-tip:btn.scramble"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg></button>
     </div>
   </div>
 
   <div id="panel">
-    <section id="retoPanel">
-      <div class="msg" id="retoMsg"></div>
+    <section id="challengePanel">
+      <div class="msg" id="challengeMsg"></div>
     </section>
-    <section id="pracPanel" hidden>
-      <div class="niveles lecs" id="lecciones" role="group" aria-label="Lección">
-        <button data-lec="cruz">1 · Cruz</button>
-        <button data-lec="esquinas">2 · Esquinas</button>
+    <section id="practicePanel" hidden>
+      <div class="levels lesson-tabs" id="lessons" role="group" data-i18n-attr="aria-label:practice.lesson">
+        <button data-lesson="cross" data-i18n="lesson.cross"></button>
+        <button data-lesson="corners" data-i18n="lesson.corners"></button>
       </div>
-      <div class="phead"><div class="ptitle" id="pracTitle"></div><div class="pcount" id="pracCount"></div></div>
-      <div class="pmsg" id="pracMsg" role="status"></div>
-      <div class="pseq" id="pracSeq" aria-label="Giros de este paso"></div>
-      <div class="niveles" id="niveles" role="group" aria-label="Nivel de ayuda">
-        <button data-nv="1">Guiado</button>
-        <button data-nv="2">Solo la pieza</button>
-        <button data-nv="3">Sin ayuda</button>
+      <div class="practice-head"><div class="practice-title" id="practiceTitle"></div><div class="practice-count" id="practiceCount"></div></div>
+      <div class="practice-msg" id="practiceMsg" role="status"></div>
+      <div class="practice-seq" id="practiceSeq" data-i18n-attr="aria-label:practice.turns"></div>
+      <div class="levels" id="levels" role="group" data-i18n-attr="aria-label:practice.level">
+        <button data-level="1" data-i18n="level.1"></button>
+        <button data-level="2" data-i18n="level.2"></button>
+        <button data-level="3" data-i18n="level.3"></button>
       </div>
-      <button class="neon c pnew" id="pracNew">OTRO EJERCICIO</button>
+      <button class="neon c practice-new" id="practiceNew" data-i18n="practice.new"></button>
     </section>
   </div>
 
@@ -84,64 +84,68 @@
   <div class="drawer" id="drawer" aria-hidden="true">
     <div class="handle"></div>
     <div class="dhead">
-      <div><div class="dtitle">GIROS</div><div class="dsub">Según cómo ves el cubo ahora</div></div>
-      <button class="iconbtn" id="dClose" aria-label="Cerrar menú de giros"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      <div><div class="dtitle" data-i18n="drawer.title"></div><div class="dsub" data-i18n="drawer.sub"></div></div>
+      <button class="iconbtn" id="dClose" data-i18n-attr="aria-label:drawer.close"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
     </div>
-    <div class="mgrid" id="mgrid"></div>
+    <div class="turnGrid" id="turnGrid"></div>
   </div>
 
   <div class="help" id="help" hidden>
     <div class="hhead">
-      <div class="htitle">AYUDA</div>
-      <button class="iconbtn" id="hClose" aria-label="Cerrar ayuda"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      <div class="htitle" data-i18n="help.title"></div>
+      <button class="iconbtn" id="hClose" data-i18n-attr="aria-label:help.close"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e9e3ff" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
     </div>
     <div class="htabs">
-      <button class="on" data-ht="uso">Cómo se usa</button>
-      <button data-ht="not">Notación</button>
+      <button class="on" data-help-tab="use" data-i18n="help.tab.use"></button>
+      <button data-help-tab="notation" data-i18n="help.tab.notation"></button>
     </div>
+    <div class="hlang"><label for="langSel" data-i18n="help.language"></label><select id="langSel"></select></div>
     <div class="hbody">
-      <section class="hsec" data-hp="uso">
+      <section class="hsec" data-help-panel="use">
         <ul>
-          <li>Arrastra una cara del cubo para girar esa capa.</li>
-          <li>Arrastra fuera del cubo para girarlo entero: de lado a lado gira sobre sí mismo y de arriba abajo se inclina hacia ti o hacia atrás. Si lo lanzas, sigue girando un poco y frena solo.</li>
-          <li>En el celular, con dos dedos giras el cubo entero; rotando los dedos lo giras en la pantalla, como una perilla, desde cualquier posición.</li>
-          <li>El recuadro de la esquina muestra el lado que no ves.</li>
-          <li>Debajo del cubo están los íconos: <b>deshacer</b> (flecha que regresa), <b>giros</b> (cuadrícula, abre las letras) y <b>mezclar</b> (flechas cruzadas). Si el cubo está a medio resolver, mezclar pide confirmación y primero lo arma solo para que lo veas ordenado; tócalo otra vez para mezclar. Mantén presionado un ícono para ver su nombre.</li>
-          <li>El ícono de cubo, arriba a la izquierda, endereza el cubo sin darle la vuelta: le quita la inclinación y lo deja de frente. Con dos toques seguidos (o manteniéndolo presionado) vuelve a la posición inicial: blanco arriba y verde al frente.</li>
-          <li>El botón <b>3×3</b> junto al título cambia al cubo <b>2×2</b> y de vuelta. Cada tamaño guarda su propio avance y su mejor tiempo.</li>
-          <li><b>Reto:</b> toca mezclar. El tiempo empieza con tu primer giro y se detiene al resolver. El botón junto al tiempo lo pausa.</li>
-          <li><b>Práctica:</b> la barra de arriba muestra qué etapa del método por capas llevas. Hay dos lecciones: <b>1 · Cruz</b> (las cuatro aristas blancas) y <b>2 · Esquinas</b> (empieza con la cruz ya hecha). El cubo se muestra con el blanco arriba; la app ilumina la pieza que toca, enmarca su hueco y dibuja una flecha sobre la cara que debes girar. Cuando te salga, cambia a <b>Solo la pieza</b> o <b>Sin ayuda</b>.</li>
-          <li>Tu avance se guarda en este navegador.</li>
+          <li data-i18n-html="help.use.1"></li>
+          <li data-i18n-html="help.use.2"></li>
+          <li data-i18n-html="help.use.3"></li>
+          <li data-i18n-html="help.use.4"></li>
+          <li data-i18n-html="help.use.5"></li>
+          <li data-i18n-html="help.use.6"></li>
+          <li data-i18n-html="help.use.7"></li>
+          <li data-i18n-html="help.use.8"></li>
+          <li data-i18n-html="help.use.9"></li>
+          <li data-i18n-html="help.use.10"></li>
         </ul>
       </section>
-      <section class="hsec" data-hp="not" hidden>
-        <p>Cada letra gira una cara 90° en sentido horario, mirándola de frente.</p>
+      <section class="hsec" data-help-panel="notation" hidden>
+        <p data-i18n="not.intro"></p>
         <div class="lgrid">
-          <div class="lcell"><b>R</b>Derecha <small>(Right)</small></div>
-          <div class="lcell"><b>L</b>Izquierda <small>(Left)</small></div>
-          <div class="lcell"><b>U</b>Arriba <small>(Up)</small></div>
-          <div class="lcell"><b>D</b>Abajo <small>(Down)</small></div>
-          <div class="lcell"><b>F</b>Frente <small>(Front)</small></div>
-          <div class="lcell"><b>B</b>Atrás <small>(Back)</small></div>
-          <div class="lcell c"><b>R'</b>antihorario</div>
-          <div class="lcell c"><b>R2</b>media vuelta (180°)</div>
+          <div class="lcell"><b>R</b><span data-i18n-html="not.R"></span></div>
+          <div class="lcell"><b>L</b><span data-i18n-html="not.L"></span></div>
+          <div class="lcell"><b>U</b><span data-i18n-html="not.U"></span></div>
+          <div class="lcell"><b>D</b><span data-i18n-html="not.D"></span></div>
+          <div class="lcell"><b>F</b><span data-i18n-html="not.F"></span></div>
+          <div class="lcell"><b>B</b><span data-i18n-html="not.B"></span></div>
+          <div class="lcell c"><b>R'</b><span data-i18n="not.prime"></span></div>
+          <div class="lcell c"><b>R2</b><span data-i18n="not.half"></span></div>
         </div>
-        <p>Las letras siguen tu vista: U siempre es la cara que ves arriba.</p>
+        <p data-i18n="not.outro"></p>
       </section>
     </div>
     <div class="signwrap">
       <div class="sline"></div>
       <svg class="sign" viewBox="0 -1542 4836 2194" role="img" aria-label="byarcy"><path d="M885 -1427Q674 -1110 474 -764Q520 -788 578 -798Q635 -809 658 -809Q682 -809 699 -808Q716 -806 742 -796Q769 -787 788 -770Q834 -729 834 -654Q834 -579 794 -490Q753 -400 684 -310Q614 -220 532 -142Q449 -65 354 -16Q259 33 177 33Q139 33 90 -16Q40 -65 40 -145Q40 -225 109 -393Q178 -561 276 -734Q375 -908 478 -1073Q580 -1238 652 -1343Q724 -1448 740 -1464Q756 -1480 798 -1491Q841 -1502 872 -1502Q903 -1501 903 -1473Q903 -1455 885 -1427ZM615 -467Q656 -539 656 -598Q656 -657 618 -657Q581 -657 504 -624Q426 -592 415 -592Q404 -592 386 -610Q191 -259 191 -162Q191 -117 220 -117Q289 -117 419 -232Q549 -348 615 -467ZM1128 332Q1123 337 1098 382Q1072 428 1043 474Q1014 521 972 563Q929 605 900 608Q872 612 864 612Q772 612 772 519Q772 410 885 264Q928 209 993 146Q1058 82 1064 74Q1070 65 1214 -207Q1118 -102 1036 -36Q954 29 878 37H871Q832 37 794 12Q756 -14 756 -78Q756 -173 807 -262Q825 -293 870 -367Q914 -441 952 -510Q988 -565 1026 -638Q1064 -711 1084 -742Q1104 -774 1122 -774Q1140 -774 1168 -752Q1197 -729 1197 -698Q1197 -667 1066 -429Q935 -191 935 -158Q935 -150 943 -150Q970 -150 1062 -226Q1155 -303 1267 -423Q1392 -556 1463 -666Q1472 -680 1478 -688Q1483 -695 1492 -708Q1500 -720 1506 -727Q1511 -734 1518 -744Q1526 -753 1532 -758Q1538 -763 1545 -768Q1556 -778 1570 -778Q1583 -778 1610 -772Q1638 -766 1644 -759Q1649 -752 1655 -746Q1665 -735 1665 -726Q1665 -716 1657 -700Q1649 -685 1564 -542Q1314 -120 1220 74Q1372 -54 1648 -305Q1659 -314 1670 -314Q1701 -314 1701 -219Q1701 -191 1691 -182Q1392 48 1128 332ZM2387 -760Q2463 -760 2463 -708Q2463 -680 2450 -667Q2437 -654 2394 -580Q2352 -507 2300 -392Q2249 -278 2234 -197Q2231 -187 2231 -169Q2231 -114 2261 -114Q2291 -114 2332 -142Q2373 -171 2405 -204Q2437 -236 2468 -270Q2498 -304 2504 -309Q2510 -314 2522 -314Q2541 -314 2545 -285Q2549 -256 2549 -225Q2549 -194 2543 -182Q2514 -125 2416 -45Q2317 35 2236 35Q2156 35 2118 -14Q2080 -63 2080 -122Q2080 -182 2100 -227Q2017 -119 1910 -44Q1802 31 1734 31Q1666 31 1623 -10Q1568 -61 1568 -152Q1568 -242 1608 -334Q1649 -425 1715 -500Q1781 -576 1860 -638Q2026 -768 2166 -768Q2220 -768 2254 -750Q2288 -732 2297 -705Q2321 -741 2338 -750Q2354 -760 2387 -760ZM2254 -649Q2083 -649 1900 -459Q1835 -391 1780 -296Q1726 -201 1726 -166Q1726 -131 1746 -131Q1774 -131 1902 -242Q2030 -352 2072 -404Q2118 -462 2254 -649ZM2785 -545Q3021 -813 3187 -813Q3228 -813 3254 -788Q3281 -764 3281 -725Q3281 -686 3226 -594Q3170 -503 3123 -440Q3098 -408 3066 -408Q3035 -408 3018 -431Q3000 -454 3000 -485Q3000 -554 3074 -641L3072 -643Q3039 -640 2908 -513Q2778 -386 2686 -286Q2595 -185 2488 -41Q2457 2 2436 2Q2414 2 2378 -12Q2343 -25 2336 -31Q2328 -37 2328 -51Q2328 -65 2336 -84Q2344 -102 2366 -136Q2387 -170 2430 -246Q2474 -322 2566 -476Q2658 -630 2676 -662Q2714 -728 2738 -758Q2783 -815 2890 -815Q2914 -815 2914 -785Q2914 -738 2827 -608ZM3958 -314Q3978 -314 3978 -268Q3978 -223 3934 -170Q3889 -118 3823 -82Q3757 -45 3682 -18Q3533 37 3428 37Q3324 37 3240 -32Q3156 -100 3156 -210Q3156 -321 3211 -432Q3266 -542 3352 -626Q3439 -709 3554 -761Q3668 -813 3780 -813Q3834 -813 3877 -782Q3920 -751 3920 -697Q3920 -643 3866 -568Q3813 -492 3758 -492Q3694 -492 3694 -553Q3694 -569 3724 -610Q3754 -651 3754 -666Q3754 -680 3743 -680Q3688 -680 3625 -642Q3562 -604 3510 -562Q3459 -520 3413 -468Q3313 -355 3313 -233Q3313 -184 3344 -148Q3376 -113 3450 -113Q3525 -113 3600 -130Q3675 -148 3724 -168Q3772 -189 3824 -222Q3875 -255 3890 -268Q3905 -280 3925 -297Q3945 -314 3958 -314ZM4223 332Q4218 337 4192 382Q4167 428 4138 474Q4109 521 4066 563Q4024 605 3996 608Q3967 612 3959 612Q3867 612 3867 519Q3867 410 3980 264Q4023 209 4088 146Q4153 82 4159 74Q4165 65 4309 -207Q4213 -102 4131 -36Q4049 29 3973 37H3966Q3927 37 3889 12Q3851 -14 3851 -78Q3851 -173 3902 -262Q3920 -293 3964 -367Q4009 -441 4047 -510Q4083 -565 4121 -638Q4159 -711 4179 -742Q4199 -774 4217 -774Q4235 -774 4264 -752Q4292 -729 4292 -698Q4292 -667 4161 -429Q4030 -191 4030 -158Q4030 -150 4038 -150Q4065 -150 4158 -226Q4250 -303 4362 -423Q4487 -556 4558 -666Q4567 -680 4572 -688Q4578 -695 4586 -708Q4595 -720 4600 -727Q4606 -734 4614 -744Q4621 -753 4627 -758Q4633 -763 4640 -768Q4651 -778 4664 -778Q4678 -778 4706 -772Q4733 -766 4738 -759Q4744 -752 4750 -746Q4760 -735 4760 -726Q4760 -716 4752 -700Q4744 -685 4659 -542Q4409 -120 4315 74Q4467 -54 4743 -305Q4754 -314 4765 -314Q4796 -314 4796 -219Q4796 -191 4786 -182Q4487 48 4223 332Z"/></svg>
       <div class="sbar"></div>
-      <div class="year">v0.33 ·© 2026 <span class="pi">π</span></div>
+      <div class="year">v0.34 · © 2026 <span class="pi">π</span></div>
     </div>
   </div>
 </div>
 
-<script src="motor_grafico.js"></script>
-<script src="logica_cubo.js"></script>
-<script src="algoritmos.js"></script>
-<script src="entrenador.js"></script>
-<script src="controlador_juego.js"></script>
+<script src="graphics_engine.js"></script>
+<script src="cube_logic.js"></script>
+<script src="i18n/i18n.js"></script>
+<script src="i18n/en.js"></script>
+<script src="i18n/es.js"></script>
+<script src="algorithms.js"></script>
+<script src="coach.js"></script>
+<script src="game_controller.js"></script>
 </body>
 </html>

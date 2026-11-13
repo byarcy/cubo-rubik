@@ -1,138 +1,157 @@
 <div align="center">
 
-# 🟥🟩🟦 CUBO RUBIK · byarcy
+# 🟥🟩🟦 RUBIK'S CUBE · byarcy
 
-**Cubo Rubik interactivo en 3D, en español, hecho para el celular y con estilo synthwave.**
+**Interactive 3D Rubik's Cube, made for the phone, with a synthwave look.**
 
-Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, en el modo Práctica.
+Race the clock in Challenge mode and learn the layer-by-layer method, stage by stage, in Practice mode.
 
-### [▶ Abrir la app](https://byarcy.github.io/cubo-rubik/)
+[English](README.md) · [Español](README.es.md)
+
+### [▶ Open the app](https://byarcy.github.io/cubo-rubik/)
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.33-ff2e97)
-![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
-![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
-![idioma](https://img.shields.io/badge/idioma-español-ffd500)
+![version](https://img.shields.io/badge/version-0.34-ff2e97)
+![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
+![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
+![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
 
 </div>
 
 <p align="center">
-  <img src="capturas/reto.jpg" width="250" alt="Modo Reto: cubo mezclado y temporizador">
+  <img src="screenshots/challenge.jpg" width="250" alt="Challenge mode: a scrambled cube and the timer">
   &nbsp;
-  <img src="capturas/practica.jpg" width="250" alt="Modo Práctica: la esquina que toca iluminada, su hueco enmarcado y una flecha sobre la cara que hay que girar">
+  <img src="screenshots/practice.jpg" width="250" alt="Practice mode: the piece to move lit up, its slot framed and an arrow on the layer to turn">
 </p>
-<p align="center"><sub>Reto con temporizador · Práctica guiada, etapa por etapa</sub></p>
+<p align="center"><sub>Challenge with a timer · Guided practice, stage by stage</sub></p>
 
-> **Desde la versión 0.30 la app está reescrita desde cero.** El código ahora está separado en archivos y el modo
-> Práctica empezó de nuevo, con otra idea: lecciones cortas, una etapa a la vez. Por ahora trae las dos
-> lecciones de la primera capa; las demás están en construcción. La versión anterior quedó guardada en la etiqueta `v0.21`.
+> **Since version 0.30 the app is rewritten from scratch**, and since 0.34 the whole project (code, comments, file
+> names and documentation) is in English, with the texts of the interface in separate language files. Practice mode
+> has two lessons so far (the white layer); the rest are on the way (see [TODO.md](TODO.md)). The previous version
+> is kept in the `v0.21` tag.
 
 ---
 
-## ✨ Qué puedes hacer
+## ✨ What you can do
 
-### ⏱️ Reto
-Mezcla el cubo y resuélvelo contra el reloj. El tiempo empieza con tu primer giro, cuenta tus movimientos y guarda tu mejor marca. Puedes pausarlo.
+### ⏱️ Challenge
+Scramble the cube and solve it against the clock. The time starts with your first turn, counts your moves and keeps your best time. You can pause it.
 
-### 🧭 Práctica
-Para aprender el **método por capas**, el de principiantes, dividido en 7 etapas.
+### 🧭 Practice
+To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 
-- **Barra de etapas:** la app mira tu cubo y muestra cuántas etapas llevas completas y cuál toca.
-- **Lección 1 · Cruz blanca:** parte de un cubo mezclado y enseña una receta que siempre funciona: llevar la arista a la capa amarilla, girarla hasta la cara de su color y meterla con media vuelta.
-- **Lección 2 · Esquinas blancas:** cada ejercicio empieza con la cruz ya hecha y varias esquinas fuera de sitio.
-- **Blanco arriba:** como en las guías, el cubo se muestra con el blanco arriba. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para la capa de abajo, que no se ve desde arriba, la flecha se pega en la fila de abajo de las caras visibles.
-- **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
-- **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
-- **Te corrige, sin castigar rutas válidas:** si giras otra cara a mitad de un paso, te pide deshacerla. Pero si el paso se puede resolver por otro camino igual de bueno (girar la capa al otro lado, o tratar una pieza de la diagonal por la cara de al lado), lo acepta y sigue contigo por ese camino.
-- **Tres niveles de ayuda:** *Guiado* (pieza, hueco, flecha y giros), *Solo la pieza* (pieza y hueco, sin giros) y *Sin ayuda* (solo te avisa cuando la capa está completa).
+- **Stage bar:** the app looks at your cube and shows how many stages you have completed and which one is next.
+- **Lesson 1 · White cross:** starts from a scrambled cube and teaches a recipe that always works: take the edge to the yellow layer, turn it until it is on the face of its color and put it in with a half turn.
+- **Lesson 2 · White corners:** each exercise starts with the cross already done and several corners out of place.
+- **White on top:** as in the guides, the cube is shown with white on top. It turns by itself to bring the faces to move in front of you, but it respects the view you choose with your fingers or with the cube button. For the bottom layer, which can't be seen from above, the arrow is stuck on the bottom row of the visible faces.
+- **Piece in focus:** the piece to move lights up and the rest of the cube is dimmed. A pink frame marks its slot.
+- **Arrow on the cube:** the face you have to turn shows an arrow with the direction of the turn, and the turns appear below as letters so you learn the notation along the way.
+- **It corrects you, without punishing valid routes:** if you turn another face in the middle of a step, it asks you to undo it. But if the step can be solved another way that is just as good (turning the layer the other way, or handling a piece on the diagonal through the face next to it), it accepts that and follows you along that route.
+- **Three help levels:** *Guided* (piece, slot, arrow and turns), *Piece only* (piece and slot, no turns) and *No help* (it only tells you when the layer is complete).
 
-#### Las 7 etapas
+#### The 7 stages
 
-| # | Etapa | Lección |
+| # | Stage | Lesson |
 | --- | --- | --- |
-| 1 | Cruz blanca | ✅ Lista |
-| 2 | Esquinas blancas | ✅ Lista |
-| 3 | Segunda capa | En construcción |
-| 4 | Cruz amarilla | En construcción |
-| 5 | Aristas amarillas | En construcción |
-| 6 | Esquinas amarillas en su sitio | En construcción |
-| 7 | Esquinas amarillas giradas | En construcción |
+| 1 | White cross | ✅ Ready |
+| 2 | White corners | ✅ Ready |
+| 3 | Second layer | Coming |
+| 4 | Yellow cross | Coming |
+| 5 | Yellow edges | Coming |
+| 6 | Yellow corners in place | Coming |
+| 7 | Yellow corners oriented | Coming |
 
-### 🧊 Cubo 2×2
-Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño guarda su propio cubo, tiempo y récord. La Práctica usa el 3×3.
+### 🌍 Languages
+English and Spanish for now. The app picks the language of your browser (English if it doesn't have yours) and you can change it in **Help**. Adding a language is just adding a text file: see [Adding a language](#adding-a-language).
 
-### Y además
-- Gira las caras arrastrando con el dedo, o usa el menú **GIROS** con la notación (R, U', F2…).
-- Arrastra fuera del cubo para girarlo entero. Con dos dedos, mover gira el cubo y rotar los dedos lo gira en la pantalla, como una perilla, desde cualquier posición; el recuadro de la esquina muestra el lado que no ves.
-- Ayuda con el uso de la app y la notación.
-- Tu avance se guarda solo, en tu navegador.
-- Hay un secreto escondido para quien resuelva el cubo. 😉
+### 🧊 2×2 cube
+A button next to the title switches between 3×3 and 2×2 in Challenge. Each size keeps its own cube, time and record. Practice uses the 3×3.
+
+### And also
+- Turn the faces by dragging with your finger, or use the **TURNS** menu with the notation (R, U', F2…).
+- Drag outside the cube to rotate it as a whole. With two fingers, moving them rotates the cube and twisting them turns it on the screen, like a knob, from any position; the box in the corner shows the side you can't see.
+- Help with the use of the app and the notation.
+- Your progress is saved on its own, in your browser (progress saved by older versions is kept).
+- There is a secret hidden for whoever solves the cube. 😉
 
 ---
 
-## 📲 Instalarla en el celular
+## 📲 Install it on your phone
 
-Funciona en el navegador y también se puede **instalar como app**. Una vez instalada, abre sin conexión.
+It works in the browser and it can also be **installed as an app**. Once installed, it opens offline.
 
 | Android (Chrome) | iPhone (Safari) |
 | --- | --- |
-| Abre la app → menú **⋮** → **Instalar app** o **Agregar a la pantalla principal** | Abre la app → **Compartir** → **Agregar a inicio** |
+| Open the app → menu **⋮** → **Install app** or **Add to Home screen** | Open the app → **Share** → **Add to Home Screen** |
 
 ---
 
-## 🛠️ Cómo está hecha
+## 🛠️ How it is built
 
-- **Sin librerías:** HTML, CSS y JavaScript puros. No hay que compilar nada.
-- **Motor 3D propio** sobre WebGL, que dibuja solo cuando algo se mueve, para cuidar la batería.
-- **Lógica separada del dibujo:** el estado del cubo y el entrenador no conocen la interfaz, así que se pueden probar solos.
-- **Ejercicios generados:** el entrenador parte de un cubo armado, revuelve lo que la lección no usa y saca de sitio las piezas que vas a practicar. Así todos los ejercicios tienen solución.
-- **PWA:** `manifest.webmanifest` y un *service worker* (`sw.js`) que guarda la app para usarla sin internet.
+- **No libraries:** plain HTML, CSS and JavaScript. Nothing to compile.
+- **Own 3D engine** on WebGL, which only draws when something moves, to save battery.
+- **Logic separated from drawing:** the cube state and the coach don't know the interface, so they can be tested on their own.
+- **Generated exercises:** the coach starts from a solved cube, scrambles what the lesson doesn't use and takes the pieces you will practice out of place. That way every exercise has a solution.
+- **Texts apart from code:** the interface never contains literal text; everything comes from `i18n/` by key.
+- **PWA:** `manifest.webmanifest` and a *service worker* (`sw.js`) that keeps the app for use without internet.
 
-### Contenido del repositorio
+### Repository contents
 
-| Archivo | Qué es |
+| File | What it is |
 | --- | --- |
-| `index.html` | La página: estructura y textos |
-| `estilos.css` | Diseño visual |
-| `motor_grafico.js` | Motor 3D (WebGL), escena, luces y animación de las capas |
-| `logica_cubo.js` | Estado del cubo, giros, notación y detector de etapas |
-| `algoritmos.js` | Secuencias de cada método, en notación estándar |
-| `entrenador.js` | El «profe» de la Práctica: reconoce el caso y prepara los ejercicios |
-| `controlador_juego.js` | Entrada (dedo, botones), Reto, Práctica, guardado y bucle principal |
-| `sw.js` | Service worker: guarda la app para usarla sin conexión |
-| `manifest.webmanifest` | Datos para instalarla como app |
-| `orbitron.woff` | Fuente de los títulos |
-| `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Íconos |
-| `PENDIENTES.md` | Lo que falta: lecciones, otros métodos e idiomas |
-| `pruebas/lecciones.test.js` | Prueba sin navegador: resuelve cientos de ejercicios de cada lección registrada |
-| `capturas/` | Imágenes de este README |
+| `index.html` | The page: structure (its texts come from `i18n/`) |
+| `styles.css` | Visual design |
+| `graphics_engine.js` | 3D engine (WebGL), scene, lights and animation of the layers |
+| `cube_logic.js` | Cube state, turns, notation and the stage detector |
+| `algorithms.js` | Sequences of each method, in standard notation |
+| `coach.js` | The "teacher" of Practice: recognizes the case, offers equivalent routes and prepares exercises |
+| `game_controller.js` | Input (finger, buttons), Challenge, Practice, saving and main loop |
+| `i18n/i18n.js` | Language module: looks up texts by key, plurals, language detection |
+| `i18n/en.js`, `i18n/es.js` | The texts of each language (one file per language) |
+| `sw.js` | Service worker: keeps the app for offline use |
+| `manifest.webmanifest` | Data to install it as an app |
+| `orbitron.woff` | Font of the titles |
+| `icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | Icons |
+| `tests/lessons.test.js` | Browser-free test: solves hundreds of exercises of every registered lesson |
+| `tests/i18n.test.js` | Browser-free test: every language is complete and consistent |
+| `TODO.md` | What is missing: lessons, other methods and languages |
+| `screenshots/` | Images for this README |
 
-### Probarla en tu computadora
+### Running it on your computer
 
-La app abre directamente desde `index.html`. Para probar también la instalación y el uso sin conexión hace falta un servidor local; con Python instalado:
+The app opens straight from `index.html`. To also try the installation and offline use you need a local server; with Python installed:
 
 ```bash
 python -m http.server 8123
 ```
 
-Luego abre `http://localhost:8123`. Con `?debug=true` al final, mezclar desordena un solo giro y el avance se guarda aparte.
+Then open `http://localhost:8123`. With `?debug=true` at the end, scrambling messes up a single turn and progress is saved separately.
 
-Para comprobar las lecciones sin abrir el navegador:
+### Tests
 
 ```bash
-node pruebas/lecciones.test.js
+node tests/lessons.test.js
+node tests/i18n.test.js
 ```
 
-Recorre solas todas las lecciones que existan, así que sirve también para las que se agreguen.
+The first one goes through every lesson that exists, so it also works for the ones that get added. The second one goes through every language file in `i18n/`.
 
-Al publicar una versión nueva hay que cambiar el número en tres lugares: `index.html` (título y pie de la ayuda), `sw.js` (`CACHE`) y la insignia de este README.
+### Adding a language
 
-La página se publica con **GitHub Pages** desde la rama `main`.
+1. Copy `i18n/en.js` to `i18n/xx.js` (`xx` = language code, for example `pt` or `fr`), change the code and the name at the top, and translate the texts. Keep the `{parameters}` as they are; plurals have the forms of the language (`one`, `other`…).
+2. Add `<script src="i18n/xx.js"></script>` in `index.html` and `'./i18n/xx.js'` in the `FILES` list of `sw.js`.
+3. Run `node tests/i18n.test.js`: it tells you if any key or parameter is missing.
+
+### Publishing a new version
+
+Change the number in four places: `data-version`, the `<title>` and the footer of `index.html`, `CACHE` in `sw.js`, and the badge of this README.
+
+The page is published with **GitHub Pages** from the `main` branch.
 
 ---
 
-## 🙌 Créditos
+## 🙌 Credits
 
-- Diseño y desarrollo: **byarcy** · © 2026
-- Fuente [Orbitron](https://fonts.google.com/specimen/Orbitron), con licencia SIL Open Font License.
+- Design and development: **byarcy** · © 2026
+- [Orbitron](https://fonts.google.com/specimen/Orbitron) font, under the SIL Open Font License.

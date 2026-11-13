@@ -1,5 +1,5 @@
-/* estilos.css · Diseño visual de Cubo Rubik · byarcy */
-/* Orbitron (OFL): solo letras latinas, sin internet */
+/* styles.css · Visual design of Rubik's Cube · byarcy */
+/* Orbitron (OFL): Latin letters only, works offline */
 @font-face{font-family:Orbitron;font-weight:400 900;font-display:swap;src:url(orbitron.woff) format("woff")}
 :root{--sys:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--bg:#0d0221;--panel:#1a0b3d;--ink:#f3efff;--muted:#b9a8e8;--soft:#d9cffa;--pink:#ff2e97;--cyan:#00e5ff;--violet:#8b5cf6}
 *{box-sizing:border-box}
@@ -18,7 +18,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tab{min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--soft);font-family:Orbitron,sans-serif;font-weight:500;font-size:13px;letter-spacing:2px}
 .tab.on{background:var(--pink);color:var(--bg);font-weight:700;box-shadow:0 0 14px rgba(255,46,151,.65)}
 .sub{flex:0 0 auto;padding:8px 16px 0}
-.tval{font-family:Orbitron,sans-serif;font-weight:700;font-size:40px;line-height:1.1;color:var(--cyan);text-shadow:0 0 16px rgba(0,229,255,.65);font-variant-numeric:tabular-nums}
+.timeVal{font-family:Orbitron,sans-serif;font-weight:700;font-size:40px;line-height:1.1;color:var(--cyan);text-shadow:0 0 16px rgba(0,229,255,.65);font-variant-numeric:tabular-nums}
 .stats{display:flex;gap:18px;font-size:13px;color:var(--soft)}
 .stats b{color:var(--ink)}.stats b.best{color:var(--pink)}
 #stage{position:relative;flex:0 0 auto;height:44vh;height:44dvh;min-height:250px;overflow:hidden;touch-action:none;background:linear-gradient(to bottom,transparent 50%,rgba(255,46,151,.14) 76%,transparent 76.2%)}
@@ -50,7 +50,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .dtitle{font-family:Orbitron,sans-serif;font-weight:700;font-size:14px;letter-spacing:3px;color:var(--pink)}
 .dsub{font-size:12px;color:var(--soft)}
 .iconbtn{width:44px;height:44px;padding:0;border-radius:12px;border:1.5px solid var(--violet);background:transparent;display:flex;align-items:center;justify-content:center}
-.mgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.turnGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .mv{min-height:48px;border-radius:10px;border:1.5px solid var(--pink);background:rgba(255,46,151,.08);font-family:Orbitron,sans-serif;font-weight:700;font-size:15px;box-shadow:0 0 8px rgba(255,46,151,.45);padding:0}
 .mv.p{border-color:var(--violet);background:rgba(139,92,246,.08);box-shadow:0 0 8px rgba(139,92,246,.45)}
 .mv.d{border-color:var(--cyan);background:rgba(0,229,255,.08);box-shadow:0 0 8px rgba(0,229,255,.45)}
@@ -80,10 +80,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tabs{margin-right:10px;padding:3px;gap:4px;border-radius:12px}
 .tab{min-height:36px;font-size:12px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .sub{padding:4px 16px 0;display:flex;flex-direction:column;align-items:center}
-.tval{font-size:36px}
-/* Reloj: cada carácter en una celda de ancho fijo (Orbitron no trae cifras de igual ancho), así el botón de pausa no se mueve */
-.tval span{display:inline-block;width:.8em;text-align:center}
-.tval span.sep{width:.36em}
+.timeVal{font-size:36px}
+/* Clock: each character in a fixed-width cell (Orbitron has no equal-width digits), so the pause button doesn't move */
+.timeVal span{display:inline-block;width:.8em;text-align:center}
+.timeVal span.sep{width:.36em}
 .gloss{position:absolute;left:16px;right:16px;z-index:25;padding:10px 12px;border-radius:12px;border:1.5px solid var(--cyan);background:var(--panel);box-shadow:0 0 16px rgba(0,229,255,.45);font-size:13px;line-height:1.4}
 .rearm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:4;padding:0 26px;min-height:48px;font-size:12px}
 .htabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:10px 16px 0;padding:3px;border:1px solid rgba(139,92,246,.55);border-radius:12px;background:rgba(26,11,61,.7)}
@@ -104,30 +104,32 @@ button{font:inherit;color:inherit;cursor:pointer}
 #app #stage .tip{bottom:66px}
 .rearm{bottom:72px}
 .rearm:active{transform:translateX(-50%) scale(.97)}
-#app.m-reto #stage{height:56vh;height:56dvh}
-/* Aviso de error y etiqueta del modo debug */
+#app.m-challenge #stage{height:56vh;height:56dvh}
+/* Error notice and debug-mode tag */
 #errbar{position:fixed;left:8px;right:8px;bottom:8px;z-index:99;padding:10px 12px;border-radius:10px;background:#3a0a1e;border:1.5px solid #ff2e97;color:#fff;font:13px/1.4 system-ui,sans-serif}
 .debugtag{font-family:var(--sys);font-size:10px;letter-spacing:1px;padding:2px 6px;border-radius:6px;background:#ffd500;color:#0d0221;text-shadow:none;vertical-align:middle}
-/* Modo Práctica */
-.etapas{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;width:100%;margin-top:6px}
-.etapas i{height:6px;border-radius:3px;background:rgba(139,92,246,.28)}
-.etapas i.on{background:var(--cyan);box-shadow:0 0 8px rgba(0,229,255,.7)}
-.etapas i.cur{background:var(--pink);box-shadow:0 0 8px rgba(255,46,151,.8)}
-.etxt{margin-top:5px;font-size:12px;color:var(--soft)}
-.etxt b{color:var(--ink)}
-.phead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.ptitle{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;color:var(--pink)}
-.pcount{font-size:12px;color:var(--muted)}
-.pmsg{margin:6px 0 8px;font-size:14px;line-height:1.4;color:var(--ink);min-height:2.8em}
-.pmsg b{color:var(--cyan)}
-.pseq{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;margin-bottom:10px}
-.pseq span{min-width:40px;height:40px;padding:0 8px;border-radius:10px;border:1.5px solid rgba(139,92,246,.6);display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-weight:700;font-size:15px;color:var(--soft)}
-.pseq span.done{opacity:.35}
-.pseq span.cur{border-color:var(--cyan);background:rgba(0,229,255,.14);box-shadow:0 0 10px rgba(0,229,255,.6);color:var(--ink)}
-.pseq span.bad{border-color:var(--pink);background:rgba(255,46,151,.14);box-shadow:0 0 10px rgba(255,46,151,.6);color:var(--ink)}
-.niveles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:3px;border:1px solid rgba(139,92,246,.55);border-radius:12px;background:rgba(26,11,61,.7);margin-bottom:10px}
-.niveles button{min-height:38px;border:0;border-radius:9px;background:transparent;color:var(--soft);font-size:13px}
-.niveles button.on{background:var(--violet);color:#fff;font-weight:700;box-shadow:0 0 10px rgba(139,92,246,.6)}
-.pnew{width:100%;font-size:12px;letter-spacing:2px}
-.niveles.lecs{grid-template-columns:repeat(2,minmax(0,1fr));margin:0 0 10px}
+/* Practice mode */
+.stages{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;width:100%;margin-top:6px}
+.stages i{height:6px;border-radius:3px;background:rgba(139,92,246,.28)}
+.stages i.on{background:var(--cyan);box-shadow:0 0 8px rgba(0,229,255,.7)}
+.stages i.cur{background:var(--pink);box-shadow:0 0 8px rgba(255,46,151,.8)}
+.stage-text{margin-top:5px;font-size:12px;color:var(--soft)}
+.stage-text b{color:var(--ink)}
+.practice-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.practice-title{font-family:Orbitron,sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;color:var(--pink)}
+.practice-count{font-size:12px;color:var(--muted)}
+.practice-msg{margin:6px 0 8px;font-size:14px;line-height:1.4;color:var(--ink);min-height:2.8em}
+.practice-msg b{color:var(--cyan)}
+.practice-seq{display:flex;flex-wrap:wrap;gap:6px;min-height:40px;margin-bottom:10px}
+.practice-seq span{min-width:40px;height:40px;padding:0 8px;border-radius:10px;border:1.5px solid rgba(139,92,246,.6);display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-weight:700;font-size:15px;color:var(--soft)}
+.practice-seq span.done{opacity:.35}
+.practice-seq span.cur{border-color:var(--cyan);background:rgba(0,229,255,.14);box-shadow:0 0 10px rgba(0,229,255,.6);color:var(--ink)}
+.practice-seq span.bad{border-color:var(--pink);background:rgba(255,46,151,.14);box-shadow:0 0 10px rgba(255,46,151,.6);color:var(--ink)}
+.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:3px;border:1px solid rgba(139,92,246,.55);border-radius:12px;background:rgba(26,11,61,.7);margin-bottom:10px}
+.levels button{min-height:38px;border:0;border-radius:9px;background:transparent;color:var(--soft);font-size:13px}
+.levels button.on{background:var(--violet);color:#fff;font-weight:700;box-shadow:0 0 10px rgba(139,92,246,.6)}
+.practice-new{width:100%;font-size:12px;letter-spacing:2px}
+.levels.lesson-tabs{grid-template-columns:repeat(2,minmax(0,1fr));margin:0 0 10px}
+.hlang{display:flex;align-items:center;gap:10px;margin:12px 16px 0;font-size:13px;color:var(--soft)}
+.hlang select{flex:1;min-height:38px;padding:0 10px;border-radius:9px;border:1px solid rgba(139,92,246,.55);background:rgba(26,11,61,.7);color:var(--ink);font:inherit}
 [hidden]{display:none!important}

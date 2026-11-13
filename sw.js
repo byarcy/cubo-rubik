@@ -1,9 +1,12 @@
-// Cubo Rubik · byarcy — guarda la app para usarla sin internet
-// Al publicar una versión nueva, cambia el número de CACHE: así se borra lo guardado de la anterior.
-const CACHE = 'cubo-rubik-v0.33';
+// Rubik's Cube · byarcy — keeps the app so it can be used offline
+// When publishing a new version, change the CACHE number: that deletes what was saved for the previous one.
+// (The prefix "cubo-rubik-" is kept on purpose so older caches get cleaned up too.)
+// Every file of the app must be in FILES; tests/i18n.test.js checks that all language files are listed.
+const CACHE = 'cubo-rubik-v0.34';
 const FILES = [
-  './', './index.html', './estilos.css',
-  './motor_grafico.js', './logica_cubo.js', './algoritmos.js', './entrenador.js', './controlador_juego.js',
+  './', './index.html', './styles.css',
+  './graphics_engine.js', './cube_logic.js', './algorithms.js', './coach.js', './game_controller.js',
+  './i18n/i18n.js', './i18n/en.js', './i18n/es.js',
   './orbitron.woff', './icon.svg',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'
 ];
@@ -20,8 +23,8 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Primero internet (para recibir versiones nuevas, y que todos los archivos sean de la misma);
-// sin conexión, lo guardado.
+// Network first (to receive new versions, and so that all files come from the same one);
+// offline, whatever was saved.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;

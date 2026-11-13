@@ -1,16 +1,16 @@
-/* motor_grafico.js · Motor 3D propio (WebGL) y escena.
-   1) M3: matemática (vectores, cuaterniones, matrices), geometrías, materiales, cámaras, raycast y dibujo.
-   2) MotorGrafico: la escena de piezas con calcomanías, la vista (giro del conjunto) y el dibujado.
-   No conoce las reglas del cubo: recibe posiciones, colores y ángulos. */
-/* M3 · motor 3D mínimo en WebGL para Cubo Rubik (byarcy).
-   Solo lo que usa la app: matemática, escena, mallas, luces, raycast y render.
-   Sin dependencias; la API sigue los nombres de Three.js para que el código sea familiar. */
+/* graphics_engine.js · Custom 3D engine (WebGL) and scene.
+   1) M3: math (vectors, quaternions, matrices), geometries, materials, cameras, raycast and drawing.
+   2) GraphicsEngine: the scene of pieces with stickers, the view (turning the whole thing) and the rendering.
+   It knows nothing about the cube's rules: it receives positions, colors and angles. */
+/* M3 · minimal 3D engine on WebGL for Rubik's Cube (byarcy).
+   Only what the app uses: math, scene, meshes, lights, raycast and render.
+   No dependencies; the API follows the names of Three.js so the code feels familiar. */
 (function(root){
 'use strict';
 const EPS=Number.EPSILON,DEG=Math.PI/180;
 const NormalBlending=1,AdditiveBlending=2,FrontSide=0,DoubleSide=2;
 
-// ---------- Matemática ----------
+// ---------- Math ----------
 class Vector2{constructor(x=0,y=0){this.x=x;this.y=y;}set(x,y){this.x=x;this.y=y;return this;}}
 class Vector3{
   constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z;}
@@ -186,7 +186,7 @@ class Color{
 }
 const _v1=new Vector3(),_vx=new Vector3(),_vy=new Vector3(),_vz=new Vector3(),_zero=new Vector3(),_one=new Vector3(1,1,1),_qa=new Quaternion(),_m0=new Matrix4();
 
-// ---------- Geometría ----------
+// ---------- Geometry ----------
 class BufferAttribute{
   constructor(array,itemSize){this.array=array;this.itemSize=itemSize;this.count=array.length/itemSize;this.version=0;}
   set needsUpdate(v){if(v)this.version++;}
@@ -212,7 +212,7 @@ class BufferGeometry{
   dispose(){for(const r of _renderers)r._freeGeometry(this);}
 }
 const F32=a=>new BufferAttribute(new Float32Array(a),3);
-// Caja con subdivisiones (mismo orden de caras que Three.js)
+// Box with subdivisions (same face order as Three.js)
 function BoxGeometry(w=1,h=1,d=1,ws=1,hs=1,ds=1){
   const g=new BufferGeometry(),idx=[],pos=[],nor=[];let nv=0;
   const plane=(u,v,wq,ud,vd,W,H,D,gx,gy)=>{
@@ -235,7 +235,7 @@ function PlaneGeometry(w=1,h=1){
   g.setAttribute('position',F32([-x,y,0,x,y,0,-x,-y,0,x,-y,0]));g.setAttribute('normal',F32([0,0,1,0,0,1,0,0,1,0,0,1]));
   g.setAttribute('uv',new BufferAttribute(new Float32Array([0,1,1,1,0,0,1,0]),2));g.setIndex([0,2,1,2,3,1]);return g;
 }
-// Losa de esquinas redondeadas con bisel suave (calcomanía); caras planas como el extruido de Three.js
+// Rounded-corner slab with a soft bevel (sticker); flat faces like Three.js's extrusion
 function TileGeometry(w,r,depth,bevel,curveSeg=6,bevelSeg=2){
   const h=w/2,pts=[];
   const corner=(cx,cy,a0)=>{for(let i=0;i<=curveSeg;i++){const a=a0+i/curveSeg*Math.PI/2;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}};
@@ -257,7 +257,7 @@ function TileGeometry(w,r,depth,bevel,curveSeg=6,bevelSeg=2){
   for(let ri=0;ri<last;ri++)for(let i=0;i<n;i++){const a=P(ri,i),b=P(ri,i+1),c=P(ri+1,i+1),d=P(ri+1,i);tri(a,b,c);tri(a,c,d);}
   const g=new BufferGeometry();g.setAttribute('position',F32(pos));g.setAttribute('normal',F32(nor));return g;
 }
-// Aristas donde las caras forman ángulo (o bordes abiertos)
+// Edges where the faces form an angle (or open borders)
 function EdgesGeometry(geo,thresholdDeg=1){
   const p=geo.attributes.position,ix=geo.index,cnt=ix?ix.count:p.count,th=Math.cos(thresholdDeg*DEG),map=new Map(),out=[];
   const vi=i=>ix?ix.array[i]:i,kv=v=>Math.round(v.x*1e4)+','+Math.round(v.y*1e4)+','+Math.round(v.z*1e4);
@@ -276,7 +276,7 @@ function EdgesGeometry(geo,thresholdDeg=1){
   const g=new BufferGeometry();g.setAttribute('position',F32(out));return g;
 }
 
-// ---------- Materiales y texturas ----------
+// ---------- Materials and textures ----------
 class Texture{constructor(image){this.image=image;this.version=0;this.isTexture=true;}set needsUpdate(v){if(v)this.version++;}dispose(){for(const r of _renderers)r._freeTexture(this);}}
 class CanvasTexture extends Texture{constructor(c){super(c);this.needsUpdate=true;}}
 class Material{
@@ -294,7 +294,7 @@ class Material{
 const mat=kind=>class extends Material{constructor(p){super(kind,p);}};
 const MeshBasicMaterial=mat('basic'),MeshLambertMaterial=mat('lambert'),MeshPhongMaterial=mat('phong'),PointsMaterial=mat('points'),LineBasicMaterial=mat('line');
 
-// ---------- Escena ----------
+// ---------- Scene ----------
 class Object3D{
   constructor(){
     this.parent=null;this.children=[];this.up=new Vector3(0,1,0);this.position=new Vector3();this.quaternion=new Quaternion();this.scale=new Vector3(1,1,1);
@@ -391,7 +391,7 @@ class PerspectiveCamera extends Camera{
   }
 }
 
-// ---------- Rayos ----------
+// ---------- Rays ----------
 class Ray{
   constructor(){this.origin=new Vector3();this.direction=new Vector3(0,0,-1);}
   copy(r){this.origin.copy(r.origin);this.direction.copy(r.direction);return this;}
@@ -427,9 +427,9 @@ class Raycaster{
 const _sc=new Vector3(),_mi=new Matrix4(),_ray=new Ray(),_ta=new Vector3(),_tb=new Vector3(),_tc=new Vector3(),_hit=new Vector3(),_v2=new Vector3(),_v3=new Vector3(),
   _e1=new Vector3(),_e2=new Vector3(),_n1=new Vector3(),_df=new Vector3();
 
-// ---------- Render WebGL ----------
+// ---------- WebGL render ----------
 const MAX_DIR=4,MAX_PT=2;
-// Las luces se declaran solo en el sombreador que las usa (WebGL 1 no admite la misma uniforme con distinta precisión)
+// Lights are declared only in the shader that uses them (WebGL 1 doesn't allow the same uniform with different precision)
 const LIGHTS=`uniform vec3 uAmb,uSky,uGround,uHemiDir,uDirDir[${MAX_DIR}],uDirCol[${MAX_DIR}],uPtPos[${MAX_PT}],uPtCol[${MAX_PT}];uniform vec2 uPtAtt[${MAX_PT}];
 float att(vec2 a,float d){return a.x>0.?pow(clamp(1.-d/a.x,0.,1.),a.y):1.;}
 vec3 hemi(vec3 n){return uAmb+mix(uGround,uSky,0.5*dot(n,uHemiDir)+0.5);}
@@ -501,7 +501,7 @@ const ATTR=['position','normal','uv','color'];
 class WebGLRenderer{
   constructor(o={}){
     const cv=document.createElement('canvas');this.domElement=cv;this.autoClear=true;this._pr=1;this._w=cv.width;this._h=cv.height;
-    // stencil:true: en muchos celulares es lo que da un búfer de profundidad de 24 bits (sin él puede ser de 16)
+    // stencil:true: on many phones this is what gives a 24-bit depth buffer (without it it may be 16)
     this._opts={alpha:!!o.alpha,antialias:!!o.antialias,depth:true,stencil:true,premultipliedAlpha:true,preserveDrawingBuffer:false};
     const gl=cv.getContext('webgl',this._opts)||cv.getContext('experimental-webgl',this._opts);
     if(!gl)throw new Error('Este navegador no tiene WebGL');
@@ -526,15 +526,15 @@ class WebGLRenderer{
   setScissor(x,y,w,h){this._sc=this._px(x,y,w,h);if(!this._lost)this.gl.scissor(...this._sc);}
   setScissorTest(on){this._scOn=on;if(!this._lost)this.gl[on?'enable':'disable'](this.gl.SCISSOR_TEST);}
   setClearColor(hex,a=1){const c=_cc.setHex(hex);this._clear=[c.r*a,c.g*a,c.b*a,a];}
-  // Borra todo el lienzo. Siempre sin recorte (scissor): en algunos celulares (p. ej. GPU Mali) borrar con
-  // recorte deja bloques sin borrar y la imagen se ve "a través" del cubo
+  // Clears the whole canvas. Always without scissor: on some phones (e.g. Mali GPU) clearing with
+  // scissor leaves uncleared blocks and the image shows "through" the cube
   clear(){
     if(this._lost)return;const gl=this.gl;
     gl.disable(gl.SCISSOR_TEST);gl.clearColor(...this._clear);gl.clearDepth(1);gl.clearStencil(0);
     gl.depthMask(true);gl.colorMask(true,true,true,true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT|gl.STENCIL_BUFFER_BIT);
     if(this._scOn)gl.enable(gl.SCISSOR_TEST);
   }
-  // Borra solo el área de la vista actual dibujando un rectángulo (sin glClear): color de fondo y profundidad al fondo
+  // Clears only the area of the current view by drawing a rectangle (no glClear): background color and depth at the back
   fillViewport(hex,a=1){
     if(this._lost)return;const gl=this.gl,c=_cc.setHex(hex);
     let f=this._fill;
@@ -587,7 +587,7 @@ class WebGLRenderer{
       x.v=t.version;
     }
   }
-  // Las instancias (varillas de neón) se aplanan en un solo búfer en la CPU: pocas y simples
+  // Instances (neon rods) are flattened into a single buffer on the CPU: few and simple
   _instGeo(o){
     let c=this._inst.get(o);const g=o.geometry,p=g.attributes.position,ix=g.index;
     if(!c){c={geo:new BufferGeometry(),v:-1,cv:-1};this._inst.set(o,c);const n=p.count*o.count;
@@ -601,12 +601,12 @@ class WebGLRenderer{
     if(ic&&c.cv!==ic.version){const out=c.geo.attributes.color.array;for(let k=0;k<o.count;k++)for(let i=0;i<p.count;i++)out.set(ic.array.subarray(k*3,k*3+3),(k*p.count+i)*3);c.geo.attributes.color.needsUpdate=true;c.cv=ic.version;}
     return c.geo;
   }
-  // keepMatrices: la escena ya se dibujó en este cuadro (p. ej. una segunda vista), no se recalculan sus matrices
+  // keepMatrices: the scene was already drawn in this frame (e.g. a second view), its matrices aren't recomputed
   render(scene,cam,keepMatrices){
     if(this._lost)return;
     if(this.autoClear)this.clear();
     if(!keepMatrices)scene.updateMatrixWorld();if(!cam.parent)cam.updateWorldMatrix(false,false);
-    // Luces y lista de objetos: se reutilizan entre cuadros para no crear basura
+    // Lights and object list: reused between frames so no garbage is created
     const L=this._L||(this._L={amb:[0,0,0],sky:[0,0,0],ground:[0,0,0],hemi:[0,1,0],dir:new Float32Array(MAX_DIR*3),dcol:new Float32Array(MAX_DIR*3),pp:new Float32Array(MAX_PT*3),pcol:new Float32Array(MAX_PT*3),patt:new Float32Array(MAX_PT*2)});
     L.amb.fill(0);L.sky.fill(0);L.ground.fill(0);L.dir.fill(0);L.dcol.fill(0);L.pp.fill(0);L.pcol.fill(0);L.patt.fill(0);
     let nd=0,np=0,ni=0;const pool=this._pool||(this._pool=[]),op=this._op||(this._op=[]),tr=this._tr||(this._tr=[]);op.length=0;tr.length=0;
@@ -653,13 +653,13 @@ class WebGLRenderer{
     if(u.uSpec){gl.uniform3f(u.uSpec,m.specular.r,m.specular.g,m.specular.b);gl.uniform1f(u.uShin,Math.max(m.shininess,1e-4));}
     if(u.uSize)gl.uniform1f(u.uSize,m.size*this._pr);
     if(m.map&&u.uMap){gl.activeTexture(gl.TEXTURE0);this._tex(m.map);gl.uniform1i(u.uMap,0);}
-    // Estado
+    // State
     if(m.blending===AdditiveBlending){gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);}
     else if(m.transparent){gl.enable(gl.BLEND);gl.blendEquation(gl.FUNC_ADD);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);}
     else gl.disable(gl.BLEND);
     gl[m.depthTest?'enable':'disable'](gl.DEPTH_TEST);gl.depthMask(!!m.depthWrite);
     gl[(o.isMesh&&m.side!==DoubleSide)?'enable':'disable'](gl.CULL_FACE);
-    // Atributos
+    // Attributes
     ATTR.forEach((name,i)=>{
       const a=geo.attributes[name],want=P.at[i]&&a;
       if(want){gl.bindBuffer(gl.ARRAY_BUFFER,this._buf(a,gl.ARRAY_BUFFER));gl.vertexAttribPointer(i,a.itemSize,gl.FLOAT,false,0,0);if(!this._on.has(i)){gl.enableVertexAttribArray(i);this._on.add(i);}}
@@ -680,28 +680,28 @@ root.M3={Vector2,Vector3,Quaternion,Matrix4,Color,BufferAttribute,BufferGeometry
   Raycaster,Plane,WebGLRenderer,NormalBlending,AdditiveBlending,FrontSide,DoubleSide};
 })(typeof window!=='undefined'?window:globalThis);
 
-const MotorGrafico=(function(){
-// ================= Aspecto: colores, luces y formas en un solo lugar =================
-// (los colores de la interfaz están en estilos.css, en :root)
+const GraphicsEngine=(function(){
+// ================= Look: colors, lights and shapes in one place =================
+// (the interface colors are in styles.css, in :root)
 const LOOK={
-  faces:{U:0xf4f2ff,D:0xffd500,F:0x00b85f,B:0x1f6bff,R:0xe8173f,L:0xff6a00}, // blanco, amarillo, verde, azul, rojo, naranja
-  plastic:{color:0x0b0a0d,specular:0x2a2a2e,shininess:18},   // cuerpo de las piezas
-  piece:{size:0.97,round:0.11,seg:5},                         // tamaño y redondeo de cada pieza
-  sticker:{size:0.82,round:0.12,glow:0.17},                   // calcomanías: tamaño, esquinas y brillo propio
-  lights:{                                                    // synthwave: cielo magenta, piso cian, bordes neón
+  faces:{U:0xf4f2ff,D:0xffd500,F:0x00b85f,B:0x1f6bff,R:0xe8173f,L:0xff6a00}, // white, yellow, green, blue, red, orange
+  plastic:{color:0x0b0a0d,specular:0x2a2a2e,shininess:18},   // body of the pieces
+  piece:{size:0.97,round:0.11,seg:5},                         // size and rounding of each piece
+  sticker:{size:0.82,round:0.12,glow:0.17},                   // stickers: size, corners and own glow
+  lights:{                                                    // synthwave: magenta sky, cyan floor, neon edges
     ambient:[0xffffff,0.34],hemi:[0xff7ad9,0x2de2ff,0.42],
     dir:[[0xfff4fb,0.42,[2,9,4]],[0xb9a8ff,0.22,[-4,-6,-6]],[0xff2e97,0.38,[-7,2,-4]],[0x00e5ff,0.34,[7,1,-5]]],
     floor:[0xff2e97,0.9,9,[0,-3.6,1.5]]},
   miniBg:0x0d0221,
   neon:[0xff2e97,0x00e5ff,0x8b5cf6],
-  camera:{pos:[6,5.4,8.6],fov:32,near:1,far:60},   // near alto = más precisión de profundidad en celulares
+  camera:{pos:[6,5.4,8.6],fov:32,near:1,far:60},   // high near = more depth precision on phones
   floorY:-2.6
 };
 const AXES=[new M3.Vector3(1,0,0),new M3.Vector3(0,1,0),new M3.Vector3(0,0,1)];
 
-// Crea la escena dentro de «stage» (el canvas se inserta como su primer hijo)
-function crearEscena(stage){
-// ================= Escena 3D =================
+// Creates the scene inside "stage" (the canvas is inserted as its first child)
+function createScene(stage){
+// ================= 3D scene =================
 const renderer=new M3.WebGLRenderer({antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.autoClear=false;
@@ -711,7 +711,7 @@ const scene=new M3.Scene();
 const CAM=new M3.Vector3(...LOOK.camera.pos);
 const camera=new M3.PerspectiveCamera(LOOK.camera.fov,1,LOOK.camera.near,LOOK.camera.far);
 camera.position.copy(CAM);camera.lookAt(0,0,0);
-// Recuadro de la esquina: la misma escena vista desde atrás
+// Corner box: the same scene seen from behind
 const miniCam=new M3.PerspectiveCamera(LOOK.camera.fov,1,LOOK.camera.near,LOOK.camera.far);
 miniCam.position.copy(CAM).multiplyScalar(-1);miniCam.lookAt(0,0,0);
 {const L=LOOK.lights;
@@ -725,9 +725,9 @@ const upW=new M3.Vector3(0,1,0);
 const rightW=new M3.Vector3().crossVectors(upW,camDir).normalize();
 const upT=new M3.Vector3().crossVectors(camDir,rightW).normalize();
 
-// ================= Piezas =================
+// ================= Pieces =================
 const roundRect=(w,r)=>M3.TileGeometry(w,r,0.02,0.012,6,2);
-// Pieza con bordes redondeados (caja subdividida cuyos bordes se curvan)
+// Piece with rounded edges (a subdivided box whose edges are curved)
 function roundedBox(size,r,seg){
   const g=new M3.BoxGeometry(size,size,size,seg,seg,seg),p=g.attributes.position,nr=g.attributes.normal;
   const h=size/2-r,v=new M3.Vector3(),c=new M3.Vector3(),d=new M3.Vector3();
@@ -744,13 +744,13 @@ const STICKER_GLOW=LOOK.sticker.glow;
 const bodyMat=new M3.MeshPhongMaterial(LOOK.plastic);
 const stGeo=roundRect(LOOK.sticker.size,LOOK.sticker.round);
 const decalGeo=new M3.PlaneGeometry(0.55,0.55);
-// cubies: un grupo por pieza; stickerMats: material de cada calcomanía; decalMats: materiales de las marcas
+// cubies: one group per piece; stickerMats: material of each sticker; decalMats: materials of the marks
 const cubies=[],stickerMats=[],decalMats=[];
-// SC: escala de cada pieza; OFF: separación entre centros de piezas
+// SC: scale of each piece; OFF: spacing between piece centers
 let SC=1,OFF=1;
 function stickerDirs(p){const out=[];for(let a=0;a<3;a++)if(p[a]){const d=[0,0,0];d[a]=p[a];out.push(d);}return out;}
 const ZV=new M3.Vector3(0,0,1);
-// Una pieza: cuerpo negro y sus calcomanías (matOf da el material de cada una)
+// One piece: black body and its stickers (matOf gives the material of each one)
 function makePiece(p,matOf,off){
   const g=new M3.Group();g.add(new M3.Mesh(bodyGeo,bodyMat));const st=[];
   for(const d of stickerDirs(p)){
@@ -760,8 +760,8 @@ function makePiece(p,matOf,off){
   }
   g.position.set(p[0]*OFF,p[1]*OFF,p[2]*OFF);g.scale.setScalar(SC);return {g,st};
 }
-// Arma las piezas. pieces: [{p,id}] (p = posición en la rejilla -1..1); colorOf(d): color de la calcomanía
-// que mira hacia d; decalOf(p): textura de una marca tenue sobre la cara de arriba de esa pieza, o null
+// Builds the pieces. pieces: [{p,id}] (p = position on the grid -1..1); colorOf(d): color of the sticker
+// that faces d; decalOf(p): texture of a faint mark on the top face of that piece, or null
 function buildCube({pieces,scale,offset,colorOf,decalOf}){
   cubies.forEach(g=>{container.remove(g);scene.remove(g);});
   cubies.length=0;stickerMats.length=0;decalMats.length=0;
@@ -783,7 +783,7 @@ function buildCube({pieces,scale,offset,colorOf,decalOf}){
   }
   markDirty();
 }
-// sts: calcomanías de la pieza, cada una con hn (hacia dónde mira armada), n (hacia dónde mira ahora) y p (posición)
+// sts: stickers of the piece, each with hn (where it faces when solved), n (where it faces now) and p (position)
 const V=a=>new M3.Vector3(a[0],a[1],a[2]);
 function orientFrom(sts){
   if(sts.length===1)return new M3.Quaternion().setFromUnitVectors(V(sts[0].hn),V(sts[0].n));
@@ -797,11 +797,11 @@ function syncGroup(g,sts){
   g.position.set(sts[0].p[0]*OFF,sts[0].p[1]*OFF,sts[0].p[2]*OFF);
   g.quaternion.copy(orientFrom(sts));g.scale.setScalar(SC);
 }
-// Dibujo eficiente: se redibuja solo si algo cambió (ver «Render»)
+// Efficient drawing: it is only redrawn if something changed (see "Render")
 let dirty=true;const markDirty=()=>{dirty=true;};
 
-// ================= Giro animado de una capa =================
-// Gira «total» radianes sobre el eje a las piezas de la capa l; al terminar, sync(g) deja cada pieza en su sitio exacto
+// ================= Animated turn of a layer =================
+// Turns the pieces of layer l by "total" radians around the axis; when done, sync(g) puts each piece in its exact place
 function animateLayer(a,l,total,dur,sync,done){
   const mem=cubies.filter(g=>Math.round(g.position.getComponent(a))===l);
   const pivot=new M3.Group();container.add(pivot);
@@ -825,12 +825,12 @@ function animateLayer(a,l,total,dur,sync,done){
   requestAnimationFrame(stepA);
 }
 
-// ================= Vista =================
+// ================= View =================
 let viewAnim=null,inertia=null;
 function stopViewMotion(){viewAnim=null;inertia=null;}
-// ---- Giro del conjunto entero: suave, sin torcerse de lado ----
-// La orientación es siempre: base · giro horizontal (sobre su eje vertical) · inclinación (hacia ti / atrás)
-// roll: giro en el plano de la pantalla (dos dedos rotando), como una perilla; se aplica al final, sobre todo lo demás
+// ---- Turning the whole thing: smooth, without twisting sideways ----
+// The orientation is always: base · horizontal turn (around its vertical axis) · tilt (toward you / away)
+// roll: turn in the screen plane (two fingers rotating), like a knob; it is applied last, over everything else
 let yaw=0,pitch=0,roll=0;const base=new M3.Quaternion();
 const normAng=a=>{const t=2*Math.PI;return ((a+Math.PI)%t+t)%t-Math.PI;};
 const _qy=new M3.Quaternion(),_qp=new M3.Quaternion(),_qr=new M3.Quaternion();
@@ -840,7 +840,7 @@ function compose(){
   _qy.setFromAxisAngle(upW,yaw);_qp.setFromAxisAngle(rightW,pitch);_qr.setFromAxisAngle(camDir,roll);
   container.quaternion.copy(_qr).multiply(_qp).multiply(_qy).multiply(base);
 }
-// Animación suave de la vista hacia un giro, una inclinación, una base y (por omisión, sin torcer) un giro de pantalla
+// Smooth animation of the view toward a turn, a tilt, a base and (by default, without twisting) a screen roll
 function animView(y1,p1,b1,dur,r1=0){
   stopViewMotion();
   viewAnim={y0:yaw,y1:yaw+normAng(y1-yaw),p0:pitch,p1:pitch+normAng(p1-pitch),r0:roll,r1:roll+normAng(r1-roll),b0:base.clone(),b1:b1.clone(),t0:performance.now(),dur};
@@ -850,31 +850,31 @@ function viewDrag(V,dx,dy){
   if(!dx&&!dy)return;
   const size=Math.max(200,Math.min(stage.clientWidth,stage.clientHeight));
   const k=3.4/size;
-  // de cabeza, el arrastre horizontal se invierte para sentirse igual
+  // upside down, the horizontal drag is inverted so it feels the same
   const flip=Math.abs(pitch)>Math.PI/2?-1:1;
-  // con el cubo torcido en la pantalla, el arrastre se endereza primero para que siga al dedo
+  // with the cube twisted on the screen, the drag is straightened first so it follows the finger
   const cr=Math.cos(roll),sr=Math.sin(roll);
   const dyw=(dx*cr-dy*sr)*k*flip,dp=(dx*sr+dy*cr)*k;
   yaw=normAng(yaw+dyw);pitch=normAng(pitch+dp);compose();
   const now=performance.now(),dt=Math.max(8,now-V.t);
   V.vy=0.6*V.vy+0.4*(dyw/dt);V.vp=0.6*V.vp+0.4*(dp/dt);V.t=now;V.moved=true;
 }
-// Dos dedos rotando: el cubo gira en el plano de la pantalla, igual que los dedos, desde cualquier posición
+// Two fingers rotating: the cube turns in the screen plane, just like the fingers, from any position
 function viewTwist(V,da){
   if(!da)return;
   roll=normAng(roll-da);compose();V.moved=true;V.t=performance.now();
 }
-// Suma un giro horizontal y una inclinación a la vista
+// Adds a horizontal turn and a tilt to the view
 function turnView(dy,dp){yaw=normAng(yaw+dy);pitch=normAng(pitch+dp);compose();}
-// Al soltar: se queda donde lo dejaste; si lo lanzaste, sigue girando y frena suave (devuelve true)
+// On release: it stays where you left it; if you flicked it, it keeps turning and slows down smoothly (returns true)
 function viewEnd(V){
   if(performance.now()-V.t<80&&Math.hypot(V.vy,V.vp)>0.0007){inertia={vy:V.vy,vp:V.vp,t:performance.now()};return true;}
   return false;
 }
-// Avanza la inercia y las animaciones de la vista; devuelve true cuando una termina
+// Advances the inertia and the view animations; returns true when one of them ends
 function stepView(now){
   let ended=false;
-  // Si la vista quedó inválida, se reinicia
+  // If the view became invalid, it is reset
   {const q=container.quaternion;if(!isFinite(q.x+q.y+q.z+q.w)||q.lengthSq()<0.5)q.identity();}
   if(inertia){
     const dt=Math.min(40,now-inertia.t);inertia.t=now;
@@ -893,7 +893,7 @@ function stepView(now){
 }
 const getView=()=>({yaw,pitch,roll,base:base.toArray()});
 function setView(y,p,b,r=0){base.fromArray(b).normalize();yaw=y;pitch=p;roll=r;compose();}
-// Balanceo suave: mientras «idle» sea cierto, el conjunto se mece un poco sin cambiar su posición
+// Gentle sway: while "idle" is true, the whole thing rocks a little without changing its position
 let swayAmp=0;const _qs=new M3.Quaternion();
 function idleSway(now,dt,idle){
   const target=idle?1:0;
@@ -919,13 +919,13 @@ function resize(){
 function render(){
   dirty=false;
   const w=stage.clientWidth,h=stage.clientHeight;
-  // Vista principal: se borra todo el lienzo (sin recorte) y se dibuja
+  // Main view: the whole canvas is cleared (no scissor) and drawn
   renderer.setScissorTest(false);
   renderer.setViewport(0,0,w,h);
   renderer.setClearColor(0x000000,0);renderer.clear();
   renderer.render(scene,camera);
   const x=w-MINI-10,y=h-MINI-10;
-  // Recuadro: se limita con recorte y su fondo se pinta con un rectángulo (sin borrar con recorte)
+  // Corner box: limited with scissor and its background painted with a rectangle (no clearing with scissor)
   renderer.setViewport(x,y,MINI,MINI);renderer.setScissor(x,y,MINI,MINI);renderer.setScissorTest(true);
   renderer.fillViewport(LOOK.miniBg,1);
   renderer.render(scene,miniCam,true);
@@ -939,5 +939,5 @@ return {canvas,scene,camera,container,camDir,rightW,upT,MINI,STICKER_GLOW,cubies
   get yaw(){return yaw;},get pitch(){return pitch;},get roll(){return roll;},get viewAnim(){return viewAnim;},get inertia(){return inertia;},get swayAmp(){return swayAmp;}};
 }
 
-return {LOOK,crearEscena};
+return {LOOK,createScene};
 })();
