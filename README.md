@@ -10,7 +10,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.31-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.32-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idioma](https://img.shields.io/badge/idioma-español-ffd500)
@@ -41,7 +41,7 @@ Para aprender el **método por capas**, el de principiantes, dividido en 7 etapa
 - **Barra de etapas:** la app mira tu cubo y muestra cuántas etapas llevas completas y cuál toca.
 - **Lección 1 · Cruz blanca:** parte de un cubo mezclado y enseña una receta que siempre funciona: llevar la arista a la capa amarilla, girarla hasta la cara de su color y meterla con media vuelta.
 - **Lección 2 · Esquinas blancas:** cada ejercicio empieza con la cruz ya hecha y varias esquinas fuera de sitio.
-- **Blanco abajo:** en las dos lecciones el cubo se muestra con el blanco abajo, para que veas la capa donde trabajas, y gira solo para dejar de frente las caras que toca mover.
+- **Blanco arriba:** como en las guías, el cubo se muestra con el blanco arriba. Gira solo para dejar de frente las caras que toca mover, pero respeta la vista que tú elijas con los dedos o con el botón del cubo. Para las capas de abajo, la flecha se dibuja alrededor del cubo.
 - **Pieza en foco:** la pieza que toca se ilumina y el resto del cubo se atenúa. Un marco rosa señala su hueco.
 - **Flecha sobre el cubo:** la cara que debes girar muestra una flecha con el sentido del giro, y debajo aparecen los giros en letras para ir aprendiendo la notación.
 - **Te corrige:** si giras otra cara a mitad de un paso, te pide deshacerla antes de seguir.

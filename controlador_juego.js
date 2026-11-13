@@ -185,6 +185,8 @@ function setMode(m){
 // obj: pieza que toca · plan: giros de este paso · i: cuántos llevas · dev: giros de más que hay que deshacer
 const prac={leccion:'cruz',nivel:1,hechos:{cruz:0,esquinas:0},obj:null,caso:null,plan:[],i:0,dev:[],fin:false};
 const lec=()=>ENTRENADOR.LECCIONES[prac.leccion];
+// true si moviste la vista tú (dedos o botón de cubo) después de que la app la acomodó: entonces no te la quita
+let vistaUsuario=false;
 // Textos de cada lección
 const LEC_UI={
   cruz:{titulo:'CRUZ BLANCA',aviso:'CRUZ BLANCA COMPLETA',
@@ -227,8 +229,8 @@ function pracAfter(){
   if(prac.fin)return;
   if(prac.nivel===1&&(prac.dev.length||(prac.i>0&&prac.i<prac.plan.length)))return;
   const cambio=pracPlan();
-  // el cubo se acomoda solo si cambió la pieza o si la cara que toca girar quedó escondida
-  if(!prac.fin&&prac.nivel<3&&(cambio||(prac.nivel===1&&!pracSeVe())))pracVista();
+  // el cubo se acomoda solo si cambió la pieza o si la cara que toca girar quedó escondida (y no moviste tú la vista)
+  if(!prac.fin&&prac.nivel<3&&(cambio||(prac.nivel===1&&!vistaUsuario&&!pracSeVe())))pracVista();
 }
 function pracNuevo(){
   if(helpOpen||busy||queue.length||scrambling||resetAnim||exploded)return;
@@ -237,20 +239,20 @@ function pracNuevo(){
   prac.obj=null;prac.fin=false;pracPlan();pracVista();
   updateUI();save();
 }
-// Vista de la lección: blanco abajo, y de frente las caras que toca girar, la pieza y su hueco
-const FLIP=new M3.Quaternion().setFromAxisAngle(new M3.Vector3(0,0,1),Math.PI);
+// Vista de la lección: blanco arriba (como en la guía), y de frente las caras que toca girar, la pieza y su hueco
 function pracVista(){
+  vistaUsuario=false;
   const eje=new M3.Vector3(0,1,0),q=new M3.Quaternion(),meta=new M3.Vector3(1,0,1),dirs=[];
   for(const m of prac.plan)if(m.f!=='U'&&m.f!=='D')dirs.push([FACE_DIR[m.f],1]);
-  if(prac.obj)dirs.push([CUBO.byId[prac.obj][0].p,0.5],[prac.obj.split(',').map(Number),0.5]);
+  if(prac.obj)dirs.push([CUBO.byId[prac.obj][0].p,1],[prac.obj.split(',').map(Number),0.6]);
   let y=G.yaw,mejor=-1e9;
   for(let k=0;k<4;k++){
-    const a=k*Math.PI/2;q.setFromAxisAngle(eje,a).multiply(FLIP);
+    const a=k*Math.PI/2;q.setFromAxisAngle(eje,a);
     let s=-0.01*Math.abs(normAng(a-G.yaw));
     for(const [d,w] of dirs)s+=w*V(d).applyQuaternion(q).dot(meta);
     if(s>mejor){mejor=s;y=a;}
   }
-  animView(y,0,FLIP,500);
+  animView(y,0,new M3.Quaternion(),500);
 }
 // ¿Se ven ahora todas las caras que hay que girar en este paso?
 function pracSeVe(){
@@ -306,12 +308,12 @@ const marcoTex=lienzo(x=>{
 const ZV=new M3.Vector3(0,0,1);
 function marca(tex,tam){
   const m=new M3.Mesh(new M3.PlaneGeometry(tam,tam),new M3.MeshBasicMaterial({map:tex,transparent:true,opacity:1,depthWrite:false}));
-  m.visible=false;m.material.visible=false;m.renderOrder=5;container.add(m);return m;
+  m.material.side=2;m.visible=false;m.material.visible=false;m.renderOrder=5;container.add(m);return m;
 }
 const flechas=[marca(flechaTex(false),2.5),marca(flechaTex(true),2.5)],marcos=[0,1,2].map(()=>marca(marcoTex,1));
-function ponMarca(m,ver,pos,dir){
+function ponMarca(m,ver,pos,dir,esc=1){
   m.visible=m.material.visible=ver;
-  if(ver){m.position.set(pos[0],pos[1],pos[2]);m.quaternion.setFromUnitVectors(ZV,V(dir));}
+  if(ver){m.position.set(pos[0],pos[1],pos[2]);m.quaternion.setFromUnitVectors(ZV,V(dir));m.scale.setScalar(esc);}
 }
 // El giro que toca ahora en el paso guiado: el siguiente del plan o, si te saliste, el que lo deshace
 function pracSig(){
@@ -333,7 +335,8 @@ function pracVisual(on){
   const g=ayuda&&prac.nivel===1?pracSig():null;
   flechas.forEach((m,i)=>{
     const ver=!!g&&(g.n===-1)===(i===1),d=g?FACE_DIR[g.f]:null;
-    ponMarca(m,ver,d&&d.map(v=>v*1.56),d);
+    // la cara de abajo no se ve desde arriba: su flecha se dibuja más grande, para que asome alrededor del cubo
+    ponMarca(m,ver,d&&d.map(v=>v*1.56),d,g&&g.f==='D'?2.5:1);
   });
   markDirty();
 }
@@ -403,6 +406,7 @@ const SNAPS=[];
 }
 function endView(V){
   if(!V||!V.moved)return;
+  vistaUsuario=true;
   if(!tipDone){tipView=true;tipDone=tipFace;}
   if(!G.viewEnd(V)){updateUI();save();}
 }
@@ -510,7 +514,7 @@ canvas.addEventListener('pointercancel',endPointer);
 // Botón de cubo: 1 toque = enderezar sin dar la vuelta; 2 toques o mantener = posición inicial (blanco arriba)
 {
   const b=$('restore');let t=0,long=false,lastTap=0;
-  const home=()=>{showTipFor(b,'Posición inicial');animView(0,0,new M3.Quaternion(),450);};
+  const home=()=>{vistaUsuario=true;showTipFor(b,'Posición inicial');animView(0,0,new M3.Quaternion(),450);};
   b.addEventListener('pointerdown',()=>{
     long=false;clearTimeout(t);
     t=setTimeout(()=>{long=true;lastTap=0;home();},550);
@@ -520,7 +524,7 @@ canvas.addEventListener('pointercancel',endPointer);
     if(long){long=false;return;}
     const now=performance.now();
     if(now-lastTap<400){lastTap=0;home();return;}
-    lastTap=now;
+    lastTap=now;vistaUsuario=true;
     // Enderezar: giro al cuarto de vuelta más cercano y sin inclinación (o de cabeza)
     const yaw=G.yaw,pitch=G.pitch;
     const y1=Math.round(yaw/(Math.PI/2))*(Math.PI/2),p1=Math.abs(pitch)>Math.PI/2?Math.PI*Math.sign(pitch):0;
