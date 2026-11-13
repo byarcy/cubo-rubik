@@ -233,6 +233,8 @@ function practicePlan(){
   const e=lessonDef().step(practice.target),before=practice.target;
   practice.plan=e.plan||[];practice.alt=e.alt||[];practice.i=0;practice.wrong=[];
   practice.kind=e.broken?'broken':e.done?'done':e.kind;practice.face=e.face||null;practice.focusIds=e.focus||null;
+  // slot: a fixed spot to frame (lesson 7); keepView: the guide says to keep the same side facing you
+  practice.slot=e.slot||null;practice.keepView=!!e.keepView;
   if(e.id)practice.target=e.id;
   if(e.done){practice.target=null;if(!practice.finished){practice.finished=true;practice.completed[practice.lesson]++;celebrate(tr('lesson.'+practice.lesson+'.done'));}}
   return !!e.id&&e.id!==before;
@@ -243,7 +245,7 @@ function practiceAfter(){
   if(practice.level===1&&(practice.wrong.length||(practice.i>0&&practice.i<practice.plan.length)))return;
   const changed=practicePlan();
   // the cube turns by itself only if the piece changed or the face to turn is hidden (and you did not move the view)
-  if(!practice.finished&&practice.level<3&&(changed||(practice.level===1&&!userMovedView&&!practiceFacesVisible())))practiceView();
+  if(!practice.finished&&practice.level<3&&!practice.keepView&&(changed||(practice.level===1&&!userMovedView&&!practiceFacesVisible())))practiceView();
 }
 function newExercise(){
   if(helpOpen||busy||queue.length||scrambling||resetAnim||exploded)return;
@@ -261,6 +263,7 @@ function practiceView(){
   const base=lessonDef().yellowUp?YELLOW_UP:new M3.Quaternion();
   for(const m of practice.plan)if(m.f!=='U'&&m.f!=='D')dirs.push([FACE_DIR[m.f],1]);
   if(practice.target)dirs.push([CUBE.byId[practice.target][0].p,1],[practice.target.split(',').map(Number),0.6]);
+  if(practice.slot)dirs.push([practice.slot.split(',').map(Number),1]);
   let y=G.yaw,bestScore=-1e9;
   for(let k=0;k<4;k++){
     const a=k*Math.PI/2;q.setFromAxisAngle(axis,a).multiply(base);
@@ -370,11 +373,11 @@ function practiceVisuals(on){
   const group=practice.focusIds&&practice.focusIds.length?practice.focusIds:null;
   const assist=!!on&&!practice.finished&&practice.kind!=='broken'&&(!!practice.target||!!group||practice.plan.length>0);
   const focus=assist&&practice.level<3;
-  const h=focus&&practice.target?practice.target.split(',').map(Number):null;
+  const h=!focus?null:practice.target?practice.target.split(',').map(Number):practice.slot?practice.slot.split(',').map(Number):null;
   // one piece, plus the center it goes to (cross) or the center it has to match (second layer);
   // in the last layer, a group of pieces (the yellow shape, the edges or corners already in place)
-  const extra=!h?null:practice.lesson==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
-  setFocus(!focus?null:h?practice.target+(extra?'|'+extra:''):group?group.join('|'):null);
+  const extra=!h||!practice.target?null:practice.lesson==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
+  setFocus(!focus?null:practice.target?practice.target+(extra?'|'+extra:''):group?group.join('|'):null);
   frames.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
     const show=!!h&&h[a]!==0;
@@ -397,7 +400,8 @@ function practiceVisuals(on){
 const turnText=(m,L)=>L[m.f]+(m.n===-1?"'":m.n===2?'2':'');
 function practiceRender(){
   // Stage bar
-  const n=CUBE.stage(),E=CUBE.STAGES,box=$('stages');
+  const E=CUBE.STAGES,box=$('stages'),real=CUBE.stage();
+  const n=!practice.finished&&practice.kind!=='broken'?Math.max(real,lessonDef().stage):real;
   if(!box.children.length)E.forEach(()=>box.appendChild(document.createElement('i')));
   [...box.children].forEach((el,i)=>{el.className=i<n?'on':i===n?'cur':'';});
   box.setAttribute('aria-label',tr('stage.aria',{n,total:E.length}));
@@ -422,6 +426,11 @@ function practiceRender(){
   else if(practice.kind==='broken')msg=trh({corners:'msg.broken',secondLayer:'msg.brokenLayer'}[practice.lesson]||'msg.brokenSolved');
   else if(practice.level===3)msg=trh('lesson.'+practice.lesson+'.free');
   else if(practice.wrong.length)msg=trh('msg.wrong');
+  else if(practice.kind==='yTurnTwist')msg=trh('msg.yturn.twist');
+  else if(practice.kind==='yTurnKeep')msg=trh('msg.yturn.keep');
+  else if(practice.kind==='yTurnHalf')msg=trh('msg.yturn.half');
+  else if(practice.kind==='yTurnNext')msg=trh('msg.yturn.next',{layer});
+  else if(practice.kind==='yTurnFinish')msg=trh('msg.yturn.finish',{layer});
   else if(practice.kind==='yCrossDot')msg=trh('msg.ycross.dot');
   else if(practice.kind==='yCrossL')msg=trh('msg.ycross.L');
   else if(practice.kind==='yCrossLine')msg=trh('msg.ycross.line');

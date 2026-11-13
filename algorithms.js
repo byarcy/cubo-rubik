@@ -24,7 +24,10 @@ const ALGORITHMS={
     // from the four sides (rotateToSlot), so the side they are written for doesn't matter.
     yellowCross:{name:'Yellow cross (flips two edges)',group:'Yellow cross',seq:"F L D L' D' F'"},
     yellowEdges:{name:'Swap yellow edges (Sune)',group:'Yellow edges',seq:"L D L' D L D2 L'"},
-    yellowCorners:{name:'Cycle three yellow corners',group:'Yellow corners',seq:"D L D' R' D L' D' R"}
+    yellowCorners:{name:'Cycle three yellow corners',group:'Yellow corners',seq:"D L D' R' D L' D' R"},
+    // The guide's R' D' R D: done twice it turns the corner at the front-top-right (yellow on top) a third of a turn;
+    // the rest of the cube looks messed up until the last corner is turned (6 repetitions in total put it back)
+    yellowTwist:{name:'Turn the yellow corner in the working spot',group:'Yellow corners',seq:"L' U' L U"}
   },
   cfop:{},
   roux:{},

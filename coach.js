@@ -269,6 +269,48 @@ function yellowCornersPlace(){
   return viaAlgorithm(placed.length?'yCornersCycle':'yCornersNone',routes,{focus:placed});
 }
 
+// ---- 7 · Yellow corners turned: the guide's last step ----
+// Always the same corner spot (WORK_SPOT: front-top-right with yellow on top) and the same side facing you:
+// twist the corner there with yellowTwist ×2 until yellow faces up, then turn only the yellow layer to bring the next
+// corner to the spot. In between, the rest of the cube looks messed up: only yellowTwist touches it, so the state is
+// valid if undoing some repetitions of yellowTwist (0 to 5) puts the first two layers back (that number is «m»).
+//   yTurnTwist  · the corner in the spot needs turning, and the rest of the cube is still tidy
+//   yTurnKeep   · the corner in the spot needs turning, the rest is messed up (normal: keep going)
+//   yTurnHalf   · an odd number of yellowTwist was done (only possible without the guide): finish the pair
+//   yTurnNext   · the corner in the spot is right: turn the yellow layer to bring one that isn't
+//   yTurnFinish · every corner is right and the rest came back: a turn of the yellow layer finishes the cube
+const WORK_SPOT='-1,-1,1';
+const TWIST=()=>algoSeq('yellowTwist',0);
+const UNTWIST=()=>CUBE.invSeq(TWIST());
+const yellowDown=id=>CUBE.byId[id].find(k=>k.hn[1]===-1).n[1]===-1;     // id: a yellow corner (by its solved place)
+const cornerAt=pos=>YELLOW_CORNERS.find(id=>key(CUBE.byId[id][0].p)===pos);
+// How many yellowTwist have to be undone to get the first two layers back (0 to 5), or -1 if none works
+function twistsDone(){
+  const snap=CUBE.snapshot();let m=-1;
+  for(let i=0;i<6;i++){
+    if(whiteLayerSolved()&&MIDDLE_EDGES.every(CUBE.pieceSolved)){m=i;break;}
+    apply(UNTWIST());
+  }
+  CUBE.applySnap(snap);return m;
+}
+function yellowCornersTurn(){
+  if(CUBE.isSolved())return {done:true};
+  const m=twistsDone(),spot=cornerAt(WORK_SPOT);
+  if(m<0||!spot)return {broken:true};
+  const extra={slot:WORK_SPOT,focus:[spot],keepView:true};
+  if(m%2)return Object.assign({kind:'yTurnHalf',plan:TWIST(),cost:0},extra);
+  if(!yellowDown(spot))return Object.assign({kind:m?'yTurnKeep':'yTurnTwist',plan:[...TWIST(),...TWIST()],cost:0},extra);
+  const all=YELLOW_CORNERS.every(yellowDown);
+  if(all&&m)return {broken:true};
+  // the turn of the yellow layer: the nearest one that brings a corner still to be turned (or, at the end, solves the cube)
+  const want=all?()=>CUBE.isSolved():()=>!yellowDown(cornerAt(WORK_SPOT));
+  const ok=afterTurns(()=>want()?1:0);
+  const k=[1,3,2].find(i=>ok[i]);
+  if(k===undefined)return {broken:true};
+  const n=turnOf(k);
+  return Object.assign({kind:all?'yTurnFinish':'yTurnNext',plan:[{f:'D',n}],cost:0,alt:alignD(n)},extra);
+}
+
 // Exercises of the last layer: a solved cube, the last layer scrambled with the same algorithms (so the first two
 // layers stay done), and the earlier yellow lessons solved by the coach itself, up to the lesson's stage
 function scrambleLastLayer(){
@@ -303,7 +345,10 @@ const LESSONS={
   yellowEdges:{stage:4,step:yellowEdges,generate:()=>generateLastLayer(4,[yellowCross]),yellowUp:true,
     pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES]},
   yellowCornersPlace:{stage:5,step:yellowCornersPlace,generate:()=>generateLastLayer(5,[yellowCross,yellowEdges]),yellowUp:true,
-    pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES,...YELLOW_EDGES]}
+    pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES,...YELLOW_EDGES]},
+  // in the middle of this lesson the solved part comes apart on purpose, so no piece is required to stay in place
+  yellowCornersTurn:{stage:6,step:yellowCornersTurn,generate:()=>generateLastLayer(6,[yellowCross,yellowEdges,yellowCornersPlace]),
+    yellowUp:true,pieces:()=>[]}
 };
 
 return {CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,

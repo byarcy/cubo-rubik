@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.37-ff2e97)
+![version](https://img.shields.io/badge/version-0.38-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -28,7 +28,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 > **Since version 0.30 the app is rewritten from scratch**, and since 0.34 the whole project (code, comments, file
 > names and documentation) is in English, with the texts of the interface in plain translation files (`locales/`). Practice mode
-> has six of its seven lessons; the last one (turning the yellow corners) is on the way (see [TODO.md](TODO.md)). The previous version
+> has all seven lessons of the method (see [TODO.md](TODO.md) for what comes next). The previous version
 > is kept in the `v0.21` tag.
 
 ---
@@ -41,11 +41,12 @@ Scramble the cube and solve it against the clock. The time starts with your firs
 ### 🧭 Practice
 To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 
-- **Stage bar:** the app looks at your cube and shows how many stages you have completed and which one is next.
+- **Stage bar:** the app looks at your cube and shows how many stages you have completed and which one is next. While you do a lesson it doesn't drop when an algorithm takes the solved part apart for a moment.
 - **Lesson 1 · White cross:** starts from a scrambled cube and teaches a recipe that always works: take the edge to the yellow layer, turn it until it is on the face of its color and put it in with a half turn.
 - **Lesson 2 · White corners:** each exercise starts with the cross already done and several corners out of place.
 - **Lesson 3 · Second layer:** starts with the white layer done. Each middle edge comes up from the yellow layer: turn that layer until the edge sits under the center of its side color, and it goes up to the right or to the left with 8 turns. If an edge is in the middle layer but in the wrong place or flipped, the same 8 turns take it down first.
 - **Lessons 4 to 6 · Last layer:** as in the guide, the cube is turned over (yellow on top) and each lesson uses one algorithm, that the app shows from whichever side is needed: **4 · Yellow cross** (6 turns: the yellow shape goes from dot to L to line to cross), **5 · Yellow edges** (7 turns: swaps two edges so that each one sits over its center) and **6 · Yellow corners** (8 turns: moves three corners around the one already in place).
+- **Lesson 7 · Turn corners:** the guide's last step. Always the same side facing you and the same spot (front, top, right): `R' D' R D` twice turns the corner there, and only the top layer is turned to bring the next one. The rest of the cube looks messed up in between, as the guide warns; the app says so, keeps the view still and the stage bar doesn't drop, and at the end the cube comes back by itself.
 - **White on top, then yellow on top:** as in the guides, the cube is shown with white on top for the first two layers and turned over for the last one. It turns by itself to bring the faces to move in front of you, but it respects the view you choose with your fingers or with the cube button. For the bottom layer, which can't be seen from above, the arrow is stuck on the bottom row of the visible faces.
 - **Piece in focus:** the piece to move lights up and the rest of the cube is dimmed. A pink frame marks its slot.
 - **Arrow on the cube:** the face you have to turn shows an arrow with the direction of the turn, and the turns appear below as letters so you learn the notation along the way.
@@ -62,7 +63,7 @@ To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 | 4 | Yellow cross | ✅ Ready |
 | 5 | Yellow edges | ✅ Ready |
 | 6 | Yellow corners in place | ✅ Ready |
-| 7 | Yellow corners oriented | Coming |
+| 7 | Yellow corners oriented | ✅ Ready |
 
 ### 🌍 Languages
 English and Spanish for now. The app picks the language of your browser (English if it doesn't have yours) and you can change it in **Help**. Adding a language is just adding a translation file: see [Adding a language](#adding-a-language).
