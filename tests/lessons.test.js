@@ -14,7 +14,24 @@
 const fs=require('fs'),path=require('path');
 const dir=path.join(__dirname,'..');
 const src=['cube_logic.js','algorithms.js','coach.js'].map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
-const {CUBE,COACH}=new Function(src+';return {CUBE,COACH};')();
+const {CUBE,COACH,ALGORITHMS}=new Function(src+';return {CUBE,COACH,ALGORITHMS};')();
+// Where the panel splits a plan into groups of turns: inside the plan, in order; the algorithms the guides split
+// (second layer and last layer) must be recognized from any side
+const GROUPED=/^(second(Right|Left|Take)|yCross|yEdges(Swap|Opposite)|yCorners)/;
+// The yellow shape on top, read straight from the stickers (without the coach): only the center, a line or an L
+function yellowShape(){
+  const at=CUBE.cube.filter(k=>CUBE.nz(k.p)===2&&k.c==='D'&&k.n[1]===-1).map(k=>k.p);
+  if(!at.length)return 'yCrossDot';
+  return at.length===2&&at[0][0]===-at[1][0]&&at[0][2]===-at[1][2]?'yCrossLine':'yCrossL';
+}
+function shapeCheck(name,kind){
+  if(/^yCross/.test(kind)&&yellowShape()!==kind)fail(name,'says '+kind+' and the cube shows '+yellowShape());
+}
+function groupCheck(name,kind,plan){
+  const g=COACH.groupStarts(plan);
+  if(g.some((v,i)=>v<=0||v>=plan.length||(i&&v<=g[i-1])))fail(name,'wrong groups '+JSON.stringify(g)+' for '+CUBE.seqText(plan));
+  if(GROUPED.test(kind)&&plan.length>1&&!g.length)fail(name,'case '+kind+': the plan is not split into groups: '+CUBE.seqText(plan));
+}
 const rand=n=>Math.floor(Math.random()*n);
 const N=300;
 let errors=0;
@@ -55,6 +72,7 @@ function quizLesson(name,L){
     if(!q.options||!q.options.includes(q.answer)){fail(name,'the answer is not among the options');continue;}
     const again=COACH.LESSONS[q.lesson].step(q.id);
     if(again.kind!==q.answer)fail(name,'the cube shows '+again.kind+' and the answer is '+q.answer);
+    shapeCheck(name,q.answer);
     seen[q.answer]=(seen[q.answer]||0)+1;
   }
   console.log((errors?'✗':'✓')+' '+name+': '+N+' cases '+JSON.stringify(seen));
@@ -79,11 +97,13 @@ for(const name of Object.keys(COACH.LESSONS)){
       if(++n>MAX_STEPS){fail(name,'does not end in '+MAX_STEPS+' steps');break;}
       if(e.stage!=null){if(e.stage<lastStage)fail(name,'went back from stage '+lastStage+' to '+e.stage);lastStage=e.stage;}
       stats.steps++;stats.kinds[e.kind]=(stats.kinds[e.kind]||0)+1;
+      shapeCheck(name,e.kind);
       const routes=[e.plan,...(e.alt||[])];
       if(e.alt&&e.alt.length)stats.withAlt++;
       // each route, on its own, must keep the invariant starting from this same cube
       const snap=CUBE.snapshot(),before=L.pieces().filter(CUBE.pieceSolved);
       routes.forEach((r,k)=>{
+        groupCheck(name,e.kind,r);
         COACH.apply(r);
         for(const id of before)if(!CUBE.pieceSolved(id)){fail(name,(k?'alternative route':'plan')+' of case "'+e.kind+'" takes piece '+id+' out of its place: '+CUBE.seqText(r));break;}
         CUBE.applySnap(snap);
@@ -95,5 +115,8 @@ for(const name of Object.keys(COACH.LESSONS)){
   }
   console.log((errors?'✗':'✓')+' '+name+': '+N+' exercises, '+(stats.steps/N).toFixed(1)+' steps each; steps with alternative routes: '+stats.withAlt+', alternatives used: '+stats.altUsed+'; cases '+JSON.stringify(stats.kinds));
 }
+// The groups of turns of each algorithm add up to its length
+for(const [n,A] of Object.entries(ALGORITHMS.layers))
+  if(A.groups&&A.groups.reduce((a,b)=>a+b,0)!==CUBE.parseSeq(A.seq).length)fail('algorithms',n+': its groups do not add up to its turns');
 console.log(errors?'\n'+errors+' errors':'\nAll good');
 process.exit(errors?1:0);

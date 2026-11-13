@@ -201,7 +201,7 @@ function setMode(m){
 // · turns / okTurn (your turns, and the last one with the coach happy: see holdStep) · away (repeat: the cube left solved)
 // · hint, hintKey, hints (Full solve: help asked for the current step, which step, and how many in the exercise)
 // · quiz (Recognize: {answer, options, chosen})
-const practice={lesson:'cross',level:1,completed:Object.fromEntries(Object.keys(COACH.LESSONS).map(l=>[l,0])),target:null,kind:null,face:null,plan:[],alt:[],i:0,wrong:[],finished:false,
+const practice={lesson:'cross',level:1,completed:Object.fromEntries(Object.keys(COACH.LESSONS).map(l=>[l,0])),target:null,kind:null,face:null,plan:[],alt:[],breaks:[],i:0,wrong:[],finished:false,
   stageAt:0,sub:null,yellowUp:false,info:null,turns:0,okTurn:0,away:false,hint:0,hintKey:null,hints:0,quiz:null,score:{right:0,total:0}};
 const lessonDef=()=>COACH.LESSONS[practice.lesson];
 // The lesson whose case is shown now (for the messages)
@@ -236,13 +236,13 @@ function practiceMove(m){
   // on the first turn any of the equivalent routes is fine; from there that one is followed
   if(practice.i===0&&!matches(practice.plan[0],m)){
     const alternative=practice.alt.find(a=>matches(a[0],m));
-    if(alternative){practice.plan=alternative;practice.alt=[];}
+    if(alternative){practice.plan=alternative;practice.alt=[];practice.breaks=COACH.groupStarts(alternative);}
   }
   const P=practice.plan,i=practice.i;
   const expected=P[i];
   if(expected&&m.f===expected.f&&m.n===expected.n){practice.i++;return;}
   // a half turn made as two quarter turns, in either direction
-  if(expected&&m.f===expected.f&&expected.n===2&&m.n!==2){P.splice(i,1,{f:m.f,n:m.n},{f:m.f,n:m.n});practice.i++;return;}
+  if(expected&&m.f===expected.f&&expected.n===2&&m.n!==2){P.splice(i,1,{f:m.f,n:m.n},{f:m.f,n:m.n});practice.breaks=practice.breaks.map(b=>b>i?b+1:b);practice.i++;return;}
   if(i>0&&isInverse(m,P[i-1])){practice.i--;return;}
   // before starting the step (or after finishing it) any turn is fine: the coach looks at the cube again
   if(i===0||i>=P.length)return;
@@ -257,6 +257,8 @@ function practicePlan(){
   // repeat: the exercise ends when the cube comes back after leaving
   if(lessonDef().loop){if(!isSolved())practice.away=true;else if(practice.away)e={done:true};}
   practice.plan=e.plan||[];practice.alt=e.alt||[];practice.i=0;practice.wrong=[];
+  // where each group of turns starts (the guides teach the algorithms in groups)
+  practice.breaks=COACH.groupStarts(practice.plan);
   practice.kind=e.broken?'broken':e.done?'done':e.kind;practice.face=e.face||null;practice.focusIds=e.focus||null;
   // slot: a fixed spot to frame (lesson 7); keepView: the guide says to keep the same side facing you
   practice.slot=e.slot||null;practice.keepView=!!e.keepView;
@@ -466,6 +468,43 @@ function practiceVisuals(on){
   markDirty();
 }
 
+// ---- Before and after: what the algorithm does to the layer on top, seen from above (last layer) ----
+const hexOf=c=>'#'+COLHEX[c].toString(16).padStart(6,'0');
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+// The layer on top as the cube is held now (vm: viewMap), for DIAGRAMS.top: the back at the top of the drawing.
+// As in the guides, on top only the color of that face shows (the rest is gray); sides: false grays the side stickers too
+// (the yellow cross only looks at the shape on top).
+const GRAY='#4a4458';
+function topGrid(vm,sides){
+  const up=FACE_DIR[vm.U],fr=FACE_DIR[vm.F],rt=FACE_DIR[vm.R],g={top:[],back:[],front:[],left:[],right:[]};
+  for(const k of CUBE.cube){
+    if(dot(k.p,up)!==1)continue;
+    const row=dot(k.p,fr)+1,col=dot(k.p,rt)+1,onTop=dot(k.n,up)===1;
+    const c=onTop?(k.c===vm.U?hexOf(k.c):GRAY):sides?hexOf(k.c):GRAY;
+    if(onTop)g.top[row*3+col]=c;
+    else if(dot(k.n,fr)===1)g.front[col]=c;
+    else if(dot(k.n,fr)===-1)g.back[col]=c;
+    else if(dot(k.n,rt)===1)g.right[row]=c;
+    else g.left[row]=c;
+  }
+  return g;
+}
+function practicePictures(show,vm){
+  const box=$('practicePics');
+  box.hidden=!show;
+  if(!show){box.textContent='';return;}
+  // while the view is still turning over, the drawings wait for it (they are redrawn when it stops)
+  if(vm.U!==(practice.yellowUp?'D':'U'))return;
+  // the step as it was when it started: undo the turns off the route and the ones of the plan already done
+  const snap=CUBE.snapshot();
+  COACH.apply(CUBE.invSeq(practice.wrong));COACH.apply(CUBE.invSeq(practice.plan.slice(0,practice.i)));
+  const sides=!(stepLesson()==='yellowCross'||(practice.info&&practice.info.alg==='yellowCross'&&practice.lesson==='repeat'));
+  const before=topGrid(vm,sides);COACH.apply(practice.plan);const after=topGrid(vm,sides);
+  CUBE.applySnap(snap);
+  const fig=(g,k)=>'<figure>'+DIAGRAMS.top(g)+'<figcaption>'+esc(tr(k))+'</figcaption></figure>';
+  box.innerHTML=fig(before,'pics.before')+'<span class="pics-arrow" aria-hidden="true">→</span>'+fig(after,'pics.after');
+}
+
 // ---- Lesson panel ----
 // Colors, directions and layers are named by key (color.U, dir.D, layer.F…); the last two as the cube looks now
 const turnText=(m,L)=>L[m.f]+(m.n===-1?"'":m.n===2?'2':'');
@@ -544,14 +583,21 @@ function practiceRender(){
   else if(sts)msg=trh('msg.corner.in',{piece,dir:esc(tr('dir.'+L[FACE_OF[key(sts.find(s=>s.c==='U').n)]]))});
   // recognize, once answered: right or not, then what that case is and its turns
   if(q&&q.chosen)msg=(q.chosen===q.answer?trh('quiz.right'):trh('quiz.wrong',{answer:'<b>'+esc(tr('case.'+q.answer))+'</b>'}))+' '+msg;
-  if(lvl()===1&&!practice.finished&&practice.kind!=='broken'){
-    if(practice.wrong.length)chips=[['bad',turnText(practiceNextTurn(),L)]];
-    else chips=practice.plan.map((m,i)=>[i<practice.i?'done':i===practice.i?'cur':'',turnText(m,L)]);
+  // each turn of the step: its drawing (as the guides draw it) and its letter; a gap where a new group of turns starts
+  const group=i=>practice.breaks.includes(i)?' gs':'';
+  const guided=lvl()===1&&!practice.finished&&practice.kind!=='broken',answered=!!(q&&q.chosen);
+  if(guided){
+    if(practice.wrong.length)chips=[['bad',practiceNextTurn()]];
+    else chips=practice.plan.map((m,i)=>[(i<practice.i?'done':i===practice.i?'cur':'')+group(i),m]);
   }
-  if(q&&q.chosen)chips=practice.plan.map(m=>['',turnText(m,L)]);
+  if(answered)chips=practice.plan.map((m,i)=>[group(i),m]);
   $('practiceMsg').innerHTML=msg;
-  const seq=$('practiceSeq');seq.textContent='';seq.hidden=!(lvl()===1||(q&&q.chosen));
-  for(const [cls,t] of chips){const s=document.createElement('span');s.className=cls;s.textContent=t;seq.appendChild(s);}
+  const seq=$('practiceSeq');seq.textContent='';seq.hidden=!(lvl()===1||answered);
+  for(const [cls,m] of chips){
+    const s=document.createElement('span');s.className=cls;
+    s.innerHTML=DIAGRAMS.turn(L[m.f],m.n)+'<b>'+esc(turnText(m,L))+'</b>';seq.appendChild(s);
+  }
+  practicePictures((guided||answered)&&practice.yellowUp&&practice.plan.length>1,vm);
   practiceVisuals(true);
 }
 

@@ -2,10 +2,10 @@
 // When publishing a new version, change the CACHE number: that deletes what was saved for the previous one.
 // (The prefix "cubo-rubik-" is kept on purpose so older caches get cleaned up too.)
 // Every file of the app must be in FILES; tests/i18n.test.js checks that every language in locales/ is listed.
-const CACHE = 'cubo-rubik-v0.39';
+const CACHE = 'cubo-rubik-v0.40';
 const FILES = [
   './', './index.html', './styles.css',
-  './graphics_engine.js', './cube_logic.js', './algorithms.js', './coach.js', './game_controller.js',
+  './graphics_engine.js', './cube_logic.js', './algorithms.js', './coach.js', './diagrams.js', './game_controller.js',
   './i18n.js', './locales/languages.json', './locales/en.json', './locales/es.json',
   './orbitron.woff', './icon.svg',
   './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'

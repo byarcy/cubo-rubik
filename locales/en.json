@@ -45,6 +45,9 @@
   },
   "practice.lesson": "Lesson",
   "practice.turns": "Turns for this step",
+  "pics.aria": "What the algorithm does to the layer on top, seen from above",
+  "pics.before": "Before",
+  "pics.after": "After",
   "practice.level": "Help level",
   "practice.more": "More practice",
   "practice.hints": {

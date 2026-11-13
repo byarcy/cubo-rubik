@@ -16,6 +16,24 @@ function apply(seq){
 }
 const algoSeq=(name,k)=>rotateToSlot(parseSeq(ALGORITHMS.layers[name].seq),k);
 const rand=n=>Math.floor(Math.random()*n);
+// Where each group of turns starts in a plan (positions after the first one), when the plan is one of the method's
+// algorithms: from any side, done once or twice, or with its first turns already done. [] if it isn't one.
+function groupStarts(plan){
+  const txt=CUBE.seqText(plan);
+  for(const name in ALGORITHMS.layers){
+    const A=ALGORITHMS.layers[name],one=parseSeq(A.seq),sizes=A.groups||[one.length];
+    for(let r=0;r<4;r++)for(let c=1;c<=2;c++){
+      const full=[];for(let i=0;i<c;i++)full.push(...rotateToSlot(one,r));
+      for(let j=0;j<full.length;j++){
+        if(CUBE.seqText(full.slice(j))!==txt)continue;
+        const starts=[];let pos=0;
+        for(let i=0;i<c;i++)for(const s of sizes){if(pos>j)starts.push(pos-j);pos+=s;}
+        return starts;
+      }
+    }
+  }
+  return [];
+}
 
 // ================= Equivalent routes =================
 // Each step has its main plan and, if there are any, other routes that also work (\`alt\`). The interface accepts
@@ -233,7 +251,9 @@ function yellowCross(){
   if(!MIDDLE_DONE())return {broken:true};
   const up=YELLOW_EDGES.filter(edgeUp);
   if(up.length===4)return {done:true};
-  const kind=up.length===0?'yCrossDot':up.length===2&&up.every((id,i,a)=>a.some(o=>o!==id&&id.split(',').map(Number).every((v,j)=>v===-o.split(',').map(Number)[j]||j===1)))?'yCrossLine':'yCrossL';
+  // the shape is where those edges are now (not where they belong): two on opposite sides make a line
+  const at=up.map(id=>CUBE.byId[id][0].p);
+  const kind=up.length===0?'yCrossDot':up.length===2&&at[0][0]===-at[1][0]&&at[0][2]===-at[1][2]?'yCrossLine':'yCrossL';
   // the yellow shape on top is lit: the edges that point up and the yellow center
   return viaAlgorithm(kind,shortest('yellowCross',()=>YELLOW_EDGES.every(edgeUp),3),{focus:[...up,'0,-1,0']});
 }
@@ -463,6 +483,6 @@ const LESSONS={
   recognize:{stage:0,step:()=>quizCase||{},generate:generateQuiz,pieces:()=>[],quiz:true}
 };
 
-return {METHOD,solveStage,orderOf,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
+return {METHOD,solveStage,orderOf,groupStarts,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
   yellowCross,yellowEdges,yellowCornersPlace,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

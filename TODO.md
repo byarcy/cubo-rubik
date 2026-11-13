@@ -9,6 +9,7 @@ Done: the seven lessons of the layer-by-layer method (white cross, white corners
 - [ ] 2×2 corners as an earlier step: Practice only works on the 3×3 today. On the 2×2 there are no centers, so "solved" has to be measured against one corner taken as fixed, and turning the left face is the same as turning the right one plus the whole cube. The coach would need that normalization first; then the white-corner and last-layer corner lessons could be reused.
 - [ ] Recognize: add the remaining cases (white corner in the wrong slot, edge flipped in the middle layer) and the yellow-corner twists of lesson 7.
 - [ ] Full solve: keep a record (time, turns and hints of each solve) to see progress.
+- [ ] Algorithms sheet: every algorithm of the method on one screen, to look up, with the same turn drawings (`DIAGRAMS.turn`), its groups and its before → after seen from above (`DIAGRAMS.top`).
 
 Every new lesson is added to `COACH.LESSONS` and must pass `node tests/lessons.test.js`.
 Its texts go in `locales/en.json` and every other language (`node tests/i18n.test.js` complains if one is missing).
