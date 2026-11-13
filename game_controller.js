@@ -298,6 +298,8 @@ function practicePlan(){
   practice.yellowUp='yellowUp' in e?!!e.yellowUp:!!lessonDef().yellowUp;
   practice.info=e.total?{reps:e.reps,total:e.total,alg:e.alg}:practice.info;
   if(!e.broken)practice.okTurn=practice.turns;
+  // the cube as the step starts, to tell later whether another way of yours got there too
+  practice.mark=e.plan&&!e.broken?COACH.mark(practice.lesson,e):null;
   if(e.id)practice.target=e.id;
   else if(practice.sub)practice.target=null;     // full solve: a last-layer step has no piece
   // full solve: the hints are for one step (the same piece, or the same last-layer stage); a new step starts without help
@@ -317,12 +319,25 @@ function holdStep(){
 // With the cube at rest: if you are not in the middle of a step, the coach looks at the cube again
 function practiceAfter(){
   if(practice.finished||lessonDef().quiz)return;
-  if(lvl()===1&&(practice.wrong.length||(practice.i>0&&practice.i<practice.plan.length)))return;
+  if(lvl()===1&&(practice.wrong.length||(practice.i>0&&practice.i<practice.plan.length))){
+    // in the middle of the plan, following it: nothing to look at
+    if(!practice.wrong.length||!practice.mark)return;
+    // you left the plan: the cube says whether your way got there too. Back on the plan → it goes on from that turn;
+    // at its end, or with nothing lost → the coach looks at the cube again; otherwise, undo.
+    const j=COACH.where(practice.mark,practice.plan);
+    if(j>0&&j<practice.plan.length){practice.i=j;practice.wrong=[];otherWay();return;}
+    if(j<0&&!COACH.settled(practice.lesson,practice.mark,practice.target))return;
+    // (the note only when your way did the step: its last turn, or its piece in place; if it only left the cube tidy,
+    // the coach just says what is next)
+    if(j>0||(practice.target&&CUBE.pieceSolved(practice.target)))otherWay();
+  }
   if(lvl()>1&&holdStep())return;
   const changed=practicePlan();
   // the cube turns by itself only if the piece changed or the face to turn is hidden (and you did not move the view)
   if(!practice.finished&&lvl()<3&&!practice.keepView&&(changed||(lvl()===1&&!userMovedView&&!practiceFacesVisible())))practiceView();
 }
+// A short note: your turns were not the plan's, and they are fine
+function otherWay(){showTipFor($('practiceMsg'),tr('msg.otherWay'),2200);}
 function newExercise(){
   if(helpOpen||busy||queue.length||scrambling||resetAnim||exploded)return;
   if(!lessonDef().generate())return;
@@ -812,7 +827,8 @@ function load(){
     if(d.practice){
       const num=v=>Math.max(0,Math.floor(+v)||0),hh=d.practice.completed,obj=v=>!!v&&typeof v==='object';
       practice.level=[1,2,3].includes(d.practice.level)?d.practice.level:1;
-      practice.method=METHODS.ALL[d.practice.method]?d.practice.method:METHODS.DEFAULT;
+      // (a method the app doesn't offer now, a draft: back to the default one; its exercises done are kept)
+      practice.method=METHODS.OPEN.includes(d.practice.method)?d.practice.method:METHODS.DEFAULT;
       // before, only the corners lesson existed and "completed" was a number
       practice.lesson=COACH.LESSONS[d.practice.lesson]?d.practice.lesson:'corners';
       if(!methodLessons(method()).includes(practice.lesson))practice.lesson=method().lessons[0];
@@ -891,13 +907,14 @@ function buildPicker(){
   $('pickMore').hidden=$('pickMoreLabel').hidden=!method().more.length;
   // the methods: choosing one starts its first lesson (the list stays open to choose another)
   const tabs=$('methodTabs');tabs.textContent='';
-  for(const id of Object.keys(METHODS.ALL)){
+  tabs.hidden=METHODS.OPEN.length<2;
+  for(const id of METHODS.OPEN){
     const b=document.createElement('button');b.dataset.method=id;b.dataset.i18n='method.'+id;b.textContent=tr('method.'+id);
     b.classList.toggle('on',id===practice.method);b.onclick=()=>switchMethod(id);tabs.appendChild(b);
   }
 }
 function switchMethod(id){
-  if(id===practice.method||!METHODS.ALL[id]||busy||queue.length||scrambling||resetAnim||exploded)return;
+  if(id===practice.method||!METHODS.OPEN.includes(id)||busy||queue.length||scrambling||resetAnim||exploded)return;
   practice.method=id;practice.lesson=method().lessons[0];
   buildPicker();algSheet();newExercise();
 }

@@ -212,6 +212,7 @@
   "piece.corner": "La esquina {colors}",
   "msg.broken": "La cruz blanca se desarmó. Toca <b>deshacer</b> hasta recuperarla.",
   "msg.wrong": "Ese giro no era. Toca <b>deshacer</b> y seguimos.",
+  "msg.otherWay": "Otra ruta: también sirve.",
   "msg.brokenLayer": "La capa blanca se desarmó. Toca <b>deshacer</b> hasta recuperarla.",
   "msg.brokenSolved": "Se desarmó la parte que ya tenías resuelta. Toca <b>deshacer</b> hasta recuperarla.",
   "msg.cross.crossTake": "{piece} está en la capa blanca, pero mal puesta. Media vuelta a esa cara la lleva a la capa {layer}.",

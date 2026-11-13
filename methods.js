@@ -60,6 +60,9 @@ const layers={
 const yellowUp=id=>CUBE.byId[id].some(k=>k.hn[1]===-1&&facesHome(k));
 const cfop={
   id:'cfop',
+  // draft: not offered in the app yet (see OPEN). Its coach still accepts only its own route in the steps with no
+  // recipe (cross, F2L), so an equally good turn of yours is taken as a mistake. Its lessons stay in the tests.
+  draft:true,
   // its algorithms (ALGORITHMS.cfop) are written as the guides write them, with yellow on top
   guide:true,
   stages:[
@@ -93,6 +96,10 @@ const cfop={
 };
 
 const ALL={layers,cfop};
+// The methods the app offers: the ones that are not drafts. Adding ?lab to the address offers the drafts too (to try
+// them on a phone before they are ready); the tests go through ALL.
+const LAB=typeof location!=='undefined'&&/[?&]lab(&|=|$)/.test(location.search);
+const OPEN=Object.keys(ALL).filter(id=>LAB||!ALL[id].draft);
 const get=id=>ALL[id]||ALL[DEFAULT];
 const DEFAULT='layers';
 // How many consecutive stages of a method are done (0 to the number of stages). Stages are for the 3×3.
@@ -102,5 +109,5 @@ function stage(id=DEFAULT){
   while(n<st.length&&st[n].ok())n++;
   return n;
 }
-return {ALL,DEFAULT,VIEW,get,stage};
+return {ALL,OPEN,DEFAULT,VIEW,get,stage};
 })();

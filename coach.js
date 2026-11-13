@@ -687,6 +687,40 @@ function againstCenters(step,current){
 }
 for(const L of Object.values(LESSONS)){const own=L.step;L.step=current=>againstCenters(own,current);}
 
-return {METHOD,solveStage,orderOf,groupStarts,modelSeq,HOLDS,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
+// ================= Another way: following a step by looking at the cube =================
+// The interface follows a guided step turn by turn, by its letters. When you leave the plan, these look at the cube
+// instead, so that another way of getting there counts as much as the plan's:
+//   mark(name, e)        what to remember when step «e» starts: the cube, the stage (the real one and the one the step
+//                        works on) and the pieces already in place
+//   where(mark, plan)    how many turns of the plan the cube has now (0 to plan.length), or -1 if it is not on the plan
+//                        (three quarter turns the other way, two opposite faces in the other order…)
+//   settled(name, mark, current)   nothing that was in place when the step started is lost, and the coach knows how
+//                        to go on from here: it can look at the cube again instead of asking you to undo
+function mark(name,e){
+  const L=LESSONS[name],own=LESSONS[e&&e.lesson||name]||L;
+  return {snap:CUBE.snapshot(),stage:METHODS.stage(L.method),step:e&&e.stage!=null?e.stage:null,held:own.pieces().filter(CUBE.pieceSolved)};
+}
+function where(mk,plan){
+  const now=JSON.stringify(CUBE.snapshot());
+  return CUBE.withSnapshot(()=>{
+    if(!CUBE.applySnap(mk.snap))return -1;
+    for(let j=0;;j++){
+      if(JSON.stringify(CUBE.snapshot())===now)return j;
+      if(j>=plan.length)return -1;
+      apply([plan[j]]);
+    }
+  });
+}
+function settled(name,mk,current){
+  const L=LESSONS[name];
+  if(!mk.held.every(CUBE.pieceSolved))return false;
+  // (a loop lesson leaves the solved cube on purpose: its step says whether the cube is still on the algorithm)
+  if(!L.loop&&METHODS.stage(L.method)<mk.stage)return false;
+  // (a whole solve never says "broken": from any cube it starts again. Going back to an earlier stage is a loss too)
+  const e=L.step(current);
+  return !e.broken&&!(mk.step!=null&&e.stage!=null&&e.stage<mk.step);
+}
+
+return {mark,where,settled,METHOD,solveStage,orderOf,groupStarts,modelSeq,HOLDS,CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,YELLOW_EDGES,YELLOW_CORNERS,LESSONS,middleCase,secondLayer,generateSecond,
   yellowCross,yellowEdges,yellowCornersPlace,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

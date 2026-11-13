@@ -212,6 +212,7 @@
   "piece.corner": "The corner {colors}",
   "msg.broken": "The white cross came apart. Tap <b>undo</b> until it's back.",
   "msg.wrong": "That turn wasn't it. Tap <b>undo</b> and we'll go on.",
+  "msg.otherWay": "Another way: that works too.",
   "msg.brokenLayer": "The white layer came apart. Tap <b>undo</b> until it's back.",
   "msg.brokenSolved": "The part you had already solved came apart. Tap <b>undo</b> until it's back.",
   "msg.cross.crossTake": "{piece} is in the white layer but in the wrong place. A half turn of that face sends it down to the {layer} layer.",

@@ -13,6 +13,31 @@ Done: the seven lessons of the layer-by-layer method (white cross, white corners
 Every new lesson is added to `COACH.LESSONS` and must pass `node tests/lessons.test.js`.
 Its texts go in `locales/en.json` and every other language (`node tests/i18n.test.js` complains if one is missing).
 
+## Sturdier Practice: judge the turn by the cube (next)
+
+**CFOP is hidden since v0.47** (`draft:true` in `methods.js`; the app offers `METHODS.OPEN`). Its code, texts and tests stay; adding `?lab` to the address shows it again, to try it on a phone. A save left in CFOP goes back to layer by layer and keeps its exercises done.
+
+Why: the guided practice did not accept turns that are as good as the coach's own. Measured with scripts that play every lesson:
+
+- **F2L:** in 52% of the steps another first turn starts a route just as short (the pair goes in from the other side), and after it the coach says "broken" in 92% of those cases, because for a moment the cross is not solved.
+- **CFOP cross:** in 20% of the positions in the middle of a plan another turn is just as good (two opposite faces in the other order, mostly) and it is marked wrong.
+- **Layer by layer** has the same gap, smaller: in 7% of the positions in the middle of a white-corner plan (`cornerOut`: after taking the corner out, it can go in from either side).
+
+The causes are in the base, not in CFOP:
+
+1. The interface decides whether a turn is right by comparing letters with one fixed list (`practiceMove` in `game_controller.js`); other routes count only on the first turn, and only the ones each lesson wrote by hand (`alt`). That was enough for recipes; it is not for steps with many good ways.
+2. A step has no goal as data: `step()` gives turns, and what they are for is hidden in its code, so nobody can ask "does this turn still lead there in time?".
+3. "Broken" is a fixed condition (the cross solved, the layer solved) that is false in the middle of any good insertion.
+4. F2L does not stay with a pair (`f2lStep` ignores the piece in progress) and its routes are a computer's, not a person's (`L2 F2 L2 F2`).
+
+Done (v0.47, not published yet) · **Another way.** When you leave the plan of a guided step, the coach looks at the cube instead of only asking to undo (`COACH.mark`, `where` and `settled` in `coach.js`; `practiceAfter` in `game_controller.js`): if your turns left the cube where the plan has it (three quarter turns the other way, two opposite faces in the other order), it goes on from that turn; if nothing that was in place is lost and the coach knows how to go on, it looks again and gives the next step; otherwise it still asks to undo (in the middle of a recipe, for example). It had never been there: since v0.30 leaving the plan always meant undoing, and v0.33 only added other routes on the first turn. `tests/lessons.test.js` checks it in every lesson (a piece put in its place by another way is always accepted). Not covered: a turn of two layers or of a middle layer in place of a face turn is only accepted at the end of the step, not turn by turn.
+
+Plan (each phase leaves the app working; CFOP stays hidden until the last one):
+
+- [ ] **Phase 1 · A referee in the coach.** Each step says its goal and how many turns are left to it (`left()`); `COACH.judge(step, turn)` answers forward, same or back by looking at the cube after the turn, and the interface only shows it. Two turns are the same if they leave the same cube against the centers (a wide turn, a half turn as two quarters, three quarters the other way). Recipes stay literal, but their other routes (every side, mirror) come from one place, checked by trying them. The measuring scripts become a test: no lesson may reject a turn that is as good as its own. Start with layer by layer (the 7% of the white corners).
+- [ ] **Phase 2 · Cross and F2L on the referee.** `search.js` gives the distance to a goal with fixed pieces (the cross, the pairs already in, the pair in progress), so any turn that keeps or shortens it is fine and "broken" only means going far away. F2L stays with its pair, and prefers routes a person would make.
+- [ ] **Phase 3 · Open CFOP again.** First with `?lab` on a phone, then for everybody (remove `draft`).
+
 ## Other methods (CFOP, Roux, ZZ)
 
 The condition to start is met: the seven lessons of the layer-by-layer method are done, so it is clear what methods share. Where things stand:
@@ -27,7 +52,7 @@ Plan, in this order (each phase leaves the app working). Next:
 - **Phase 3a · CFOP last layer in two looks (done, v0.43).** A method selector in the lesson list (Layer by layer · CFOP); `ALGORITHMS.cfop` has 15 face-only algorithms written as the guides write them (verified by simulation; the Z perm needs a final U2); the `cfop` method in `methods.js` (6 stages, its sheet and pictures); four lessons in `coach.js` (OLL cross with 2 algorithms, OLL face with 7, PLL corners with the T and Y perms, PLL edges with the U, H and Z perms), each passing 300 exercises with every case; Help · Algorithms shows each method's sheet. Still layer-only: Full solve, Repeat and Recognize.
 - **Phase 3b · CFOP cross and F2L (done, v0.44).** `search.js` finds the shortest ways for the intuitive steps: it only follows the pieces that matter, with tables of distances (the cross table is built the first time, in about 0.2 s; an F2L pair takes about 5 ms). Lesson **1 · Cross** gives the whole cross at the bottom in the fewest turns (4 to 7 in practice, never more than 8); lesson **2 · F2L** puts in, each time, the pair that goes in with the fewest turns (3 to 8) without breaking the cross or the pairs already in. CFOP now has its six lessons.
 - **Phase 3c · Full solve, Repeat and Recognize for CFOP (done, v0.46).** They are made by factories that work for any method (`makeRepeat`, `makeQuiz` in `coach.js`), and the interface knows them by their kind (solve, loop, quiz), not by their name. CFOP Full solve: a scrambled cube with the six lessons and hints (300 solves in the tests, about 9 steps each). Repeat: the 15 OLL and PLL algorithms (they come back after 2 to 6 repetitions). Recognize: the OLL cross, the seven OLL corner cases, the two PLL corner cases and the four PLL edge cases (with more than three cases, the options are the answer and two others).
-- [ ] **CFOP, next:** F2L taught by its cases (today the coach gives the shortest turns for each pair, but doesn't name the case or teach how to see it); lighting only the yellow stickers in OLL; and later full CFOP (OLL in one look, 57 cases; PLL in one look, 21).
+- [ ] **CFOP, next (after "Sturdier Practice", above):** F2L taught by its cases (today the coach gives the shortest turns for each pair, but doesn't name the case or teach how to see it); lighting only the yellow stickers in OLL; and later full CFOP (OLL in one look, 57 cases; PLL in one look, 21).
 - [ ] **Phase 4 · ZZ and Roux.** ZZ needs a new idea, edge orientation (good and bad edges); Roux needs `M` and blocks (two 1×2×3 blocks, then the corners, then only `M` and `U`). Full CFOP (57 OLL, 21 PLL, 41 F2L cases) can come after, with filters in the sheet.
 
 `ALGORITHMS.roux` and `zz` are empty, waiting for phase 4.
