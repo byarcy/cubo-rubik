@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.35-ff2e97)
+![version](https://img.shields.io/badge/version-0.36-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -28,7 +28,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 > **Since version 0.30 the app is rewritten from scratch**, and since 0.34 the whole project (code, comments, file
 > names and documentation) is in English, with the texts of the interface in plain translation files (`locales/`). Practice mode
-> has two lessons so far (the white layer); the rest are on the way (see [TODO.md](TODO.md)). The previous version
+> has three lessons so far (the first two layers); the rest are on the way (see [TODO.md](TODO.md)). The previous version
 > is kept in the `v0.21` tag.
 
 ---
@@ -44,6 +44,7 @@ To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 - **Stage bar:** the app looks at your cube and shows how many stages you have completed and which one is next.
 - **Lesson 1 · White cross:** starts from a scrambled cube and teaches a recipe that always works: take the edge to the yellow layer, turn it until it is on the face of its color and put it in with a half turn.
 - **Lesson 2 · White corners:** each exercise starts with the cross already done and several corners out of place.
+- **Lesson 3 · Second layer:** starts with the white layer done. Each middle edge comes up from the yellow layer: turn that layer until the edge sits under the center of its side color, and it goes up to the right or to the left with 8 turns. If an edge is in the middle layer but in the wrong place or flipped, the same 8 turns take it down first.
 - **White on top:** as in the guides, the cube is shown with white on top. It turns by itself to bring the faces to move in front of you, but it respects the view you choose with your fingers or with the cube button. For the bottom layer, which can't be seen from above, the arrow is stuck on the bottom row of the visible faces.
 - **Piece in focus:** the piece to move lights up and the rest of the cube is dimmed. A pink frame marks its slot.
 - **Arrow on the cube:** the face you have to turn shows an arrow with the direction of the turn, and the turns appear below as letters so you learn the notation along the way.
@@ -56,7 +57,7 @@ To learn the **layer-by-layer method**, the beginner one, split into 7 stages.
 | --- | --- | --- |
 | 1 | White cross | ✅ Ready |
 | 2 | White corners | ✅ Ready |
-| 3 | Second layer | Coming |
+| 3 | Second layer | ✅ Ready |
 | 4 | Yellow cross | Coming |
 | 5 | Yellow edges | Coming |
 | 6 | Yellow corners in place | Coming |

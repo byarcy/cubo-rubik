@@ -146,13 +146,62 @@ function generateCross(){
   return false;
 }
 
+// ================= Second layer =================
+// White stays on top and the middle edges come up from the yellow layer, as in the guide. The four middle edges,
+// named by their solved position, in the same order as CORNER_SLOTS:
+const MIDDLE_EDGES=CORNER_SLOTS.map(id=>{const p=id.split(',');return p[0]+',0,'+p[2];});
+const whiteLayerSolved=()=>CROSS_EDGES.every(CUBE.pieceSolved)&&CORNER_SLOTS.every(CUBE.pieceSolved);
+// Cases of a middle edge:
+//   secondTake  · it is in the middle layer but in another slot or flipped: an insertion there takes it down
+//   align       · it is in the yellow layer, but not under the center of its side color
+//   secondRight / secondLeft · it is under the center of its side color; it goes up into its slot to the right or left
+// «face» is the model face of the side color (the center the edge has to match), for the messages and the focus.
+function middleCase(id){
+  const sts=CUBE.byId[id],p=sts[0].p,h=id.split(',').map(Number);
+  if(p[1]===0){
+    const k=CORNER_SLOTS.indexOf(key([p[0],1,p[2]])),before=MIDDLE_EDGES.filter(CUBE.pieceSolved);
+    const goal=()=>CUBE.byId[id][0].p[1]===-1&&whiteLayerSolved()&&before.every(CUBE.pieceSolved);
+    const plan=algoSeq('secondRight',k),other=algoSeq('secondLeft',k);
+    return {id,kind:'secondTake',plan,cost:3,alt:trial(other,goal)?[other]:[]};
+  }
+  const side=sts.find(s=>s.n[1]!==-1),under=CUBE.FACE_DIR[side.c];
+  if(p[0]!==under[0]||p[2]!==under[2]){
+    const n=alignTurn(id,under);
+    return {id,kind:'align',plan:[{f:'D',n}],cost:1,alt:alignD(n),face:side.c};
+  }
+  const k=CORNER_SLOTS.indexOf(key([h[0],1,h[2]]));
+  const kind=side.c===rotateToSlot([{f:'F',n:1}],k)[0].f?'secondRight':'secondLeft';
+  return {id,kind,plan:algoSeq(kind,k),cost:0,face:side.c};
+}
+// Which middle edge is next. Returns {broken:true} if the white layer isn't complete, {done:true} when the layer is.
+function secondLayer(current){
+  if(!whiteLayerSolved())return {broken:true};
+  const missing=MIDDLE_EDGES.filter(id=>!CUBE.pieceSolved(id));
+  if(!missing.length)return {done:true};
+  if(current&&missing.includes(current))return middleCase(current);
+  return missing.map(middleCase).sort((a,b)=>a.cost-b.cost)[0];
+}
+// Exercise: white layer done, middle and yellow layers scrambled by random insertions, at least two edges to place
+function generateSecond(){
+  for(let attempt=0;attempt<30;attempt++){
+    CUBE.resetLogic();
+    for(let i=0;i<25;i++){
+      apply(algoSeq(rand(2)?'secondRight':'secondLeft',rand(4)));
+      apply([{f:'D',n:[1,-1,2][rand(3)]}]);
+    }
+    if(whiteLayerSolved()&&MIDDLE_EDGES.filter(id=>!CUBE.pieceSolved(id)).length>=2)return true;
+  }
+  return false;
+}
+
 // Lessons of Practice mode. step(current) says which piece is next, with which turns and which equivalent routes exist;
 // generate() prepares an exercise. To add a lesson: add it here and run tests/lessons.test.js.
 // pieces: the ones the lesson places; once one is placed, no step may take it out of its place again
 const LESSONS={
   cross:{stage:0,step:cross,generate:generateCross,pieces:()=>CROSS_EDGES},
-  corners:{stage:1,step:corners,generate:generateCorners,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS]}
+  corners:{stage:1,step:corners,generate:generateCorners,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS]},
+  secondLayer:{stage:2,step:secondLayer,generate:generateSecond,pieces:()=>[...CROSS_EDGES,...CORNER_SLOTS,...MIDDLE_EDGES]}
 };
 
-return {CORNER_SLOTS,CROSS_EDGES,LESSONS,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
+return {CORNER_SLOTS,CROSS_EDGES,MIDDLE_EDGES,LESSONS,middleCase,secondLayer,generateSecond,rotateToSlot,apply,cornerCase,corners,solveCorners,generateCorners,edgeCase,cross,generateCross};
 })();

@@ -193,7 +193,7 @@ function setMode(m){
 // lesson: which one is open · completed: finished exercises of each one
 // level: 1 guided (piece, slot, arrow and turns) · 2 piece and slot only · 3 no help
 // target: piece to move · plan: turns of this step · i: how many you have done · wrong: extra turns that must be undone
-const practice={lesson:'cross',level:1,completed:{cross:0,corners:0},target:null,kind:null,plan:[],alt:[],i:0,wrong:[],finished:false};
+const practice={lesson:'cross',level:1,completed:Object.fromEntries(Object.keys(COACH.LESSONS).map(l=>[l,0])),target:null,kind:null,face:null,plan:[],alt:[],i:0,wrong:[],finished:false};
 const lessonDef=()=>COACH.LESSONS[practice.lesson];
 // true if you moved the view yourself (fingers or cube button) during the current step: then the app leaves it alone
 // until the step ends
@@ -232,7 +232,7 @@ function practicePlan(){
   userMovedView=false;
   const e=lessonDef().step(practice.target),before=practice.target;
   practice.plan=e.plan||[];practice.alt=e.alt||[];practice.i=0;practice.wrong=[];
-  practice.kind=e.broken?'broken':e.done?'done':e.kind;
+  practice.kind=e.broken?'broken':e.done?'done':e.kind;practice.face=e.face||null;
   if(e.id)practice.target=e.id;
   if(e.done){practice.target=null;if(!practice.finished){practice.finished=true;practice.completed[practice.lesson]++;celebrate(tr('lesson.'+practice.lesson+'.done'));}}
   return !!e.id&&e.id!==before;
@@ -368,7 +368,8 @@ function practiceVisuals(on){
   const focus=assist&&practice.level<3;
   const h=focus?practice.target.split(',').map(Number):null;
   // in the cross, the center of the face the edge goes to is also lit
-  setFocus(focus?practice.target+(practice.lesson==='cross'?'|'+key([h[0],0,h[2]]):''):null);
+  const extra=!focus?null:practice.lesson==='cross'?key([h[0],0,h[2]]):practice.face?key(FACE_DIR[practice.face]):null;
+  setFocus(focus?practice.target+(extra?'|'+extra:''):null);
   frames.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
     const show=!!h&&h[a]!==0;
@@ -404,14 +405,20 @@ function practiceRender(){
   let msg='',chips=[];
   const sts=practice.target&&CUBE.byId[practice.target];
   // every translated piece is escaped before it goes inside a message (the messages are markup)
-  const colors=sts?'<b>'+sts.map(s=>s.c).sort((a,b)=>(b==='U')-(a==='U')).map(c=>esc(tr('color.'+c))).join('-')+'</b>':'';
-  const center=sts&&sts.find(s=>s.c!=='U'),face=center?'<b>'+esc(tr('color.'+center.c))+'</b>':'';
-  const piece=trh(practice.lesson==='cross'?'piece.edge':'piece.corner',{colors});
+  const first=c=>c==='U'||c===practice.face;
+  const colors=sts?'<b>'+sts.map(s=>s.c).sort((a,b)=>first(b)-first(a)).map(c=>esc(tr('color.'+c))).join('-')+'</b>':'';
+  const center=sts&&sts.find(s=>s.c!=='U'),faceCode=practice.face||(center&&center.c);
+  const face=faceCode?'<b>'+esc(tr('color.'+faceCode))+'</b>':'';
+  const piece=trh(practice.lesson==='corners'?'piece.corner':'piece.edge',{colors});
   const layer=esc(tr('layer.'+L.D)),dir=esc(tr('dir.'+L.D));
   if(practice.finished)msg=trh('lesson.'+practice.lesson+'.complete');
-  else if(practice.kind==='broken')msg=trh('msg.broken');
+  else if(practice.kind==='broken')msg=trh(practice.lesson==='secondLayer'?'msg.brokenLayer':'msg.broken');
   else if(practice.level===3)msg=trh('lesson.'+practice.lesson+'.free');
   else if(practice.wrong.length)msg=trh('msg.wrong');
+  else if(practice.kind==='secondTake')msg=trh('msg.second.take',{piece,layer});
+  else if(practice.lesson==='secondLayer'&&practice.kind==='align')msg=trh('msg.second.align',{piece,layer,face});
+  else if(practice.kind==='secondRight')msg=trh('msg.second.right',{piece,face});
+  else if(practice.kind==='secondLeft')msg=trh('msg.second.left',{piece,face});
   else if(practice.kind==='crossTake')msg=trh('msg.cross.take',{piece,layer});
   else if(practice.kind==='crossMiddle')msg=trh('msg.cross.middle',{piece,layer});
   else if(practice.lesson==='cross'&&practice.kind==='align')msg=trh('msg.cross.align',{piece,layer,face});
@@ -625,7 +632,7 @@ function load(){
       practice.level=[1,2,3].includes(d.practice.level)?d.practice.level:1;
       // before, only the corners lesson existed and "completed" was a number
       practice.lesson=COACH.LESSONS[d.practice.lesson]?d.practice.lesson:'corners';
-      practice.completed=hh&&typeof hh==='object'?{cross:num(hh.cross),corners:num(hh.corners)}:{cross:0,corners:num(hh)};
+      practice.completed=Object.fromEntries(Object.keys(COACH.LESSONS).map(l=>[l,num(hh&&typeof hh==='object'?hh[l]:l==='corners'?hh:0)]));
     }
     const okQ=a=>Array.isArray(a)&&a.length===4&&a.every(v=>typeof v==='number'&&isFinite(v));
     if(d.view&&okQ(d.view.base))G.setView(+d.view.yaw||0,+d.view.pitch||0,d.view.base,+d.view.roll||0);

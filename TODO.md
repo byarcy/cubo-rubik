@@ -4,9 +4,8 @@ Living list of what is missing. When something is finished it is deleted from he
 
 ## Practice lessons
 
-Done: **1 · Cross**, **2 · Corners** (white layer). Missing, in this order:
+Done: **1 · Cross**, **2 · Corners** (white layer), **3 · 2nd layer**. Missing, in this order:
 
-- [ ] 3 · Second layer (reuses almost everything from corners: two mirror cases and one "piece in the wrong place" case).
 - [ ] 4 · Yellow cross.
 - [ ] 5 · Yellow edges.
 - [ ] 6 · Yellow corners in place.

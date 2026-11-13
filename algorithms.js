@@ -14,7 +14,11 @@ const ALGORITHMS={
     cornerRight:{name:'White points sideways',group:'White corners',seq:"R' D' R"},
     cornerFront:{name:'White points the other way',group:'White corners',seq:"F D F'"},
     cornerOut:{name:'White points outward',group:'White corners',seq:"R' D2 R D R' D' R"},
-    cornerTake:{name:'Corner in the wrong place',group:'White corners',seq:"R' D' R"}
+    cornerTake:{name:'Corner in the wrong place',group:'White corners',seq:"R' D' R"},
+    // Second layer: written for the slot between F and R. secondRight: the edge is under the F center (its side
+    // color is F) and goes up to the right; secondLeft: it is under the R center (side color R) and goes up to the left
+    secondRight:{name:'Edge goes up to the right',group:'Second layer',seq:"D' R' D R D F D' F'"},
+    secondLeft:{name:'Edge goes up to the left',group:'Second layer',seq:"D F D' F' D' R' D R"}
   },
   cfop:{},
   roux:{},
