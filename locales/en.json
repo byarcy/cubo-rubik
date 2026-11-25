@@ -325,6 +325,7 @@
   "help.language": "Language",
   "skin.title": "Look of the cube",
   "skin.classic": "Classic cube",
+  "skin.stickerless": "Stickerless",
   "skin.sphere": "Sphere",
   "help.use.1": "Drag a face of the cube to turn that layer.",
   "help.use.2": "Drag outside the cube to rotate the whole cube: side to side spins it on itself, up and down tilts it toward you or away. If you flick it, it keeps spinning a little and slows down by itself.",

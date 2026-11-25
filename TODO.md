@@ -75,7 +75,10 @@ readers) and saved with the game. Two skins: the classic cube and the **sphere**
 cell of the grid cut by the ball with soft edges, so the layers still turn on flat cuts; its stickers are the parts of the
 ball nearest each face. The marks of Practice (slot frame, arrows) are laid on the ball. Next:
 
-- [ ] More skins: stickerless (pieces in the color of their face), white body, high contrast (easier to tell apart).
+Done (v0.49): **stickerless**, each piece all in colored plastic (no black body, so the lines between pieces
+show the color too; `plainParts` in `graphics_engine.js`).
+
+- [ ] More skins: white body, high contrast (easier to tell apart).
 
 ## Languages
 
@@ -95,5 +98,5 @@ Done: English is the main language and Spanish is the first translation (v0.34).
 ## Pending checks
 
 - [ ] Check on a real phone: a few lessons, the 2×2, and dragging a middle row with a finger (in the browser pane, with a mouse, the turns menu groups, x, dragging the middle column, Undo and the drawings of Help · Notation were checked, v0.43).
-- [ ] Check on a real phone (v0.48): the sphere (turning, the marks of Practice, the 2×2) and the back swipe from the side of the screen (it closes what is open, warns over the cube, and a second swipe leaves).
+- [ ] Check on a real phone (v0.48, v0.49): the sphere, the stickerless cube (turning, the marks of Practice, the 2×2) and the back swipe from the side of the screen (it closes what is open, warns over the cube, and a second swipe leaves).
 - [ ] Retake the README screenshots: the current ones show lessons 1 and 2 in English and the interface before the light practice panel (v0.41).

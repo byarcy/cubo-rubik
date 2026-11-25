@@ -751,8 +751,9 @@ const ZV=new M3.Vector3(0,0,1);
 // ================= Skins: the shape of the pieces =================
 // classic: rounded cubes with flat stickers. sphere: the same puzzle cut out of a ball. Each piece is its cell of the
 // grid cut by the ball, with soft edges, so the layers still turn on flat cuts; its stickers are the parts of the ball
-// nearest each face (as on a real puzzle ball), so a corner shows three colors and an edge two.
-const SKINS=['classic','sphere'];
+// nearest each face (as on a real puzzle ball), so a corner shows three colors and an edge two. stickerless: the
+// plastic of each face is its color, up to the rounded edges of the piece.
+const SKINS=['classic','stickerless','sphere'];
 let skin='classic';
 const shapes=new Map();   // sphere geometries, by size and piece (they depend on where the piece starts)
 const BIG=50;
@@ -849,6 +850,29 @@ function sphereSticker(p,d){
   g.setAttribute('position',new M3.BufferAttribute(new Float32Array(pos),3));g.setAttribute('normal',new M3.BufferAttribute(new Float32Array(nor),3));
   return g;
 }
+// Stickerless: the whole piece is colored plastic, so the lines between pieces show the color too. The rounded piece
+// is split among its faces: each bit goes to the face it is most toward. Each part is in the frame of its face (its z is
+// the face, as the stickers), so lighting up a piece, touching it and turning it work as with stickers.
+function plainParts(dirs){
+  const seg=10,src=roundedBox(LOOK.piece.size,LOOK.piece.round,seg),p=src.attributes.position,n=src.attributes.normal,ix=src.index.array;
+  const parts=dirs.map(d=>({d,inv:new M3.Quaternion().setFromUnitVectors(ZV,new M3.Vector3(...d)).invert(),pos:[],nor:[]}));
+  const v=new M3.Vector3(),w=new M3.Vector3();
+  for(let i=0;i<ix.length;i+=3){
+    const t=[ix[i],ix[i+1],ix[i+2]];
+    const cx=(p.getX(t[0])+p.getX(t[1])+p.getX(t[2]))/3,cy=(p.getY(t[0])+p.getY(t[1])+p.getY(t[2]))/3,cz=(p.getZ(t[0])+p.getZ(t[1])+p.getZ(t[2]))/3;
+    let part=parts[0],best=-Infinity;
+    for(const q of parts){const s=q.d[0]*cx+q.d[1]*cy+q.d[2]*cz;if(s>best){best=s;part=q;}}
+    for(const k of t){
+      v.fromBufferAttribute(p,k).applyQuaternion(part.inv);w.fromBufferAttribute(n,k).applyQuaternion(part.inv);
+      part.pos.push(v.x,v.y,v.z);part.nor.push(w.x,w.y,w.z);
+    }
+  }
+  return parts.map(q=>{
+    const g=new M3.BufferGeometry();
+    g.setAttribute('position',new M3.BufferAttribute(new Float32Array(q.pos),3));g.setAttribute('normal',new M3.BufferAttribute(new Float32Array(q.nor),3));
+    return g;
+  });
+}
 const shape=(k,make)=>{k=OFF+'|'+SC+'|'+k;if(!shapes.has(k))shapes.set(k,make());return shapes.get(k);};
 function setSkin(name){if(SKINS.includes(name))skin=name;}
 // How far out the marks over a face go: the round arrow on a face, and the straight ones on the side of a layer
@@ -861,11 +885,13 @@ let SC=1,OFF=1;
 function stickerDirs(p){const out=[];for(let a=0;a<3;a++)if(p[a]){const d=[0,0,0];d[a]=p[a];out.push(d);}return out;}
 // One piece: black body and its stickers (matOf gives the material of each one)
 function makePiece(p,matOf,off){
-  const ball=skin==='sphere',pk=p.join(',');
-  const g=new M3.Group();g.add(new M3.Mesh(ball?shape(pk,()=>sphereBody(p)):bodyGeo,bodyMat));const st=[];
-  for(const d of stickerDirs(p)){
-    const m=new M3.Mesh(ball?shape(pk+'|'+d.join(','),()=>sphereSticker(p,d)):stGeo,matOf(d)),dv=new M3.Vector3(...d);
-    if(!ball)m.position.copy(dv).multiplyScalar(off);m.quaternion.setFromUnitVectors(ZV,dv);m.userData.st=true;
+  const ball=skin==='sphere',plain=skin==='stickerless',pk=p.join(','),dirs=stickerDirs(p);
+  // (stickerless: no black body, the colored parts are the whole piece)
+  const g=new M3.Group();if(!plain)g.add(new M3.Mesh(ball?shape(pk,()=>sphereBody(p)):bodyGeo,bodyMat));const st=[];
+  const parts=plain?shape('plain|'+pk,()=>plainParts(dirs)):null;
+  for(const [i,d] of dirs.entries()){
+    const m=new M3.Mesh(ball?shape(pk+'|'+d.join(','),()=>sphereSticker(p,d)):plain?parts[i]:stGeo,matOf(d)),dv=new M3.Vector3(...d);
+    if(!ball&&!plain)m.position.copy(dv).multiplyScalar(off);m.quaternion.setFromUnitVectors(ZV,dv);m.userData.st=true;
     g.add(m);st.push({d,m});
   }
   g.position.set(p[0]*OFF,p[1]*OFF,p[2]*OFF);g.scale.setScalar(SC);return {g,st};
