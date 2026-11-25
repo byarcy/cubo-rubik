@@ -8,7 +8,6 @@
   "size.label": "Change cube size",
   "size.tip": "Cube size",
   "size.aria": "{size} cube; tap to switch to {other}",
-  "size.cube": "{size} cube",
   "size.practiceOnly": "Practice uses the 3×3 cube",
   "saved.yes": "Progress saved",
   "saved.no": "Not saved",

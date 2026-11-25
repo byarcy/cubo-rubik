@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.50-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.51-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)

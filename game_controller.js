@@ -862,7 +862,6 @@ function setSize(n){
   CUBE.size=n;cancelPress();buildCube();
   modeStates=o.states||{challenge:null,practice:null};challengeLoad(o.challenge);
   applySnap(modeStates[mode]);hist=[];earned=false;armed=!isSolved();
-  showTipFor($('sizeBtn'),tr('size.cube',{size:n+'×'+n}));
   updateUI();save();
 }
 
