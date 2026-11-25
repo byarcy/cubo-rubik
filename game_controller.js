@@ -677,7 +677,8 @@ canvas.addEventListener('pointerdown',e=>{
       if(!h.object.userData.st&&!h.object.userData.decal){const c=[nLoc.x,nLoc.y,nLoc.z],i=c.map(Math.abs).reduce((b,v,k,a)=>v>a[b]?k:b,0);nLoc.set(0,0,0).setComponent(i,Math.sign(c[i]));}
       const nW=nLoc.applyQuaternion(wq).normalize();
       pd={type:'face',id:e.pointerId,start:h.point.clone(),nW,grp,done:false};
-      if(showcase)press={id:e.pointerId,x:e.clientX,y:e.clientY,t0:performance.now(),snd:null};
+      // the secret: only holding the π itself (the faint mark on the white center) charges it, not any piece
+      if(showcase&&h.object.userData.decal)press={id:e.pointerId,x:e.clientX,y:e.clientY,t0:performance.now(),snd:null};
     }else{
       pd={type:'view',id:e.pointerId,x:e.clientX,y:e.clientY,V:viewStart()};
     }
