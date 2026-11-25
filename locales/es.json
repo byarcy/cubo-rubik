@@ -323,6 +323,9 @@
   "help.tab.notation": "Notación",
   "help.tab.algs": "Algoritmos",
   "help.language": "Idioma",
+  "skin.title": "Aspecto del cubo",
+  "skin.classic": "Cubo clásico",
+  "skin.sphere": "Esfera",
   "help.use.1": "Arrastra una cara del cubo para girar esa capa.",
   "help.use.2": "Arrastra fuera del cubo para girarlo entero: de lado a lado gira sobre sí mismo y de arriba abajo se inclina hacia ti o hacia atrás. Si lo lanzas, sigue girando un poco y frena solo.",
   "help.use.3": "En el celular, con dos dedos giras el cubo entero; rotando los dedos lo giras en la pantalla, como una perilla, desde cualquier posición.",
@@ -413,6 +416,7 @@
   "err.runtime": "Error: {msg} · Recarga la página.",
   "err.load": "Error al cargar tu avance: {msg}. Empecé con un cubo nuevo.",
   "err.badSave": "El cubo guardado no era un cubo válido, así que empieza armado.",
+  "msg.backAgain": "Vuelve a deslizar para salir de la app.",
   "err.webgl": "Este navegador no puede mostrar el cubo 3D (WebGL desactivado). Prueba con Chrome, Safari, Edge o Firefox actualizados.",
   "err.language": "No se pudo cargar ese idioma. Revisa tu conexión e inténtalo de nuevo."
 }

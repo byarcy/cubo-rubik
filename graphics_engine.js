@@ -688,6 +688,9 @@ const LOOK={
   plastic:{color:0x0b0a0d,specular:0x2a2a2e,shininess:18},   // body of the pieces
   piece:{size:0.97,round:0.11,seg:5},                         // size and rounding of each piece
   sticker:{size:0.82,round:0.12,glow:0.17},                   // stickers: size, corners and own glow
+  // Sphere skin (scene units): radius of the ball, rounding and gap of the pieces, and how far each sticker keeps
+  // from the cuts (inset), from the other stickers of its piece (split) and how round its corners are
+  sphere:{radius:1.7,round:0.06,gap:0.03,inset:0.08,split:0.05,corner:0.1},
   lights:{                                                    // synthwave: magenta sky, cyan floor, neon edges
     ambient:[0xffffff,0.34],hemi:[0xff7ad9,0x2de2ff,0.42],
     dir:[[0xfff4fb,0.42,[2,9,4]],[0xb9a8ff,0.22,[-4,-6,-6]],[0xff2e97,0.38,[-7,2,-4]],[0x00e5ff,0.34,[7,1,-5]]],
@@ -744,18 +747,125 @@ const STICKER_GLOW=LOOK.sticker.glow;
 const bodyMat=new M3.MeshPhongMaterial(LOOK.plastic);
 const stGeo=roundRect(LOOK.sticker.size,LOOK.sticker.round);
 const decalGeo=new M3.PlaneGeometry(0.55,0.55);
+const ZV=new M3.Vector3(0,0,1);
+// ================= Skins: the shape of the pieces =================
+// classic: rounded cubes with flat stickers. sphere: the same puzzle cut out of a ball. Each piece is its cell of the
+// grid cut by the ball, with soft edges, so the layers still turn on flat cuts; its stickers are the parts of the ball
+// nearest each face (as on a real puzzle ball), so a corner shows three colors and an edge two.
+const SKINS=['classic','sphere'];
+let skin='classic';
+const shapes=new Map();   // sphere geometries, by size and piece (they depend on where the piece starts)
+const BIG=50;
+// The cell of the piece at p (grid -1..1), in scene units: [from, to] on each axis; an outer layer is open outward
+const cellOf=p=>p.map(v=>[v===-1?-BIG:v*OFF-SC/2,v===1?BIG:v*OFF+SC/2]);
+// Closest point to v inside the box lo..hi cut by the ball of radius rho (both convex): the box alone if that is
+// inside the ball; if not, it is on the ball, with some axes held at a side of the box and the rest along v
+function closestIn(v,lo,hi,rho){
+  const c=v.map((x,i)=>Math.min(hi[i],Math.max(lo[i],x)));
+  if(c[0]*c[0]+c[1]*c[1]+c[2]*c[2]<=rho*rho)return c;
+  let best=c,bd=Infinity;
+  for(let mask=0;mask<27;mask++){   // each axis: 0 free, 1 at lo, 2 at hi
+    const pt=[0,0,0],free=[];let fixed=0,m=mask;
+    for(let i=0;i<3;i++){const s=m%3;m=(m-s)/3;if(!s)free.push(i);else{pt[i]=s===1?lo[i]:hi[i];fixed+=pt[i]*pt[i];}}
+    if(!free.length||fixed>rho*rho)continue;
+    const len=Math.hypot(...free.map(i=>v[i]));if(len<1e-12)continue;
+    const k=Math.sqrt(rho*rho-fixed)/len;
+    for(const i of free)pt[i]=v[i]*k;
+    if(pt.some((x,i)=>x<lo[i]-1e-9||x>hi[i]+1e-9))continue;
+    const d=(pt[0]-v[0])**2+(pt[1]-v[1])**2+(pt[2]-v[2])**2;
+    if(d<bd){bd=d;best=pt;}
+  }
+  return best;
+}
+// Body of a ball piece: a box around it whose points are pulled onto the piece shrunk by "round" and pushed back out
+// by "round" (the same idea as roundedBox, so the edges are soft and the normals smooth)
+function sphereBody(p){
+  const S=LOOK.sphere,R=S.radius,r=S.round,g2=S.gap/2,cell=cellOf(p),c=p.map(v=>v*OFF),out=R+0.2;
+  const lo=cell.map(([a])=>a+g2+r),hi=cell.map(([,b])=>b-g2-r);
+  const blo=cell.map(([a])=>Math.max(a+g2,-out)),bhi=cell.map(([,b])=>Math.min(b-g2,out)),mid=blo.map((a,i)=>(a+bhi[i])/2);
+  const g=new M3.BoxGeometry(bhi[0]-blo[0],bhi[1]-blo[1],bhi[2]-blo[2],14,14,14),pos=g.attributes.position,nor=g.attributes.normal;
+  for(let i=0;i<pos.count;i++){
+    const v=[pos.getX(i)+mid[0],pos.getY(i)+mid[1],pos.getZ(i)+mid[2]];
+    const k=closestIn(v,lo,hi,R-r),d=v.map((x,j)=>x-k[j]),l=Math.hypot(...d)||1;
+    pos.setXYZ(i,(k[0]+d[0]/l*r-c[0])/SC,(k[1]+d[1]/l*r-c[1])/SC,(k[2]+d[2]/l*r-c[2])/SC);
+    nor.setXYZ(i,d[0]/l,d[1]/l,d[2]/l);
+  }
+  pos.needsUpdate=true;nor.needsUpdate=true;return g;
+}
+// A sticker of a ball piece, seen straight down its face d (axis a): a convex patch in the plane of the other two axes
+// (u, v), between the cuts of its cell and where another face becomes the nearest. Returns its center and outline.
+function sphereOutline(p,d){
+  const S=LOOK.sphere,a=d.findIndex(x=>x),b=(a+1)%3,c=(a+2)%3,cell=cellOf(p),Rs=S.radius+0.015,lim=Rs/Math.SQRT2;
+  const inside=(u,v,e)=>{
+    if(u<cell[b][0]+S.inset+e||u>cell[b][1]-S.inset-e||v<cell[c][0]+S.inset+e||v>cell[c][1]-S.inset-e)return false;
+    const h2=Rs*Rs-u*u-v*v;if(h2<=0)return false;const h=Math.sqrt(h2);
+    // how far (u, v) is from where the face of u (or of v) becomes the nearest: the gap h - |u| over how fast it changes
+    const room=(x,y)=>(h-Math.abs(x))/Math.hypot(x/h+Math.sign(x),y/h);
+    return room(u,v)>=S.split+e&&room(v,u)>=S.split+e;
+  };
+  const mid=i=>(Math.max(cell[i][0],-lim)+Math.min(cell[i][1],lim))/2,q=[mid(b),mid(c)],e=S.corner,P=[];
+  for(let k=0;k<128;k++){
+    const t=k/128*2*Math.PI,cu=Math.cos(t),sv=Math.sin(t);let a0=0,a1=3;
+    for(let it=0;it<30;it++){const m=(a0+a1)/2;if(inside(q[0]+cu*m,q[1]+sv*m,e))a0=m;else a1=m;}
+    P.push([q[0]+cu*a0,q[1]+sv*a0]);
+  }
+  // round corners: the shrunk patch grown back by "corner" in every direction
+  const B=[];
+  for(let k=0;k<96;k++){
+    const t=k/96*2*Math.PI,n=[Math.cos(t),Math.sin(t)];let best=P[0],bv=-Infinity;
+    for(const pt of P){const v=pt[0]*n[0]+pt[1]*n[1];if(v>bv){bv=v;best=pt;}}
+    B.push([best[0]+n[0]*e,best[1]+n[1]*e]);
+  }
+  const lift=(u,v)=>{const X=[0,0,0];X[a]=d[a]*Math.sqrt(Math.max(0,Rs*Rs-u*u-v*v));X[b]=u;X[c]=v;return X;};
+  return {q,B,lift,Rs};
+}
+// Where the sticker of the piece at p facing d is, and which way it faces (for the marks drawn on it)
+function stickerSpot(p,d){
+  if(skin!=='sphere')return {pos:p.map((v,i)=>v+d[i]*0.54),n:d};
+  const {q,lift,Rs}=sphereOutline(p,d),X=lift(q[0],q[1]);
+  return {pos:X,n:X.map(x=>x/Rs)};
+}
+// Sticker geometry, in the sticker's own frame (its z is d, as the flat stickers): a fan of rings over the patch, a
+// little above the ball (closer and the screen can't tell which of the two is in front)
+function sphereSticker(p,d){
+  const {q,B,lift,Rs}=sphereOutline(p,d),c=p.map(v=>v*OFF);
+  const inv=new M3.Quaternion().setFromUnitVectors(ZV,new M3.Vector3(...d)).invert();
+  const ring=s=>B.map(([u,v])=>lift(q[0]+(u-q[0])*s,q[1]+(v-q[1])*s));
+  const rings=[[lift(q[0],q[1])],...[1,2,3,4,5].map(k=>ring(k/5))],pos=[],nor=[];
+  const put=X=>{
+    const v=new M3.Vector3((X[0]-c[0])/SC,(X[1]-c[1])/SC,(X[2]-c[2])/SC).applyQuaternion(inv),n=new M3.Vector3(X[0]/Rs,X[1]/Rs,X[2]/Rs).applyQuaternion(inv);
+    pos.push(v.x,v.y,v.z);nor.push(n.x,n.y,n.z);
+  };
+  const tri=(A,Bv,C)=>{
+    // facing out of the ball
+    const u=[Bv[0]-A[0],Bv[1]-A[1],Bv[2]-A[2]],w=[C[0]-A[0],C[1]-A[1],C[2]-A[2]];
+    const n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];
+    if(n[0]*A[0]+n[1]*A[1]+n[2]*A[2]<0){put(A);put(C);put(Bv);}else{put(A);put(Bv);put(C);}
+  };
+  const n=B.length;
+  for(let k=0;k<n;k++)tri(rings[0][0],rings[1][k],rings[1][(k+1)%n]);
+  for(let r=1;r<rings.length-1;r++)for(let k=0;k<n;k++){const k1=(k+1)%n;tri(rings[r][k],rings[r+1][k],rings[r+1][k1]);tri(rings[r][k],rings[r+1][k1],rings[r][k1]);}
+  const g=new M3.BufferGeometry();
+  g.setAttribute('position',new M3.BufferAttribute(new Float32Array(pos),3));g.setAttribute('normal',new M3.BufferAttribute(new Float32Array(nor),3));
+  return g;
+}
+const shape=(k,make)=>{k=OFF+'|'+SC+'|'+k;if(!shapes.has(k))shapes.set(k,make());return shapes.get(k);};
+function setSkin(name){if(SKINS.includes(name))skin=name;}
+// How far out the marks over a face go: the round arrow on a face, and the straight ones on the side of a layer
+const faceOut=()=>skin==='sphere'?LOOK.sphere.radius+0.06:1.56;
+const sideOut=layer=>skin==='sphere'?Math.sqrt(Math.max(0,LOOK.sphere.radius**2-(layer*OFF)**2))+0.14:1.56;
 // cubies: one group per piece; stickerMats: material of each sticker; decalMats: materials of the marks
 const cubies=[],stickerMats=[],decalMats=[];
 // SC: scale of each piece; OFF: spacing between piece centers
 let SC=1,OFF=1;
 function stickerDirs(p){const out=[];for(let a=0;a<3;a++)if(p[a]){const d=[0,0,0];d[a]=p[a];out.push(d);}return out;}
-const ZV=new M3.Vector3(0,0,1);
 // One piece: black body and its stickers (matOf gives the material of each one)
 function makePiece(p,matOf,off){
-  const g=new M3.Group();g.add(new M3.Mesh(bodyGeo,bodyMat));const st=[];
+  const ball=skin==='sphere',pk=p.join(',');
+  const g=new M3.Group();g.add(new M3.Mesh(ball?shape(pk,()=>sphereBody(p)):bodyGeo,bodyMat));const st=[];
   for(const d of stickerDirs(p)){
-    const m=new M3.Mesh(stGeo,matOf(d)),dv=new M3.Vector3(...d);
-    m.position.copy(dv).multiplyScalar(off);m.quaternion.setFromUnitVectors(ZV,dv);m.userData.st=true;
+    const m=new M3.Mesh(ball?shape(pk+'|'+d.join(','),()=>sphereSticker(p,d)):stGeo,matOf(d)),dv=new M3.Vector3(...d);
+    if(!ball)m.position.copy(dv).multiplyScalar(off);m.quaternion.setFromUnitVectors(ZV,dv);m.userData.st=true;
     g.add(m);st.push({d,m});
   }
   g.position.set(p[0]*OFF,p[1]*OFF,p[2]*OFF);g.scale.setScalar(SC);return {g,st};
@@ -774,9 +884,12 @@ function buildCube({pieces,scale,offset,colorOf,decalOf}){
     g.userData.id=id;
     const tex=decalOf(p);
     if(tex){
-      const dv=new M3.Vector3(0,1,0);
       const pm=new M3.Mesh(decalGeo,new M3.MeshBasicMaterial({map:tex,transparent:true,opacity:0,depthWrite:false}));
-      pm.position.copy(dv).multiplyScalar(0.522);pm.quaternion.setFromUnitVectors(ZV,dv);
+      if(skin==='sphere'){
+        // on the ball, laid on its sticker, just above it
+        const s=stickerSpot(p,[0,1,0]),k=1+0.03/LOOK.sphere.radius;
+        pm.position.set((s.pos[0]*k-p[0]*OFF)/SC,(s.pos[1]*k-p[1]*OFF)/SC,(s.pos[2]*k-p[2]*OFF)/SC);pm.quaternion.setFromUnitVectors(ZV,new M3.Vector3(...s.n));
+      }else{const dv=new M3.Vector3(0,1,0);pm.position.copy(dv).multiplyScalar(0.522);pm.quaternion.setFromUnitVectors(ZV,dv);}
       pm.userData.decal=true;g.add(pm);decalMats.push(pm.material);
     }
     container.add(g);cubies.push(g);
@@ -928,7 +1041,7 @@ function render(){
 }
 
 return {canvas,scene,camera,container,camDir,rightW,upT,MINI,STICKER_GLOW,cubies,stickerMats,decalMats,
-  buildCube,syncGroup,orientFrom,animateLayer,markDirty,isDirty:()=>dirty,
+  buildCube,syncGroup,orientFrom,SKINS,setSkin,get skin(){return skin;},stickerSpot,faceOut,sideOut,animateLayer,markDirty,isDirty:()=>dirty,
   normAng,animView,viewStart,viewDrag,viewTwist,viewEnd,turnView,stepView,getView,setView,idleSway,stopSway,
   resize,render,base,
   get yaw(){return yaw;},get pitch(){return pitch;},get roll(){return roll;},get viewAnim(){return viewAnim;},get inertia(){return inertia;},get swayAmp(){return swayAmp;}};

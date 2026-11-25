@@ -470,7 +470,7 @@ function arrowD(g){
       if(V(n).applyQuaternion(container.quaternion).dot(camDir)<0.25||k>=2)continue;
       const m=arrowsD[k++],t=[n[2]*s,0,-n[0]*s];
       m.quaternion.setFromRotationMatrix(new M3.Matrix4().makeBasis(V(t),new M3.Vector3().crossVectors(V(n),V(t)),V(n)));
-      m.position.set(n[0]*1.56,layer,n[2]*1.56);
+      const out=G.sideOut(layer);m.position.set(n[0]*out,layer,n[2]*out);
       m.visible=m.material.visible=true;
     }
   }
@@ -501,7 +501,8 @@ function practiceVisuals(on){
   frames.forEach((m,a)=>{
     const d=[0,0,0];if(h)d[a]=h[a];
     const show=!!h&&h[a]!==0;
-    placeMark(m,show,show&&h.map((v,i)=>v+d[i]*0.54),d);
+    const sp=show&&G.stickerSpot(h,d);
+    placeMark(m,show,show&&sp.pos,show&&sp.n);
   });
   const g=assist&&lvl()===1?practiceNextTurn():null;
   // the horizontal layer at the bottom of the view gets straight arrows; any other face, the round one on it
@@ -510,7 +511,7 @@ function practiceVisuals(on){
   arrowD(arrowDTurn);
   arrows.forEach((m,i)=>{
     const show=!!g&&!bottom&&(g.n===-1)===(i===1),d=g?FACE_DIR[g.f]:null;
-    placeMark(m,show,d&&d.map(v=>v*1.56),d);
+    placeMark(m,show,d&&d.map(v=>v*G.faceOut()),d);
   });
   markDirty();
 }
@@ -672,6 +673,8 @@ canvas.addEventListener('pointerdown',e=>{
       const h=hits[0];const grp=groupOf(h.object);
       const wq=new M3.Quaternion();h.object.getWorldQuaternion(wq);
       const nLoc=(h.object.userData.st||h.object.userData.decal)?new M3.Vector3(0,0,1):h.face.normal.clone();
+      // (on the body, the face is the axis its surface mostly points along: on the ball, or on a rounded edge)
+      if(!h.object.userData.st&&!h.object.userData.decal){const c=[nLoc.x,nLoc.y,nLoc.z],i=c.map(Math.abs).reduce((b,v,k,a)=>v>a[b]?k:b,0);nLoc.set(0,0,0).setComponent(i,Math.sign(c[i]));}
       const nW=nLoc.applyQuaternion(wq).normalize();
       pd={type:'face',id:e.pointerId,start:h.point.clone(),nW,grp,done:false};
       if(showcase)press={id:e.pointerId,x:e.clientX,y:e.clientY,t0:performance.now(),snd:null};
@@ -781,7 +784,7 @@ function challengeLoad(r){challenge.state=r&&r.state||'idle';challenge.base=r&&r
 function save(){
   try{
     modeStates[mode]=snapshot();
-    const d={v:1,sz:CUBE.size,alt:other[CUBE.size===3?2:3],mode,hist:hist.slice(-300),view:G.getView(),tipDone,states:modeStates,challenge:challengeSave(),practice:{method:practice.method,lesson:practice.lesson,level:practice.level,completed:practice.completed}};
+    const d={v:1,sz:CUBE.size,skin:G.skin,alt:other[CUBE.size===3?2:3],mode,hist:hist.slice(-300),view:G.getView(),tipDone,states:modeStates,challenge:challengeSave(),practice:{method:practice.method,lesson:practice.lesson,level:practice.level,completed:practice.completed}};
     localStorage.setItem(KEY,JSON.stringify(d));setSaved(true);
   }catch(e){setSaved(false);}
 }
@@ -821,7 +824,8 @@ function load(){
     d.states=validStates(d.states);
     if(d.alt&&typeof d.alt==='object')d.alt.states=validStates(d.alt.states);
     CUBE.size=d.sz;other[CUBE.size===3?2:3]=d.alt||null;
-    if(CUBE.size===2)buildCube();
+    if(G.SKINS.includes(d.skin))G.setSkin(d.skin);
+    if(CUBE.size===2||G.skin!=='classic')buildCube();
     tipDone=d.tipDone===true;
     modeStates={challenge:d.states&&d.states.challenge||null,practice:d.states&&d.states.practice||null};
     if(d.practice){
@@ -991,6 +995,36 @@ function openPicker(o){
   $('lessonPick').setAttribute('aria-expanded',o?'true':'false');
 }
 $('dClose').onclick=()=>openDrawer(false);
+// Skin: the look of the cube, chosen by its picture at the bottom of Help. The pieces are made again in their places.
+function skinButtons(){
+  document.querySelectorAll('#skins button').forEach(b=>{const on=b.dataset.skin===G.skin;b.classList.toggle('on',on);b.setAttribute('aria-checked',on?'true':'false');});
+}
+function setSkin(name){
+  if(name===G.skin||!G.SKINS.includes(name))return;
+  if(exploded){whenAssembled(()=>setSkin(name));return;}
+  if(busy||queue.length||scrambling||resetAnim){setTimeout(()=>setSkin(name),150);return;}
+  G.setSkin(name);cancelPress();buildCube();syncFromLogic();skinButtons();updateUI();save();
+}
+document.querySelectorAll('#skins button').forEach(b=>b.onclick=()=>setSkin(b.dataset.skin));
+// Back gesture: on phones a swipe from the side of the screen means "back", and with nowhere to go back to the app
+// closes, even in the middle of turning the cube. One history entry of our own takes that swipe: it closes whatever is
+// open, and over the cube it only warns; a second swipe in a row leaves. The entry is added after a tap or a key (a
+// swipe taken by the phone ends in pointercancel, not pointerup), because browsers skip entries added without one.
+let backArmed=false;
+function armBack(){
+  if(backArmed)return;
+  try{history.pushState({cubeBack:1},'');backArmed=true;}catch(_){}
+}
+addEventListener('pointerup',armBack,true);
+addEventListener('keydown',armBack,true);
+addEventListener('popstate',()=>{
+  if(!backArmed)return;
+  backArmed=false;
+  if(helpOpen){$('hClose').click();armBack();return;}
+  if(pickerOpen){openPicker(false);armBack();return;}
+  if(drawerOpen){openDrawer(false);armBack();return;}
+  showTipFor($('stage'),tr('msg.backAgain'),2500);
+});
 // The turns menu: faces, two layers, and the middle layers with the whole cube (one row per direction)
 const TURN_GROUPS={faces:'RLUDFB',wide:'rludfb',middle:'MESxyz'};
 let turnGroup='faces';
@@ -1452,7 +1486,7 @@ function loop(now){
 }
 
 // ================= Start =================
-try{buildCube();if(!load()){CUBE.resetLogic();syncFromLogic();}armed=!isSolved();}
+try{buildCube();if(!load()){CUBE.resetLogic();syncFromLogic();}armed=!isSolved();skinButtons();}
 catch(e){showErr(tr('err.load',{msg:e.message}));try{CUBE.resetLogic();syncFromLogic();}catch(_){}}
 try{resize();}catch(e){showErr(tr('err.runtime',{msg:e.message}));}
 try{updateUI();}catch(e){showErr(tr('err.runtime',{msg:e.message}));}

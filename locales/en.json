@@ -323,6 +323,9 @@
   "help.tab.notation": "Notation",
   "help.tab.algs": "Algorithms",
   "help.language": "Language",
+  "skin.title": "Look of the cube",
+  "skin.classic": "Classic cube",
+  "skin.sphere": "Sphere",
   "help.use.1": "Drag a face of the cube to turn that layer.",
   "help.use.2": "Drag outside the cube to rotate the whole cube: side to side spins it on itself, up and down tilts it toward you or away. If you flick it, it keeps spinning a little and slows down by itself.",
   "help.use.3": "On a phone, use two fingers to rotate the whole cube; twisting your fingers turns it on the screen, like a knob, from any position.",
@@ -413,6 +416,7 @@
   "err.runtime": "Error: {msg} · Reload the page.",
   "err.load": "Error loading your progress: {msg}. Started with a new cube.",
   "err.badSave": "Your saved cube wasn't a valid cube, so it starts solved.",
+  "msg.backAgain": "Swipe back again to leave the app.",
   "err.webgl": "This browser can't show the 3D cube (WebGL is turned off). Try an up-to-date Chrome, Safari, Edge or Firefox.",
   "err.language": "Couldn't load that language. Check your connection and try again."
 }

@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.47.1-ff2e97)
+![version](https://img.shields.io/badge/version-0.48-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -76,6 +76,8 @@ English and Spanish for now. The app picks the language of your browser (English
 A button next to the title switches between 3×3 and 2×2 in Challenge. Each size keeps its own cube, time and record. Practice uses the 3×3.
 
 ### And also
+- **Sphere:** at the bottom of **Help**, two pictures choose the look of the cube: the classic cube or a sphere, the same puzzle cut out of a ball (corners show three colors and edges two, as on a real puzzle ball). Everything works the same with both, and the choice is saved.
+- **Back swipe:** on phones, a swipe from the side of the screen no longer closes the app by accident: it closes whatever is open (Help, the turns menu, the lesson list) or, over the cube, says to swipe again to leave.
 - **Another way:** in a guided step, if you leave the plan and your own turns get there too, the app sees it on the cube and goes on (three quarter turns the other way, two opposite faces in the other order, or a different route that leaves nothing out of place), instead of asking you to undo. In the middle of a recipe, a turn that takes something apart still has to be undone.
 - **CFOP (beginner), on hold:** its six lessons (cross and F2L by searching for the shortest way, the last layer in two looks) and its drills are in the code and in the tests, but the app does not offer them for now: in the steps with no recipe the coach only accepts its own route. Adding `?lab` to the address shows the method selector again, to try it.
 - Turn the faces by dragging with your finger (a middle row or column turns that middle layer), or use the **TURNS** menu with the notation, in three groups: faces (R, U', F2…), two layers (r, u…) and the middle layers and whole cube (M, E, S, x, y, z; the whole-cube turns turn the view).

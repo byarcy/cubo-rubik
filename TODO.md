@@ -30,7 +30,7 @@ The causes are in the base, not in CFOP:
 3. "Broken" is a fixed condition (the cross solved, the layer solved) that is false in the middle of any good insertion.
 4. F2L does not stay with a pair (`f2lStep` ignores the piece in progress) and its routes are a computer's, not a person's (`L2 F2 L2 F2`).
 
-Done (v0.47, not published yet) · **Another way.** When you leave the plan of a guided step, the coach looks at the cube instead of only asking to undo (`COACH.mark`, `where` and `settled` in `coach.js`; `practiceAfter` in `game_controller.js`): if your turns left the cube where the plan has it (three quarter turns the other way, two opposite faces in the other order), it goes on from that turn; if nothing that was in place is lost and the coach knows how to go on, it looks again and gives the next step; otherwise it still asks to undo (in the middle of a recipe, for example). It had never been there: since v0.30 leaving the plan always meant undoing, and v0.33 only added other routes on the first turn. `tests/lessons.test.js` checks it in every lesson (a piece put in its place by another way is always accepted). Not covered: a turn of two layers or of a middle layer in place of a face turn is only accepted at the end of the step, not turn by turn.
+Done (v0.47) · **Another way.** When you leave the plan of a guided step, the coach looks at the cube instead of only asking to undo (`COACH.mark`, `where` and `settled` in `coach.js`; `practiceAfter` in `game_controller.js`): if your turns left the cube where the plan has it (three quarter turns the other way, two opposite faces in the other order), it goes on from that turn; if nothing that was in place is lost and the coach knows how to go on, it looks again and gives the next step; otherwise it still asks to undo (in the middle of a recipe, for example). It had never been there: since v0.30 leaving the plan always meant undoing, and v0.33 only added other routes on the first turn. `tests/lessons.test.js` checks it in every lesson (a piece put in its place by another way is always accepted). Not covered: a turn of two layers or of a middle layer in place of a face turn is only accepted at the end of the step, not turn by turn.
 
 Plan (each phase leaves the app working; CFOP stays hidden until the last one):
 
@@ -67,6 +67,16 @@ Done (not published yet): the coach works against the centers. Every lesson step
 
 - [ ] **2×2 practice on top of this.** On the 2×2 the frame is one corner, so with `againstCenters` the corner lessons can work on it; what is left is in "Practice lessons".
 
+## Skins
+
+Done (v0.48): the look of the cube is chosen by its picture at the bottom of Help (no text, the name is only for screen
+readers) and saved with the game. Two skins: the classic cube and the **sphere**, the same puzzle cut out of a ball
+(`sphereBody`, `sphereOutline` and `sphereSticker` in `graphics_engine.js`; sizes in `LOOK.sphere`). Each piece is its
+cell of the grid cut by the ball with soft edges, so the layers still turn on flat cuts; its stickers are the parts of the
+ball nearest each face. The marks of Practice (slot frame, arrows) are laid on the ball. Next:
+
+- [ ] More skins: stickerless (pieces in the color of their face), white body, high contrast (easier to tell apart).
+
 ## Languages
 
 Done: English is the main language and Spanish is the first translation (v0.34). Since v0.35 the translations are plain JSON files in `locales/` (data only, only `<b>` and `<small>` allowed), the language is detected from the browser (English if there is no match) and can be changed in Help; `node tests/i18n.test.js` checks that every language is complete and safe.
@@ -85,4 +95,5 @@ Done: English is the main language and Spanish is the first translation (v0.34).
 ## Pending checks
 
 - [ ] Check on a real phone: a few lessons, the 2×2, and dragging a middle row with a finger (in the browser pane, with a mouse, the turns menu groups, x, dragging the middle column, Undo and the drawings of Help · Notation were checked, v0.43).
+- [ ] Check on a real phone (v0.48): the sphere (turning, the marks of Practice, the 2×2) and the back swipe from the side of the screen (it closes what is open, warns over the cube, and a second swipe leaves).
 - [ ] Retake the README screenshots: the current ones show lessons 1 and 2 in English and the interface before the light practice panel (v0.41).

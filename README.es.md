@@ -12,7 +12,7 @@ Mide tu tiempo en el modo Reto y aprende el método por capas, etapa por etapa, 
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![versión](https://img.shields.io/badge/versión-0.47.1-ff2e97)
+![versión](https://img.shields.io/badge/versión-0.48-ff2e97)
 ![funciona sin conexión](https://img.shields.io/badge/sin_conexión-PWA-00e5ff)
 ![sin dependencias](https://img.shields.io/badge/dependencias-0-8b5cf6)
 ![idiomas](https://img.shields.io/badge/idiomas-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
@@ -76,6 +76,8 @@ Por ahora, inglés y español. La app toma el idioma de tu navegador (inglés si
 Botón junto al título para cambiar entre 3×3 y 2×2 en el Reto. Cada tamaño guarda su propio cubo, tiempo y récord. La Práctica usa el 3×3.
 
 ### Y además
+- **Esfera:** al final de **Ayuda**, dos imágenes eligen el aspecto del cubo: el cubo clásico o una esfera, el mismo rompecabezas recortado en forma de bola (las esquinas muestran tres colores y las aristas dos, como en las esferas reales). Todo funciona igual con los dos, y la elección se guarda.
+- **Gesto de volver:** en el celular, deslizar desde un costado de la pantalla ya no cierra la app sin querer: cierra lo que esté abierto (Ayuda, el menú de giros, la lista de lecciones) o, sobre el cubo, avisa que hay que volver a deslizar para salir.
 - **Otra ruta:** en un paso guiado, si te sales del plan y tus propios giros también llegan, la app lo ve en el cubo y sigue (tres cuartos de giro hacia el otro lado, dos caras opuestas en el otro orden, o una ruta distinta que no deja nada fuera de su sitio), en vez de pedirte deshacer. A mitad de una receta, un giro que desarma algo todavía hay que deshacerlo.
 - **CFOP (principiante), en pausa:** sus seis lecciones (cruz y F2L buscando el camino más corto, la última capa en dos pasos) y sus ejercicios están en el código y en las pruebas, pero la app no los ofrece por ahora: en los pasos sin receta el profe solo acepta su propia ruta. Con `?lab` al final de la dirección vuelve a aparecer el selector de método, para probarlo.
 - Gira las caras arrastrando con el dedo (una fila o columna del medio gira esa capa del medio), o usa el menú **GIROS** con la notación, en tres grupos: caras (R, U', F2…), dos capas (r, u…) y capas del medio y cubo entero (M, E, S, x, y, z; los giros del cubo entero giran la vista).
