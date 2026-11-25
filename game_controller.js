@@ -56,7 +56,7 @@ function buildCube(){
   SC=size===2?1.5:1;OFF=size===2?0.75:1;
   CUBE.forEachPiece(p=>pieces.push({p,id:key(p)}));
   G.buildCube({pieces,scale:SC,offset:OFF,
-    colorOf:d=>COLHEX[FACE_OF[key(d)]],
+    colorOf:d=>G.faceColors()[FACE_OF[key(d)]],
     // Easter egg: faint π only on the white center
     decalOf:p=>(size===3?nz(p)===1&&p[1]===1:key(p)==='1,1,1')?piTex:null});
   focusId=undefined;focusMats=[];
@@ -1405,7 +1405,7 @@ function eggFrame(now,dt){
       // the cube shakes more and more and the pieces light up
       const amp=0.05*prog*prog;
       container.position.set((Math.random()-0.5)*amp,(Math.random()-0.5)*amp,(Math.random()-0.5)*amp);
-      for(const m of stickerMats){m.emissiveIntensity=STICKER_GLOW+0.5*prog;}
+      for(const m of stickerMats){m.emissiveIntensity=(m.userData.glow??STICKER_GLOW)+0.5*prog;}
       if(prog>0.6){if(!inflow)inflowStart();inflowUpdate((prog-0.6)/0.4);}
     }
     if(el>=PI_MS)explode();
@@ -1446,8 +1446,9 @@ window.addEventListener('resize',resize);
 let lastFrame=0;
 function loopBody(now){
   if(G.stepView(now)){updateUI();save();}
-  for(const m of stickerMats)m.emissiveIntensity=STICKER_GLOW;
-  for(const m of focusMats)m.emissiveIntensity=0.42;
+  // (each skin has its own glow; the piece to look at glows a little more)
+  for(const m of stickerMats)m.emissiveIntensity=m.userData.glow??STICKER_GLOW;
+  for(const m of focusMats)m.emissiveIntensity=(m.userData.glow??STICKER_GLOW)+0.25;
   // the straight arrow follows the cube while you turn it
   if(arrowDTurn&&(G.viewAnim||G.inertia||pd))arrowD(arrowDTurn);
   const dt=Math.min(50,now-(lastFrame||now));lastFrame=now;

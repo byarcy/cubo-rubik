@@ -76,7 +76,11 @@ cell of the grid cut by the ball with soft edges, so the layers still turn on fl
 ball nearest each face. The marks of Practice (slot frame, arrows) are laid on the ball. Next:
 
 Done (v0.49): **stickerless**, each piece all in colored plastic (no black body, so the lines between pieces
-show the color too; `plainParts` in `graphics_engine.js`).
+show the color too; `plainParts` in `graphics_engine.js`). In v0.50 it was made to look like photos of a real one
+(`LOOK.plain`): its own colors, a white studio light instead of the neon one, matte plastic with no glow, shade in the
+gaps (vertex colors), pieces that almost touch, and the real shape (`plainBox`: edges barely rounded, except the ones
+between two inner sides, so each face has big round corners toward the inside and a dark hole where four pieces meet).
+Each kind of piece is made once and turned (`plainShape`), about 90 ms on a desktop.
 
 - [ ] More skins: white body, high contrast (easier to tell apart).
 
@@ -98,5 +102,5 @@ Done: English is the main language and Spanish is the first translation (v0.34).
 ## Pending checks
 
 - [ ] Check on a real phone: a few lessons, the 2×2, and dragging a middle row with a finger (in the browser pane, with a mouse, the turns menu groups, x, dragging the middle column, Undo and the drawings of Help · Notation were checked, v0.43).
-- [ ] Check on a real phone (v0.48, v0.49): the sphere, the stickerless cube (turning, the marks of Practice, the 2×2) and the back swipe from the side of the screen (it closes what is open, warns over the cube, and a second swipe leaves).
+- [ ] Check on a real phone (v0.48 to v0.50): the sphere, the stickerless cube (turning, the marks of Practice, the 2×2) and the back swipe from the side of the screen (it closes what is open, warns over the cube, and a second swipe leaves).
 - [ ] Retake the README screenshots: the current ones show lessons 1 and 2 in English and the interface before the light practice panel (v0.41).

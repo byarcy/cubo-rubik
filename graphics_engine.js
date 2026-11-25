@@ -695,6 +695,13 @@ const LOOK={
     ambient:[0xffffff,0.34],hemi:[0xff7ad9,0x2de2ff,0.42],
     dir:[[0xfff4fb,0.42,[2,9,4]],[0xb9a8ff,0.22,[-4,-6,-6]],[0xff2e97,0.38,[-7,2,-4]],[0x00e5ff,0.34,[7,1,-5]]],
     floor:[0xff2e97,0.9,9,[0,-3.6,1.5]]},
+  // Stickerless: like real colored plastic. Its own colors (taken from photos of a real stickerless cube), a white studio
+  // light instead of the neon one (soft enough that no face burns to white), matte plastic with no glow, and shade in the
+  // gaps between pieces (ao: how dark). The pieces almost touch (size), as on a real one; their edges are rounded a
+  // little (round) and the ones between two inner sides a lot (inner).
+  plain:{size:0.995,round:0.045,inner:0.15,faces:{U:0xf3f0ea,D:0xfff000,F:0x66dd2b,B:0x1f8fff,R:0xff1f4f,L:0xff7f1a},specular:0x141414,shininess:10,glow:0,ao:0.75,
+    lights:{ambient:[0xffffff,0.12],hemi:[0xffffff,0x6f655a,0.28],
+      dir:[[0xffffff,0.62,[2,9,5]],[0xfff1e0,0.22,[8,2,6]],[0xdde6ff,0.15,[-6,3,-5]],[0xffffff,0.06,[-2,-6,3]]]}},
   miniBg:0x0d0221,
   neon:[0xff2e97,0x00e5ff,0x8b5cf6],
   camera:{pos:[6,5.4,8.6],fov:32,near:1,far:60},   // high near = more depth precision on phones
@@ -717,10 +724,15 @@ camera.position.copy(CAM);camera.lookAt(0,0,0);
 // Corner box: the same scene seen from behind
 const miniCam=new M3.PerspectiveCamera(LOOK.camera.fov,1,LOOK.camera.near,LOOK.camera.far);
 miniCam.position.copy(CAM).multiplyScalar(-1);miniCam.lookAt(0,0,0);
-{const L=LOOK.lights;
-  scene.add(new M3.AmbientLight(...L.ambient));scene.add(new M3.HemisphereLight(...L.hemi));
-  for(const [c,i,p] of L.dir){const d=new M3.DirectionalLight(c,i);d.position.set(...p);scene.add(d);}
-  const [c,i,dist,p]=L.floor,f=new M3.PointLight(c,i,dist);f.position.set(...p);scene.add(f);}
+// Two sets of lights: the neon one, and a white studio one for the stickerless skin (only one is on at a time)
+function lightSet(L){
+  const g=new M3.Group();
+  g.add(new M3.AmbientLight(...L.ambient));g.add(new M3.HemisphereLight(...L.hemi));
+  for(const [c,i,p] of L.dir){const d=new M3.DirectionalLight(c,i);d.position.set(...p);g.add(d);}
+  if(L.floor){const [c,i,dist,p]=L.floor,f=new M3.PointLight(c,i,dist);f.position.set(...p);g.add(f);}
+  scene.add(g);return g;
+}
+const neonLights=lightSet(LOOK.lights),studioLights=lightSet(LOOK.plain.lights);studioLights.visible=false;
 const container=new M3.Group();scene.add(container);
 
 const camDir=CAM.clone().normalize();
@@ -853,9 +865,83 @@ function sphereSticker(p,d){
 // Stickerless: the whole piece is colored plastic, so the lines between pieces show the color too. The rounded piece
 // is split among its faces: each bit goes to the face it is most toward. Each part is in the frame of its face (its z is
 // the face, as the stickers), so lighting up a piece, touching it and turning it work as with stickers.
+// The shape of a real stickerless piece: the edges are only slightly rounded ("round"), except the ones between two inner
+// sides, which are rounded a lot ("inner"): seen from the front, each face is a square with big round corners toward
+// the inside of the cube and small ones on its outer edges. It is three rounded squares (one seen along each axis)
+// intersected; the points of a box around it are pulled onto it (shrunk by "round", Dykstra's method for the closest
+// point of an intersection), then pushed back out by "round", so all its edges are soft and its normals smooth.
+function plainBox(dirs){
+  const P=LOOK.plain,s=P.round,H=P.size/2-s,seg=14;
+  const outer=(a,sg)=>dirs.some(d=>d[a]===sg);
+  // radius (shrunk) of each corner of the square seen along axis k: [i][j] for the signs of the other two axes
+  const prisms=[0,1,2].map(k=>{
+    const i=(k+1)%3,j=(k+2)%3,r={};
+    for(const si of [-1,1])for(const sj of [-1,1])r[si+','+sj]=outer(i,si)||outer(j,sj)?0:P.inner-s;
+    return {i,j,r};
+  });
+  // closest point of w inside one rounded square (only its two axes change), written into w
+  const project=(w,{i,j,r})=>{
+    const u=w[i],v=w[j],su=u<0?-1:1,sv=v<0?-1:1,rc=r[su+','+sv],c=H-rc;
+    if(rc>0&&Math.abs(u)>c&&Math.abs(v)>c){
+      const du=Math.abs(u)-c,dv=Math.abs(v)-c,l=Math.hypot(du,dv);
+      if(l>rc){w[i]=su*(c+du*rc/l);w[j]=sv*(c+dv*rc/l);}
+    }else{w[i]=u<-H?-H:u>H?H:u;w[j]=v<-H?-H:v>H?H:v;}
+  };
+  const g=new M3.BoxGeometry(P.size,P.size,P.size,seg,seg,seg),pos=g.attributes.position,nor=g.attributes.normal,hs=P.size/2;
+  const warp=x=>{const t=Math.abs(x)/hs;return Math.sign(x)*hs*(0.5*t+0.5*Math.sin(t*Math.PI/2));};
+  const inc=[[0,0,0],[0,0,0],[0,0,0]],w=[0,0,0];
+  for(let n=0;n<pos.count;n++){
+    const v=[warp(pos.getX(n)),warp(pos.getY(n)),warp(pos.getZ(n))],x=v.slice();
+    for(const a of inc)a.fill(0);
+    // (it stops as soon as the point no longer moves; most need only a few rounds)
+    for(let it=0;it<40;it++){
+      let moved=0;
+      for(let m=0;m<3;m++){
+        const a=inc[m];
+        for(let q=0;q<3;q++)w[q]=x[q]+a[q];
+        project(w,prisms[m]);
+        for(let q=0;q<3;q++){a[q]=x[q]+a[q]-w[q];moved+=Math.abs(w[q]-x[q]);x[q]=w[q];}
+      }
+      if(it&&moved<1e-7)break;
+    }
+    const d=v.map((a,q)=>a-x[q]),l=Math.hypot(...d)||1;
+    pos.setXYZ(n,x[0]+d[0]/l*s,x[1]+d[1]/l*s,x[2]+d[2]/l*s);nor.setXYZ(n,d[0]/l,d[1]/l,d[2]/l);
+  }
+  return g;
+}
+// Every center (and every edge, every corner) has the same shape, only turned: it is made once for each kind and turned
+// to each piece's sides (one of the 24 turns of a cube: the axes swapped and signed, without a mirror)
+const ROTS=[];
+for(const p of [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]])for(let sg=0;sg<8;sg++){
+  const s=[sg&1?-1:1,sg&2?-1:1,sg&4?-1:1],R=[0,1,2].map(i=>{const row=[0,0,0];row[p[i]]=s[i];return row;});
+  const det=R[0][0]*(R[1][1]*R[2][2]-R[1][2]*R[2][1])-R[0][1]*(R[1][0]*R[2][2]-R[1][2]*R[2][0])+R[0][2]*(R[1][0]*R[2][1]-R[1][1]*R[2][0]);
+  if(det===1)ROTS.push(R);
+}
+const plainKinds={};
+function plainShape(dirs){
+  const base=plainKinds[dirs.length]||(plainKinds[dirs.length]=(D=>({dirs:D,g:plainBox(D)}))([[0,0,1],[0,1,0],[1,0,0]].slice(0,dirs.length)));
+  const turn=(R,v)=>R.map(row=>row[0]*v[0]+row[1]*v[1]+row[2]*v[2]);
+  const R=ROTS.find(R=>base.dirs.every(d=>{const t=turn(R,d);return dirs.some(e=>e[0]===t[0]&&e[1]===t[1]&&e[2]===t[2]);}));
+  const p=base.g.attributes.position,n=base.g.attributes.normal,P=new Float32Array(p.count*3),N=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){P.set(turn(R,[p.getX(i),p.getY(i),p.getZ(i)]),i*3);N.set(turn(R,[n.getX(i),n.getY(i),n.getZ(i)]),i*3);}
+  const g=new M3.BufferGeometry();g.setIndex(base.g.index);
+  g.setAttribute('position',new M3.BufferAttribute(P,3));g.setAttribute('normal',new M3.BufferAttribute(N,3));
+  return g;
+}
 function plainParts(dirs){
-  const seg=10,src=roundedBox(LOOK.piece.size,LOOK.piece.round,seg),p=src.attributes.position,n=src.attributes.normal,ix=src.index.array;
-  const parts=dirs.map(d=>({d,inv:new M3.Quaternion().setFromUnitVectors(ZV,new M3.Vector3(...d)).invert(),pos:[],nor:[]}));
+  const src=plainShape(dirs),p=src.attributes.position,n=src.attributes.normal,ix=src.index.array;
+  const parts=dirs.map(d=>({d,inv:new M3.Quaternion().setFromUnitVectors(ZV,new M3.Vector3(...d)).invert(),pos:[],nor:[],col:[]}));
+  // Shade: a point is darker the deeper it goes into a gap next to another piece (not on the outer edges of the cube)
+  const half=LOOK.plain.size/2,AX=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],ss=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+  const shade=(x,y,z,d)=>{
+    const depth=half-(d[0]*x+d[1]*y+d[2]*z);let occ=0;
+    for(const e of AX){
+      if(e[0]*d[0]+e[1]*d[1]+e[2]*d[2]!==0||dirs.some(o=>o[0]===e[0]&&o[1]===e[1]&&o[2]===e[2]))continue;
+      occ=Math.max(occ,ss(half-0.09,half,e[0]*x+e[1]*y+e[2]*z)*ss(0,0.07,depth));
+    }
+    occ=Math.max(occ,ss(0.15,0.5,depth));
+    return 1-LOOK.plain.ao*occ;
+  };
   const v=new M3.Vector3(),w=new M3.Vector3();
   for(let i=0;i<ix.length;i+=3){
     const t=[ix[i],ix[i+1],ix[i+2]];
@@ -864,17 +950,21 @@ function plainParts(dirs){
     for(const q of parts){const s=q.d[0]*cx+q.d[1]*cy+q.d[2]*cz;if(s>best){best=s;part=q;}}
     for(const k of t){
       v.fromBufferAttribute(p,k).applyQuaternion(part.inv);w.fromBufferAttribute(n,k).applyQuaternion(part.inv);
-      part.pos.push(v.x,v.y,v.z);part.nor.push(w.x,w.y,w.z);
+      const a=shade(p.getX(k),p.getY(k),p.getZ(k),part.d);
+      part.pos.push(v.x,v.y,v.z);part.nor.push(w.x,w.y,w.z);part.col.push(a,a,a);
     }
   }
   return parts.map(q=>{
     const g=new M3.BufferGeometry();
     g.setAttribute('position',new M3.BufferAttribute(new Float32Array(q.pos),3));g.setAttribute('normal',new M3.BufferAttribute(new Float32Array(q.nor),3));
+    g.setAttribute('color',new M3.BufferAttribute(new Float32Array(q.col),3));
     return g;
   });
 }
 const shape=(k,make)=>{k=OFF+'|'+SC+'|'+k;if(!shapes.has(k))shapes.set(k,make());return shapes.get(k);};
-function setSkin(name){if(SKINS.includes(name))skin=name;}
+function setSkin(name){if(!SKINS.includes(name))return;skin=name;studioLights.visible=skin==='stickerless';neonLights.visible=!studioLights.visible;markDirty();}
+// The colors of the faces for this skin
+const faceColors=()=>skin==='stickerless'?LOOK.plain.faces:LOOK.faces;
 // How far out the marks over a face go: the round arrow on a face, and the straight ones on the side of a layer
 const faceOut=()=>skin==='sphere'?LOOK.sphere.radius+0.06:1.56;
 const sideOut=layer=>skin==='sphere'?Math.sqrt(Math.max(0,LOOK.sphere.radius**2-(layer*OFF)**2))+0.14:1.56;
@@ -904,7 +994,9 @@ function buildCube({pieces,scale,offset,colorOf,decalOf}){
   SC=scale;OFF=offset;
   for(const {p,id} of pieces){
     const {g}=makePiece(p,d=>{
-      const col=colorOf(d),mat=new M3.MeshLambertMaterial({color:col,emissive:col,emissiveIntensity:STICKER_GLOW});
+      const col=colorOf(d),P=LOOK.plain,mat=skin==='stickerless'
+        ?new M3.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:P.glow,specular:P.specular,shininess:P.shininess,vertexColors:true,userData:{glow:P.glow}})
+        :new M3.MeshLambertMaterial({color:col,emissive:col,emissiveIntensity:STICKER_GLOW});
       stickerMats.push(mat);return mat;
     },0.475);
     g.userData.id=id;
@@ -1067,7 +1159,7 @@ function render(){
 }
 
 return {canvas,scene,camera,container,camDir,rightW,upT,MINI,STICKER_GLOW,cubies,stickerMats,decalMats,
-  buildCube,syncGroup,orientFrom,SKINS,setSkin,get skin(){return skin;},stickerSpot,faceOut,sideOut,animateLayer,markDirty,isDirty:()=>dirty,
+  buildCube,syncGroup,orientFrom,SKINS,setSkin,get skin(){return skin;},faceColors,stickerSpot,faceOut,sideOut,animateLayer,markDirty,isDirty:()=>dirty,
   normAng,animView,viewStart,viewDrag,viewTwist,viewEnd,turnView,stepView,getView,setView,idleSway,stopSway,
   resize,render,base,
   get yaw(){return yaw;},get pitch(){return pitch;},get roll(){return roll;},get viewAnim(){return viewAnim;},get inertia(){return inertia;},get swayAmp(){return swayAmp;}};
