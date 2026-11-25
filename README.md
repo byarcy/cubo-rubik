@@ -12,7 +12,7 @@ Race the clock in Challenge mode and learn the layer-by-layer method, stage by s
 
 `https://byarcy.github.io/cubo-rubik/`
 
-![version](https://img.shields.io/badge/version-0.47-ff2e97)
+![version](https://img.shields.io/badge/version-0.47.1-ff2e97)
 ![works offline](https://img.shields.io/badge/offline-PWA-00e5ff)
 ![no dependencies](https://img.shields.io/badge/dependencies-0-8b5cf6)
 ![languages](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-ffd500)
